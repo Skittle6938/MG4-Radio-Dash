@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fondu gauche / droite de la règle FM vers la couleur du panneau -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="left" android:width="140dp">
+        <shape><gradient android:angle="0" android:startColor="#FF141925" android:endColor="#00141925" /></shape>
+    </item>
+    <item android:gravity="right" android:width="140dp">
+        <shape><gradient android:angle="180" android:startColor="#FF141925" android:endColor="#00141925" /></shape>
+    </item>
+</layer-list>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MG4-Radio-Dash : écran DAB au style MG4Dash. Tous les identifiants d'origine sont conservés. -->
+<RelativeLayout android:id="@id/radio_band_view_container" android:clickable="true" android:layout_width="fill_parent" android:layout_height="fill_parent" android:paddingTop="12.0dip" android:paddingEnd="12.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout android:orientation="vertical" android:background="@drawable/rd_bg_panel" android:padding="20.0dip" android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+        <!-- Pochette + infos station -->
+        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="0.0dip" android:layout_weight="1.0" android:baselineAligned="false">
+
+            <FrameLayout android:background="@drawable/rd_bg_tab" android:layout_width="280.0dip" android:layout_height="fill_parent">
+                <ImageView android:tag="rd_art" android:layout_width="fill_parent" android:layout_height="fill_parent" android:scaleType="centerCrop" />
+                <!-- Vues d'origine (logo / diaporama), pilotées par le code SAIC : masquées, remplacées par rd_art -->
+                <FrameLayout android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content">
+                    <ImageView android:id="@id/iv_radio_dab_cover" android:layout_width="1.0dip" android:layout_height="1.0dip" />
+                    <com.saicmotor.radio.view.widget.bannerview.banner_view.BannerView android:id="@id/bv_slide_show" android:visibility="gone" android:layout_width="1.0dip" android:layout_height="1.0dip" app:autoPlaying="true" app:interval="1500" />
+                    <Button android:id="@id/btn_radio_switch_logo_slideshow" android:layout_width="1.0dip" android:layout_height="1.0dip" />
+                    <Button android:id="@id/btn_dab_scan" android:visibility="gone" android:layout_width="1.0dip" android:layout_height="1.0dip" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <LinearLayout android:orientation="vertical" android:id="@id/ll_dab_info" android:layout_width="0.0dip" android:layout_height="fill_parent" android:layout_weight="1.0" android:layout_marginStart="28.0dip">
+                <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
+                    <TextView android:textSize="17.0sp" android:textColor="#FF8A94A6" android:letterSpacing="0.12" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" android:text="RADIO DAB+" android:fontFamily="sans-serif-medium" />
+                    <Button android:textSize="17.0sp" android:textColor="#FFA0AEC0" android:id="@id/btn_dab_program" android:background="@drawable/rd_bg_button" android:paddingStart="18.0dip" android:paddingEnd="18.0dip" android:layout_width="wrap_content" android:layout_height="48.0dip" android:text="@string/radio_btn_program_list_text_EPG" android:textAllCaps="false" />
+                    <ImageButton android:id="@id/btn_dab_rds_setting" android:background="@drawable/rd_bg_button" android:padding="10.0dip" android:layout_width="48.0dip" android:layout_height="48.0dip" android:src="@drawable/radio_btn_dab_setting" android:scaleType="fitCenter" android:layout_marginStart="10.0dip" />
+                </LinearLayout>
+                <TextView android:textSize="52.0sp" android:textColor="#FFFFFFFF" android:ellipsize="marquee" android:id="@id/tv_dab_program_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:fontFamily="sans-serif-light" android:marqueeRepeatLimit="marquee_forever" />
+                <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip">
+                    <ImageView android:id="@id/iv_radio_dab_type" android:background="@mipmap/icon_radio_dab_type_img" android:layout_width="26.0dip" android:layout_height="21.0dip" />
+                    <TextView android:textSize="21.0sp" android:textColor="#FFA0AEC0" android:id="@id/tv_dab_radio_ensemble_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:layout_marginStart="10.0dip" />
+                </LinearLayout>
+                <com.saicmotor.radio.view.widget.MarqueTextView android:textSize="21.0sp" android:textColor="#FF00D2FF" android:ellipsize="marquee" android:id="@id/tv_dab_frequency_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:singleLine="true" android:includeFontPadding="false" android:marqueeRepeatLimit="marquee_forever" />
+
+                <Space android:layout_width="1.0dip" android:layout_height="0.0dip" android:layout_weight="1.0" />
+
+                <!-- Commandes -->
+                <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:id="@id/ll_dab_base_function" android:layout_width="fill_parent" android:layout_height="wrap_content">
+                    <ImageButton android:id="@id/ib_dab_favorite" android:background="@drawable/rd_bg_button" android:layout_width="68.0dip" android:layout_height="68.0dip" android:scaleType="center" />
+                    <Space android:layout_width="0.0dip" android:layout_height="1.0dip" android:layout_weight="1.0" />
+                    <Button android:id="@id/btn_dab_previous" android:background="@drawable/rd_btn_prev" android:layout_width="68.0dip" android:layout_height="68.0dip" />
+                    <ImageButton android:id="@id/ib_dab_play_pause" android:background="@drawable/rd_bg_play" android:layout_width="88.0dip" android:layout_height="88.0dip" android:scaleType="center" android:layout_marginStart="28.0dip" android:layout_marginEnd="28.0dip" />
+                    <Button android:id="@id/btn_dab_next" android:background="@drawable/rd_btn_next" android:layout_width="68.0dip" android:layout_height="68.0dip" />
+                    <Space android:layout_width="0.0dip" android:layout_height="1.0dip" android:layout_weight="1.0" />
+                    <Button android:id="@id/btn_dab_favorite_list" android:background="@drawable/rd_btn_fav_list" android:layout_width="68.0dip" android:layout_height="68.0dip" />
+                    <Button android:id="@id/btn_dab_search_list" android:background="@drawable/rd_btn_search_list" android:layout_width="68.0dip" android:layout_height="68.0dip" android:layout_marginStart="12.0dip" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Favoris en tuiles (remplies par RadioDash) + reprise auto -->
+        <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="128.0dip" android:layout_marginTop="16.0dip">
+            <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:tag="rd_favs_dab" android:layout_width="0.0dip" android:layout_height="fill_parent" android:layout_weight="1.0" />
+            <Button android:textSize="16.0sp" android:textColor="#FFA0AEC0" android:id="@id/btn_radio_autostart" android:background="@drawable/rd_bg_button" android:paddingStart="16.0dip" android:paddingEnd="16.0dip" android:layout_width="wrap_content" android:layout_height="56.0dip" android:text="@string/radio_autostart_on" android:layout_marginStart="16.0dip" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

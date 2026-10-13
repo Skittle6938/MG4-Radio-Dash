@@ -20,3 +20,6 @@ jadx/
 
 # Misc
 *.tmp
+build/
+dist/
+helper/build/

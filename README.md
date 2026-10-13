@@ -1,3 +1,30 @@
+# MG4 Radio Dash — redesigned radio for the MG4 (fork of MG4-Radio-DABplus-Fix)
+
+This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.com/Skittle6938/MG4Dash)** and adds favourites-only station switching. It keeps every fix from the original project ([MG4-Radio-DABplus-Fix](https://github.com/Skittle6938/MG4-Radio-DABplus-Fix), documented below).
+
+![MG4 Radio Dash](screenshots/radio-dash.jpg)
+
+### What's new in this fork
+
+- **Full-screen dark glass design**: the SAIC side bar and top banner are hidden (swipe from the left or top edge to bring them back), DAB / FM tabs as pills, the top-left corner is left free for MG's fog-light overlay button.
+- **MG4Dash dock** at the bottom (clock, Home, Vehicle, Climate, Energy, Android Auto, Settings) to jump straight to the MG4Dash pages.
+- **Large square station artwork**, the same image as on the home screen (DAB+ slideshow, with the per-station cache as fallback).
+- **Favourite tiles** under the artwork: DAB stations with their image, FM stations with their RDS name and frequency. One tap tunes the station.
+- **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged.
+- **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small red hearts for favourites. Drag the cursor to tune.
+- Restyled favourite cards, playback buttons (identical on FM and DAB) and frequency colours.
+
+### How it is built
+
+The redesign is applied on top of `apk/Radio_patched_signed.apk`:
+- `dash/` — modified layouts (all original view IDs kept), drawables, colours and two smali files (`RadioService$6` for favourites skipping, `RadioMainActivity` for three lifecycle hooks);
+- `helper/src/` — a small Java module (`RadioDash`, `Favorites`, `FmDial`) compiled to smali and added to the app;
+- `build.ps1` — compiles the module, decodes the base APK, applies `dash/`, rebuilds and signs with the AOSP platform test key (not included: see MG4Dash's README to download it).
+
+Install exactly like the original patch below (`adb push` + `pm install -r -f`, or USB stick), then **reboot the head unit**. To go back, reinstall the original `Radio_patched_signed.apk`, or `adb shell pm uninstall com.saicmotor.radio` for the factory radio.
+
+---
+
 # MG4 Radio — DAB+ Slideshow Art on Launcher + Auto-Resume
 
 Patch for the SAIC MG4 (EH32 LL firmware) head unit that:

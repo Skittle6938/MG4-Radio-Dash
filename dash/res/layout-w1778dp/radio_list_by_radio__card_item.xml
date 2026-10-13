@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@id/btn_radio_list_item_root_view" android:layout_width="@dimen/dp_245" android:layout_height="118.0dip" android:padding="6.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:visibility="visible" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <ImageButton android:id="@id/btn_radio_list_item" android:background="@drawable/rd_bg_card" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+        <TextView android:textSize="22.0sp" android:textColor="@color/color_selected" android:ellipsize="end" android:id="@id/txt_radio_dab_list_item_service_name" android:layout_width="@dimen/dp_160" android:layout_height="wrap_content" android:layout_marginTop="20.0dip" android:singleLine="true" android:includeFontPadding="false" android:layout_marginStart="@dimen/dp_30" />
+        <ImageView android:id="@id/img_radio_list_item_favorite" android:background="@null" android:layout_width="@dimen/dp_32" android:layout_height="@dimen/dp_32" android:src="@mipmap/icon_radio_item_collection" android:scaleType="fitCenter" android:layout_alignBottom="@id/txt_radio_dab_list_item_service_name" android:layout_marginEnd="@dimen/dp_36" android:layout_alignParentEnd="true" />
+        <TextView android:textSize="16.0sp" android:textColor="#FFA0AEC0" android:ellipsize="end" android:id="@id/txt_radio_dab_list_item_ensemble_name" android:layout_width="@dimen/dp_160" android:layout_height="wrap_content" android:layout_marginTop="20.0dip" android:singleLine="true" android:includeFontPadding="false" android:layout_below="@id/txt_radio_dab_list_item_service_name" android:layout_marginStart="@dimen/dp_30" />
+        <ImageView android:id="@id/iv_list_delete" android:background="@null" android:visibility="invisible" android:layout_width="@dimen/dp_32" android:layout_height="@dimen/dp_32" android:src="@mipmap/icon_radio_list_delete" />
+    </RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MG4-Radio-Dash : onglets DAB / FM / AM en puces, coin haut-gauche laissé libre (bouton antibrouillards). -->
+<androidx.constraintlayout.widget.ConstraintLayout android:id="@id/layoutTab" android:layout_width="fill_parent" android:layout_height="64.0dip"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:id="@id/rl_menu_bar" android:layout_width="wrap_content" android:layout_height="64.0dip" android:layout_marginStart="92.0dip" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
+        <RelativeLayout android:id="@id/layout_tab_dab" android:background="@drawable/rd_bg_tab" android:layout_width="wrap_content" android:layout_height="52.0dip">
+            <TextView android:textSize="19.0sp" android:textColor="@color/radio_left_bar_btn_title" android:gravity="center" android:id="@id/tv_dab" android:layout_width="150.0dip" android:layout_height="52.0dip" android:text="@string/radio_left_bar_title_dab" android:fontFamily="sans-serif-medium" />
+        </RelativeLayout>
+        <ImageView android:id="@id/iv_layout_tab_dab_line1" android:visibility="invisible" android:layout_width="10.0dip" android:layout_height="1.0dip" />
+        <RelativeLayout android:id="@id/layout_tab_fm" android:background="@drawable/rd_bg_tab" android:layout_width="wrap_content" android:layout_height="52.0dip">
+            <TextView android:textSize="19.0sp" android:textColor="@color/radio_left_bar_btn_title" android:gravity="center" android:id="@id/tv_fm" android:layout_width="150.0dip" android:layout_height="52.0dip" android:text="@string/radio_left_bar_title_fm" android:fontFamily="sans-serif-medium" />
+        </RelativeLayout>
+        <ImageView android:id="@id/iv_layout_tab_fm_line1" android:visibility="invisible" android:layout_width="10.0dip" android:layout_height="1.0dip" />
+        <RelativeLayout android:orientation="vertical" android:id="@id/layout_tab_am" android:background="@drawable/rd_bg_tab" android:layout_width="wrap_content" android:layout_height="52.0dip">
+            <TextView android:textSize="19.0sp" android:textColor="@color/radio_left_bar_btn_title" android:gravity="center" android:id="@id/tv_am" android:layout_width="150.0dip" android:layout_height="52.0dip" android:text="@string/radio_left_bar_title_am" android:fontFamily="sans-serif-medium" />
+        </RelativeLayout>
+        <ImageView android:id="@id/iv_layout_tab_am_line1" android:visibility="invisible" android:layout_width="10.0dip" android:layout_height="1.0dip" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
