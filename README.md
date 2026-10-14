@@ -2,7 +2,11 @@
 
 This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.com/Skittle6938/MG4Dash)** and adds favourites-only station switching. It keeps every fix from the original project ([MG4-Radio-DABplus-Fix](https://github.com/Skittle6938/MG4-Radio-DABplus-Fix), documented below).
 
-![MG4 Radio Dash](screenshots/radio-dash.jpg)
+![MG4 Radio Dash, DAB+](screenshots/radio-dash.jpg)
+
+![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
+
+*Photos taken on the car: DAB+ with the station slideshow and favourite tiles, FM with the new dial and its favourite hearts.*
 
 ### What's new in this fork
 
