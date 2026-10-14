@@ -117,7 +117,7 @@ public final class FmDial extends View {
             c.drawCircle(x, cy, 15 * d, glow);
             c.drawCircle(x, cy, 9 * d, thumb);
             if (dragValue >= 0) {
-                String s = String.format(Locale.FRANCE, "%.1f", dragValue / 1000f);
+                String s = String.format(Locale.getDefault(), "%.1f", dragValue / 1000f);
                 float bw = bubbleText.measureText(s) + 20 * d;
                 rect.set(x - bw / 2, cy + 16 * d, x + bw / 2, cy + 44 * d);
                 c.drawRoundRect(rect, 12 * d, 12 * d, bubble);

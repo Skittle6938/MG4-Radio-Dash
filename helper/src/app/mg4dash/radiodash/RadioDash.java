@@ -48,6 +48,28 @@ import java.util.Locale;
  */
 public final class RadioDash {
     private static final String TAG = "RadioDash";
+
+    /** Libellés du dock et de l'aide, dans la langue de la voiture (anglais par défaut). */
+    private static final String[][] I18N = {
+            // en, fr, de, es, it, nl
+            {"Home", "Accueil", "Start", "Inicio", "Home", "Start"},
+            {"Vehicle", "Véhicule", "Fahrzeug", "Vehículo", "Veicolo", "Voertuig"},
+            {"Climate", "Clim", "Klima", "Clima", "Clima", "Klimaat"},
+            {"Energy", "Énergie", "Energie", "Energía", "Energia", "Energie"},
+            {"Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto"},
+            {"Settings", "Paramètres", "Einstellungen", "Ajustes", "Impostazioni", "Instellingen"},
+            {"Add favourites with ♥: the steering wheel and home screen will skip between them",
+                    "Ajoutez des favoris avec ♥ : le volant et l'accueil passeront de l'un à l'autre",
+                    "Favoriten mit ♥ hinzufügen: Lenkrad und Startbildschirm wechseln dann zwischen ihnen",
+                    "Añada favoritos con ♥: el volante y la pantalla de inicio pasarán de uno a otro",
+                    "Aggiungi preferiti con ♥: volante e schermata home passeranno dall'uno all'altro",
+                    "Voeg favorieten toe met ♥: stuur en startscherm schakelen dan tussen deze zenders"},
+    };
+
+    private static String tr(int i) {
+        int col = java.util.Arrays.asList("en", "fr", "de", "es", "it", "nl").indexOf(Locale.getDefault().getLanguage());
+        return I18N[i][Math.max(col, 0)];
+    }
     private static final String DASH = "app.mg4dash";
 
     // Charte MG4Dash
@@ -102,8 +124,8 @@ public final class RadioDash {
             try {
                 if (clock != null) {
                     Date now = new Date();
-                    clock.setText(new SimpleDateFormat("HH:mm", Locale.FRANCE).format(now));
-                    date.setText(new SimpleDateFormat("EEE d MMM", Locale.FRANCE).format(now).replace(".", ""));
+                    clock.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now));
+                    date.setText(new SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(now).replace(".", ""));
                 }
                 fixLayout(a);
                 applyArt(a);
@@ -173,12 +195,12 @@ public final class RadioDash {
         dock.addView(clockCell, new LinearLayout.LayoutParams(-2, -1));
 
         String[][] items = {
-                {"rd_ic_home", "Accueil", "home"},
-                {"rd_ic_car", "Véhicule", DASH + "/.pages.VehicleActivity"},
-                {"rd_ic_snow", "Clim", DASH + "/.pages.ClimateActivity"},
-                {"rd_ic_bolt", "Énergie", DASH + "/.pages.EnergyActivity"},
+                {"rd_ic_home", tr(0), "home"},
+                {"rd_ic_car", tr(1), DASH + "/.pages.VehicleActivity"},
+                {"rd_ic_snow", tr(2), DASH + "/.pages.ClimateActivity"},
+                {"rd_ic_bolt", tr(3), DASH + "/.pages.EnergyActivity"},
                 {"rd_ic_navigation", "Android Auto", "com.allgo.app.androidauto/.ProjectionActivity"},
-                {"rd_ic_settings", "Paramètres", "com.saicmotor.settings/.ui.MainActivity"},
+                {"rd_ic_settings", tr(5), "com.saicmotor.settings/.ui.MainActivity"},
         };
         for (final String[] it : items) {
             LinearLayout cell = new LinearLayout(a);
@@ -334,7 +356,7 @@ public final class RadioDash {
         row.setContentDescription(key);
         row.removeAllViews();
         if (favs == null || favs.isEmpty()) {
-            TextView empty = text(a, "Ajoutez des favoris avec ♥ : le volant et l'accueil passeront de l'un à l'autre", 17, TITLE);
+            TextView empty = text(a, tr(6), 17, TITLE);
             row.addView(empty);
             return;
         }
@@ -363,7 +385,7 @@ public final class RadioDash {
                 // FM : nom RDS (s'il existe) + fréquence, sans icône.
                 int ch = ((Number) call(st, "getChannelNumber")).intValue();
                 selected = ch == curFm;
-                String freq = String.format(Locale.FRANCE, "%.1f MHz", ch / 1000f);
+                String freq = String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 Object rds = callQuiet(st, "getRds");
                 Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
                 String name = ps == null ? "" : ps.toString().trim();
