@@ -18,6 +18,7 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 - **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small red hearts for favourites. Drag the cursor to tune.
 - Restyled favourite cards, playback buttons (identical on FM and DAB) and frequency colours.
 - **Follows the MG4Dash theme** (background and button colour chosen in MG4Dash 0.8 settings): the radio recolours itself the next time it opens.
+- **Light mode** (MG4Dash 0.9.4 or later): when MG4Dash is light, or in Auto during the day, the radio uses light backgrounds with dark text and icons, and switches back to dark when the car's lights come on.
 
 ### How it is built
 
