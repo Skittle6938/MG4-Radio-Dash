@@ -43,7 +43,21 @@ public final class Palette {
             {0x2979FF, 0x00D2FF}, {0x8E99A8, 0xCFD6DF}, {0xE53935, 0xFF8A80}, {0x00C853, 0x69F0AE}, {0xFF8F00, 0xFFC46B},
     };
 
+    // Mode clair (mêmes tables que MG4Dash) : fonds clairs, boutons plus soutenus, textes foncés
+    private static final int[][] BG_LIGHT = {
+            {0xE9EEF6, 0xF6F8FC, 0xEDF1F8, 0xFFFFFF, 0xCBD3E1, 0xE3E8F0, 0xD3DAE6, 0xD5DBE5},
+            {0xEDEDED, 0xF8F8F8, 0xF1F1F1, 0xFFFFFF, 0xCFCFD4, 0xE6E6EA, 0xD6D6DC, 0xD9D9DE},
+            {0xE4E6E9, 0xF2F3F5, 0xE9EBEE, 0xFCFCFD, 0xC7CBD1, 0xDDE0E4, 0xCDD1D7, 0xD2D6DB},
+            {0xE6F0EB, 0xF4F9F6, 0xEAF3EE, 0xFFFFFF, 0xC4D6CC, 0xDCE8E1, 0xCCDDD3, 0xD2E0D8},
+            {0xF2E8EA, 0xFAF4F5, 0xF5ECEE, 0xFFFFFF, 0xDCC7CC, 0xEDE0E3, 0xE2D0D4, 0xE4D5D8},
+    };
+    private static final int[][] ACC_LIGHT = {
+            {0x1E63D6, 0x0088AD}, {0x5E6878, 0x46505E}, {0xD32F2F, 0xB71C1C}, {0x00A142, 0x007F35}, {0xE67E00, 0xB86200},
+    };
+    private static final int TEXT_DARK = 0x141922;
+
     private static final Map<Integer, Integer> MAP = new HashMap<>();
+    private static boolean lightMode = false;
     private static String loaded = null;
     private static boolean identity = true;
     private static final Set<Object> done = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
@@ -58,19 +72,29 @@ public final class Palette {
         if (v.equals(loaded)) return false;
         loaded = v;
         int b = 0, a = 0;
+        boolean lm = false;
         try {
             String[] p = v.split(",");
             b = Math.max(0, Math.min(BG.length - 1, Integer.parseInt(p[0].trim())));
             a = Math.max(0, Math.min(ACC.length - 1, Integer.parseInt(p[1].trim())));
+            if (p.length > 2) lm = "1".equals(p[2].trim());
         } catch (Throwable ignored) {}
-        identity = b == 0 && a == 0;
+        lightMode = lm;
+        identity = b == 0 && a == 0 && !lm;
         MAP.clear();
         done.clear();
-        int[] o = BG[0], n = BG[b];
+        int[] o = BG[0], n = (lm ? BG_LIGHT : BG)[b];
         for (int i = 0; i < o.length; i++) MAP.put(o[i], n[i]);
         MAP.put(0x141925, n[1]);                       // fond propre à la radio
         MAP.put(0x3A4356, light(n[4], 0.10f));          // graduations du cadran FM
-        int act = ACC[a][0], sel = ACC[a][1];
+        int act = (lm ? ACC_LIGHT : ACC)[a][0], sel = (lm ? ACC_LIGHT : ACC)[a][1];
+        if (lm) {
+            // Textes : blanc → foncé, gris → gris foncé
+            MAP.put(0xFFFFFF, TEXT_DARK);
+            MAP.put(0xE6EAF0, TEXT_DARK);
+            MAP.put(0xA0AEC0, 0x4A5466);
+            MAP.put(0x8A94A6, 0x5A6475);
+        }
         MAP.put(0x2979FF, act);
         MAP.put(0x00D2FF, sel);
         MAP.put(0x1A5CCC, shade(act, 0.70f));
@@ -104,6 +128,20 @@ public final class Palette {
                 TextView t = (TextView) v;
                 t.setTextColor(map(t.getTextColors()));
                 done.add(v);
+            }
+            if (lightMode && v instanceof ImageView && !done.contains("icon" + System.identityHashCode(v))) {
+                ImageView iv = (ImageView) v;
+                Drawable d = iv.getDrawable();
+                String name = "";
+                try { if (v.getId() != View.NO_ID) name = v.getResources().getResourceEntryName(v.getId()); } catch (Throwable ignored) {}
+                boolean vector = d instanceof android.graphics.drawable.VectorDrawable
+                        || (d instanceof DrawableContainer && !(d.getCurrent() instanceof android.graphics.drawable.BitmapDrawable));
+                // Icônes blanches sur fond clair → foncées ; pas le bouton lecture (sur fond coloré) ni le cœur des favoris
+                if (vector && iv.getColorFilter() == null && iv.getImageTintList() == null
+                        && !name.equals("btn_play_pause") && !name.equals("ib_favorite") && !"rd_art".equals(v.getTag())) {
+                    iv.setColorFilter(0xFF000000 | TEXT_DARK, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+                done.add("icon" + System.identityHashCode(v));
             }
             if (v instanceof ImageView) {
                 ImageView iv = (ImageView) v;
