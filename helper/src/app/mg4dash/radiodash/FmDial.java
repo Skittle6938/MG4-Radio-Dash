@@ -43,15 +43,15 @@ public final class FmDial extends View {
     public FmDial(Context c) {
         super(c);
         d = c.getResources().getDisplayMetrics().density;
-        track.setColor(0xFF262D3D);
-        tick.setColor(0xFF3A4356);
+        track.setColor(Palette.map(0xFF262D3D));
+        tick.setColor(Palette.map(0xFF3A4356));
         label.setColor(0xFF8A94A6);
         label.setTextSize(14 * d);
         label.setTextAlign(Paint.Align.CENTER);
         fav.setColor(0xFFFF9100);
-        glow.setColor(0x4000D2FF);
+        glow.setColor(Palette.map(0x4000D2FF));
         thumb.setColor(0xFFFFFFFF);
-        bubble.setColor(0xFF2979FF);
+        bubble.setColor(Palette.map(0xFF2979FF));
         bubbleText.setColor(0xFFFFFFFF);
         bubbleText.setTextSize(16 * d);
         bubbleText.setTextAlign(Paint.Align.CENTER);
@@ -101,7 +101,7 @@ public final class FmDial extends View {
         int v = dragValue >= 0 ? dragValue : value;
         if (v >= MIN) {
             float x = xOf(v);
-            active.setShader(new LinearGradient(pad(), 0, x, 0, 0xFF00D2FF, 0xFF2979FF, Shader.TileMode.CLAMP));
+            active.setShader(new LinearGradient(pad(), 0, x, 0, Palette.map(0xFF00D2FF), Palette.map(0xFF2979FF), Shader.TileMode.CLAMP));
             rect.set(pad(), cy - th / 2, x, cy + th / 2);
             c.drawRoundRect(rect, th, th, active);
         }

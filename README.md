@@ -17,6 +17,7 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 - **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged.
 - **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small red hearts for favourites. Drag the cursor to tune.
 - Restyled favourite cards, playback buttons (identical on FM and DAB) and frequency colours.
+- **Follows the MG4Dash theme** (background and button colour chosen in MG4Dash 0.8 settings): the radio recolours itself the next time it opens.
 
 ### How it is built
 

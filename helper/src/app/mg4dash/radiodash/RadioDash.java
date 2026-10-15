@@ -92,6 +92,7 @@ public final class RadioDash {
     public static void onCreate(Activity a) {
         try {
             current = a;
+            Palette.load(a);
             fullscreen(a);
             installDock(a);
             connectSession(a);
@@ -104,6 +105,8 @@ public final class RadioDash {
     public static void onResume(Activity a) {
         current = a;
         try {
+            // Thème changé dans MG4Dash : on reconstruit l'écran avec les nouvelles couleurs
+            if (Palette.load(a)) { a.recreate(); return; }
             fullscreen(a);
             main.removeCallbacks(tick);
             main.post(tick);
@@ -131,6 +134,7 @@ public final class RadioDash {
                 applyArt(a);
                 renderFavorites(a);
                 updateFmDial(a);
+                Palette.recolor(a.getWindow().getDecorView());
             } catch (Throwable t) {
                 Log.w(TAG, "rafraîchissement : " + t);
             }
@@ -213,7 +217,7 @@ public final class RadioDash {
             int res = a.getResources().getIdentifier(it[0], "drawable", a.getPackageName());
             if (res != 0) icon.setImageResource(res);
             boolean accent = it[1].equals("Android Auto");
-            icon.setColorFilter(accent ? ACTION : SUB);
+            icon.setColorFilter(Palette.map(accent ? ACTION : SUB));
             cell.addView(icon, new LinearLayout.LayoutParams(dp(a, 30), dp(a, 30)));
             TextView label = text(a, it[1], 19, accent ? TEXT : SUB);
             label.setPadding(dp(a, 12), 0, 0, 0);
