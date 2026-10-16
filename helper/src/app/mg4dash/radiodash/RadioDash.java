@@ -125,6 +125,9 @@ public final class RadioDash {
             Activity a = current;
             if (a == null) return;
             try {
+                // Thème auto : MG4Dash republie le thème quand les feux s'allument ou s'éteignent,
+                // même si la radio reste affichée ; on le relit ici et on redessine l'écran.
+                if (Palette.load(a)) { a.recreate(); return; }
                 if (clock != null) {
                     Date now = new Date();
                     clock.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now));
