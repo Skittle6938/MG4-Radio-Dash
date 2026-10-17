@@ -171,16 +171,19 @@ public final class RadioDash {
         ViewGroup content = a.findViewById(android.R.id.content);
         if (content == null || content.findViewWithTag("rd_dock") != null) return;
         View app = content.getChildAt(0);
-        // Le contenu d'origine laisse la place au dock (84 dp + marges).
+        boolean vertical = Palette.verticalDock;
+        // Le contenu d'origine laisse la place au dock : 84 dp en bas, ou 64 dp à gauche (barre verticale).
         if (app != null) {
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) app.getLayoutParams();
-            lp.bottomMargin = dp(a, 108);
+            if (vertical) lp.leftMargin = dp(a, 16 + 64 + 4);
+            else lp.bottomMargin = dp(a, 108);
             app.setLayoutParams(lp);
             app.setBackgroundColor(Color.TRANSPARENT);
         }
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{0xFF141B29, 0xFF0B0F17, 0xFF0E1420});
         content.setBackground(bg);
+        if (vertical) { installVerticalDock(a, content); return; }
 
         LinearLayout dock = new LinearLayout(a);
         dock.setTag("rd_dock");
@@ -235,6 +238,70 @@ public final class RadioDash {
         FrameLayout.LayoutParams dlp = new FrameLayout.LayoutParams(-1, dp(a, 84), Gravity.BOTTOM);
         dlp.setMargins(dp(a, 16), 0, dp(a, 16), dp(a, 12));
         content.addView(dock, dlp);
+    }
+
+    /**
+     * Barre verticale à gauche, comme dans MG4Dash quand l'option est choisie : icônes seules, la place
+     * du bouton antibrouillards en haut. Réglages : toucher = réglages de la voiture, appui long =
+     * réglages MG4Dash, double toucher = Wi-Fi.
+     */
+    private static void installVerticalDock(final Activity a, ViewGroup content) {
+        LinearLayout bar = new LinearLayout(a);
+        bar.setTag("rd_dock");
+        bar.setOrientation(LinearLayout.VERTICAL);
+        bar.setBackground(panel(a, PANEL, 20));
+        bar.setPadding(dp(a, 4), dp(a, 4), dp(a, 4), dp(a, 6));
+        bar.setElevation(dp(a, 6));
+        bar.addView(new View(a), new LinearLayout.LayoutParams(-1, dp(a, 62)));
+        clock = null; date = null;
+        String[][] items = {
+                {"rd_ic_settings", "com.saicmotor.settings/.ui.MainActivity"},
+                {"rd_ic_navigation", "com.allgo.app.androidauto/.ProjectionActivity"},
+                {"rd_ic_phone", DASH + "/.pages.PhoneActivity"},
+                {"rd_ic_bolt", DASH + "/.pages.EnergyActivity"},
+                {"rd_ic_car", DASH + "/.pages.VehicleActivity"},
+                {"rd_ic_home", "home"},
+        };
+        for (final String[] it : items) {
+            FrameLayout cell = new FrameLayout(a);
+            cell.setClickable(true);
+            cell.setFocusable(true);
+            cell.setBackground(panel(a, Color.TRANSPARENT, 16));
+            ImageView icon = new ImageView(a);
+            int res = a.getResources().getIdentifier(it[0], "drawable", a.getPackageName());
+            if (res != 0) icon.setImageResource(res);
+            icon.setColorFilter(Palette.map(SUB));
+            cell.addView(icon, new FrameLayout.LayoutParams(dp(a, 34), dp(a, 34), Gravity.CENTER));
+            if (it[0].equals("rd_ic_settings")) {
+                final android.view.GestureDetector gd = new android.view.GestureDetector(a, new android.view.GestureDetector.SimpleOnGestureListener() {
+                    @Override public boolean onSingleTapConfirmed(android.view.MotionEvent e) { open(a, it[1]); return true; }
+                    @Override public boolean onDoubleTap(android.view.MotionEvent e) { openAction(a, android.provider.Settings.ACTION_WIFI_SETTINGS); return true; }
+                    @Override public void onLongPress(android.view.MotionEvent e) { open(a, DASH + "/.settings.SettingsActivity"); }
+                    @Override public boolean onDown(android.view.MotionEvent e) { return true; }
+                });
+                cell.setOnTouchListener(new View.OnTouchListener() {
+                    @Override public boolean onTouch(View v, android.view.MotionEvent ev) { return gd.onTouchEvent(ev); }
+                });
+            } else {
+                cell.setOnClickListener(new View.OnClickListener() {
+                    @Override public void onClick(View v) { open(a, it[1]); }
+                });
+            }
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1f);
+            lp.topMargin = dp(a, 4);
+            bar.addView(cell, lp);
+        }
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(a, 64), -1, Gravity.START);
+        blp.setMargins(dp(a, 16), dp(a, 12), 0, dp(a, 12));
+        content.addView(bar, blp);
+    }
+
+    private static void openAction(Activity a, String action) {
+        try {
+            a.startActivity(new Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Throwable t) {
+            open(a, "com.saicmotor.settings/.ui.MainActivity");
+        }
     }
 
     private static void open(Activity a, String target) {

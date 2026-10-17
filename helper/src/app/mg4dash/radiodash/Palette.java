@@ -58,6 +58,8 @@ public final class Palette {
 
     private static final Map<Integer, Integer> MAP = new HashMap<>();
     private static boolean lightMode = false;
+    /** Barre verticale à gauche choisie dans MG4Dash (4e champ de mg4dash_theme). */
+    public static boolean verticalDock = false;
     private static String loaded = null;
     private static boolean identity = true;
     private static final Set<Object> done = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
@@ -78,6 +80,7 @@ public final class Palette {
             b = Math.max(0, Math.min(BG.length - 1, Integer.parseInt(p[0].trim())));
             a = Math.max(0, Math.min(ACC.length - 1, Integer.parseInt(p[1].trim())));
             if (p.length > 2) lm = "1".equals(p[2].trim());
+            verticalDock = p.length > 3 && "1".equals(p[3].trim());
         } catch (Throwable ignored) {}
         lightMode = lm;
         identity = b == 0 && a == 0 && !lm;
