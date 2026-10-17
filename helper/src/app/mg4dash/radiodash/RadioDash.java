@@ -256,7 +256,7 @@ public final class RadioDash {
         clock = null; date = null;
         String[][] items = {
                 {"rd_ic_settings", "com.saicmotor.settings/.ui.MainActivity"},
-                {"rd_ic_navigation", "com.allgo.app.androidauto/.ProjectionActivity"},
+                {"rd_ic_projection", "com.allgo.app.androidauto/.ProjectionActivity"},
                 {"rd_ic_phone", DASH + "/.pages.PhoneActivity"},
                 {"rd_ic_bolt", DASH + "/.pages.EnergyActivity"},
                 {"rd_ic_car", DASH + "/.pages.VehicleActivity"},
