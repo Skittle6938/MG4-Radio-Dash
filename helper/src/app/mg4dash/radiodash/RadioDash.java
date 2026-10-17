@@ -228,8 +228,12 @@ public final class RadioDash {
             TextView label = text(a, it[1], 19, accent ? TEXT : SUB);
             label.setPadding(dp(a, 12), 0, 0, 0);
             cell.addView(label);
+            final boolean isSettings = it[0].equals("rd_ic_settings");
             cell.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { open(a, it[2]); }
+                @Override public void onClick(View v) { open(a, isSettings ? DASH + "/.settings.SettingsActivity" : it[2]); }
+            });
+            if (isSettings) cell.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override public boolean onLongClick(View v) { open(a, it[2]); return true; }
             });
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
             lp.leftMargin = dp(a, 6);
@@ -242,8 +246,8 @@ public final class RadioDash {
 
     /**
      * Barre verticale à gauche, comme dans MG4Dash quand l'option est choisie : icônes seules, la place
-     * du bouton antibrouillards en haut. Réglages : toucher = réglages de la voiture, appui long =
-     * réglages MG4Dash, double toucher = Wi-Fi.
+     * du bouton antibrouillards en haut. Réglages : toucher = réglages MG4Dash, appui long =
+     * réglages de la voiture, double toucher = Wi-Fi.
      */
     private static void installVerticalDock(final Activity a, ViewGroup content) {
         LinearLayout bar = new LinearLayout(a);
@@ -274,9 +278,9 @@ public final class RadioDash {
             cell.addView(icon, new FrameLayout.LayoutParams(dp(a, 34), dp(a, 34), Gravity.CENTER));
             if (it[0].equals("rd_ic_settings")) {
                 final android.view.GestureDetector gd = new android.view.GestureDetector(a, new android.view.GestureDetector.SimpleOnGestureListener() {
-                    @Override public boolean onSingleTapConfirmed(android.view.MotionEvent e) { open(a, it[1]); return true; }
+                    @Override public boolean onSingleTapConfirmed(android.view.MotionEvent e) { open(a, DASH + "/.settings.SettingsActivity"); return true; }
                     @Override public boolean onDoubleTap(android.view.MotionEvent e) { openAction(a, android.provider.Settings.ACTION_WIFI_SETTINGS); return true; }
-                    @Override public void onLongPress(android.view.MotionEvent e) { open(a, DASH + "/.settings.SettingsActivity"); }
+                    @Override public void onLongPress(android.view.MotionEvent e) { open(a, it[1]); }
                     @Override public boolean onDown(android.view.MotionEvent e) { return true; }
                 });
                 cell.setOnTouchListener(new View.OnTouchListener() {
