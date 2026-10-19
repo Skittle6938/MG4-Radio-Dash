@@ -1600,6 +1600,11 @@
 .method public onMediaSessionPlay()V
     .locals 3
 
+    # Radio Dash : une lecture lancée par le volant ou l'accueil compte pour la reprise auto
+    const/4 v0, 0x1
+
+    invoke-static {p0, v0}, Lapp/mg4dash/radiodash/Favorites;->wasPlaying(Ljava/lang/Object;Z)V
+
     .line 1647
     invoke-static {}, Lcom/saicmotor/radio/service/RadioService;->access$200()Lcom/saicmotor/radio/utils/log/Logger;
 

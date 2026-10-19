@@ -57,7 +57,7 @@ public final class FmDial extends View {
         bubbleText.setTextAlign(Paint.Align.CENTER);
         bubbleText.setFakeBoldText(true);
         int res = c.getResources().getIdentifier("icon_radio_item_collection", "mipmap", c.getPackageName());
-        heart = res != 0 ? c.getResources().getDrawable(res, null) : null;
+        heart = res != 0 ? c.getResources().getDrawable(res, null).mutate() : null;   // étoile (mipmap remplacé)
     }
 
     public void setOnTune(OnTune t) { onTune = t; }
@@ -106,8 +106,9 @@ public final class FmDial extends View {
             c.drawRoundRect(rect, th, th, active);
         }
         // Favoris
+        if (heart != null) heart.setTint(Palette.starColor());
         if (heart != null) for (Integer f : favorites) {
-            float hs = 13 * d, hx = xOf(f);
+            float hs = 16 * d, hx = xOf(f);
             heart.setBounds((int) (hx - hs / 2), (int) (cy - th - 4 * d - hs), (int) (hx + hs / 2), (int) (cy - th - 4 * d));
             heart.draw(c);
         }

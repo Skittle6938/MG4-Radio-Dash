@@ -6,16 +6,17 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Photos taken on the car: DAB+ with the station slideshow and favourite tiles, FM with the new dial and its favourite hearts.*
+*Photos taken on the car: DAB+ with the station slideshow and favourite tiles, FM with the new dial and its favourite hearts (since replaced by stars).*
 
 ### What's new in this fork
 
 - **Full-screen dark glass design**: the SAIC side bar and top banner are hidden (swipe from the left or top edge to bring them back), DAB / FM tabs as pills, the top-left corner is left free for MG's fog-light overlay button.
 - **MG4Dash dock** at the bottom (clock, Home, Vehicle, Climate, Energy, Android Auto, Settings) to jump straight to the MG4Dash pages.
 - **Large square station artwork**, the same image as on the home screen (DAB+ slideshow, with the per-station cache as fallback).
-- **Favourite tiles** under the artwork: DAB stations with their image, FM stations with their RDS name and frequency. One tap tunes the station.
+- **One favourites bar on the right**, 3 columns: the favourite stations of the current band with their image (DAB) or their frequency and RDS name (FM/AM). One tap tunes the station. The old bottom row is gone and the central controls are bigger.
 - **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged.
-- **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small red hearts for favourites. Drag the cursor to tune.
+- **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small stars for favourites. Drag the cursor to tune.
+- **Stars instead of hearts** for favourites, in the colour of the MG4Dash theme you chose.
 - Restyled favourite cards, playback buttons (identical on FM and DAB) and frequency colours.
 - **Follows the MG4Dash theme** (background and button colour chosen in MG4Dash 0.8 settings): the radio recolours itself the next time it opens.
 - **Light mode** (MG4Dash 0.9.4 or later): when MG4Dash is light, or in Auto during the day, the radio uses light backgrounds with dark text and icons, and switches back to dark when the car's lights come on.
@@ -73,6 +74,8 @@ If the radio was playing when you switched the car off, it now **starts playing 
 *The "REPRISE AUTO : ON" toggle added at the bottom-left of the radio page.*
 
 **How it works:** at boot the car asks the radio to load as the active media source but in a *muted / paused* state (this is the stock behaviour — it's why the station name shows on the launcher but no sound plays). The patch intercepts that moment and, when auto-resume is enabled and the radio was playing at shutdown, routes it through the radio's normal tune-and-play path instead, so audio actually starts.
+
+**Playing started from the steering wheel or the home screen also counts** (this fork): the "was playing" flag used to be updated only by the play button inside the radio app, so a radio started any other way was not resumed at the next start. A pause sent by the car at shutdown deliberately does not clear it.
 
 ### 3. Live metadata while paused
 

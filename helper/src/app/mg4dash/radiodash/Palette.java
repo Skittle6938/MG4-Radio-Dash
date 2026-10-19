@@ -62,6 +62,7 @@ public final class Palette {
     public static boolean verticalDock = false;
     private static String loaded = null;
     private static boolean identity = true;
+    private static final Map<TextView, ColorStateList> textDone = new WeakHashMap<>();
     private static final Set<Object> done = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
 
     private Palette() {}
@@ -86,6 +87,7 @@ public final class Palette {
         identity = b == 0 && a == 0 && !lm;
         MAP.clear();
         done.clear();
+        textDone.clear();
         int[] o = BG[0], n = (lm ? BG_LIGHT : BG)[b];
         for (int i = 0; i < o.length; i++) MAP.put(o[i], n[i]);
         MAP.put(0x141925, n[1]);                       // fond propre à la radio
@@ -116,6 +118,38 @@ public final class Palette {
         return n == null ? color : (color & 0xFF000000) | n;
     }
 
+    /** Couleur des étoiles de favoris : le bouton d'action du thème MG4Dash choisi. */
+    public static int starColor() {
+        return map(0xFF2979FF);
+    }
+
+    /**
+     * Teinte les étoiles de favoris à la couleur du thème : le bouton étoile de la radio (ib_favorite,
+     * ib_dab_favorite) et l'étoile des listes de stations (fond de img_radio_list_item_favorite).
+     * Ne dépend pas du mode clair : appelé à chaque rafraîchissement.
+     */
+    public static void tintStars(View v) {
+        if (v == null) return;
+        try {
+            if (v instanceof ImageView && v.getId() != View.NO_ID) {
+                String name = v.getResources().getResourceEntryName(v.getId());
+                ColorStateList tint = ColorStateList.valueOf(starColor());
+                if (name.equals("ib_favorite") || name.equals("ib_dab_favorite")) {
+                    ((ImageView) v).setImageTintList(tint);
+                } else if (name.equals("img_radio_list_item_favorite")) {
+                    v.setBackgroundTintList(tint);
+                    ((ImageView) v).setImageTintList(tint);
+                }
+            }
+            if (v instanceof ViewGroup) {
+                ViewGroup g = (ViewGroup) v;
+                for (int i = 0; i < g.getChildCount(); i++) tintStars(g.getChildAt(i));
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "tintStars : " + t);
+        }
+    }
+
     /** Recolore une vue et ses enfants (déjà traités : ignorés). */
     public static void recolor(View v) {
         if (identity || v == null) return;
@@ -127,10 +161,14 @@ public final class Palette {
                 done.add(m);
                 if (m != bg) v.setBackground(m);
             }
-            if (v instanceof TextView && !done.contains(v)) {
+            if (v instanceof TextView) {
                 TextView t = (TextView) v;
-                t.setTextColor(map(t.getTextColors()));
-                done.add(v);
+                // L'appli rebranche la couleur d'origine quand la station change : on la recolore alors aussi.
+                if (textDone.get(t) != t.getTextColors()) {
+                    ColorStateList mapped = map(t.getTextColors());
+                    t.setTextColor(mapped);
+                    textDone.put(t, t.getTextColors());
+                }
             }
             if (lightMode && v instanceof ImageView && !done.contains("icon" + System.identityHashCode(v))) {
                 ImageView iv = (ImageView) v;
@@ -141,7 +179,7 @@ public final class Palette {
                         || (d instanceof DrawableContainer && !(d.getCurrent() instanceof android.graphics.drawable.BitmapDrawable));
                 // Icônes blanches sur fond clair → foncées ; pas le bouton lecture (sur fond coloré) ni le cœur des favoris
                 if (vector && iv.getColorFilter() == null && iv.getImageTintList() == null
-                        && !name.equals("btn_play_pause") && !name.equals("ib_favorite") && !"rd_art".equals(v.getTag())) {
+                        && !name.equals("btn_play_pause") && !name.equals("ib_favorite") && !name.equals("ib_dab_favorite") && !"rd_art".equals(v.getTag())) {
                     iv.setColorFilter(0xFF000000 | TEXT_DARK, android.graphics.PorterDuff.Mode.SRC_IN);
                 }
                 done.add("icon" + System.identityHashCode(v));

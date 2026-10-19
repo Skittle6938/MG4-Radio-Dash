@@ -22,6 +22,25 @@ public final class Favorites {
 
     private Favorites() {}
 
+    /**
+     * Reprise auto : mémorise « en lecture » quand la lecture est lancée par la session média
+     * (volant, accueil). Sans cela, seul le bouton lecture de l'appli radio mettait le drapeau à
+     * jour, et le démarrage suivant ne reprenait pas la radio. Appelé seulement pour « lecture » :
+     * une pause de la session peut venir de l'arrêt de la voiture et ne doit pas annuler la reprise.
+     * @param listener l'instance RadioService$6 (écouteur du binder)
+     */
+    public static void wasPlaying(Object listener, boolean playing) {
+        try {
+            Object service = field(listener, "this$0");
+            Class<?> prefs = Class.forName("com.saicmotor.radio.utils.RadioSharedPreference");
+            Object p = prefs.getMethod("getInstance", android.content.Context.class).invoke(null, service);
+            prefs.getMethod("putRadioWasPlaying", boolean.class).invoke(p, playing);
+            Log.i(TAG, "reprise auto : " + (playing ? "en lecture" : "en pause"));
+        } catch (Throwable t) {
+            Log.w(TAG, "reprise auto indisponible : " + t);
+        }
+    }
+
     /** DAB : favori suivant/précédent, sinon station valide suivante/précédente (origine). */
     public static Object nextDab(Object storage, boolean forward) {
         try {

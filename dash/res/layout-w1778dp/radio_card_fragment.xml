@@ -5,7 +5,7 @@
         <ImageView android:background="@mipmap/icon_radio_avatar" android:layout_width="wrap_content" android:layout_height="wrap_content" />
         <TextView android:textSize="@dimen/sp_36" android:textColor="@color/radio_left_bar_btn_title" android:layout_gravity="center_horizontal" android:id="@id/tv_radio_type" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dp_75" android:textAlignment="center" />
     </LinearLayout>
-    <androidx.constraintlayout.widget.ConstraintLayout android:id="@id/layout_list" android:visibility="visible" android:layout_width="fill_parent" android:layout_height="fill_parent">
+    <androidx.constraintlayout.widget.ConstraintLayout android:id="@id/layout_list" android:visibility="visible" android:layout_width="1.0dip" android:layout_height="1.0dip">
         <FrameLayout android:layout_width="fill_parent" android:layout_height="20.0dip" app:layout_constraintTop_toTopOf="parent">
             <Button android:textSize="@dimen/sp_22" android:textColor="@color/color_selected" android:layout_gravity="center_vertical" android:id="@id/bt_search_list" android:background="@drawable/radio_btn_search_list_2" android:paddingLeft="@dimen/dp_22" android:paddingRight="@dimen/dp_22" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/radio_search_list_bar_title" android:textAllCaps="false" android:layout_marginStart="@dimen/dp_34" />
         </FrameLayout>
@@ -19,4 +19,12 @@
             <androidx.recyclerview.widget.RecyclerView android:id="@id/recycler_fav" android:layout_width="wrap_content" android:layout_height="fill_parent" android:layout_marginTop="@dimen/dp_10" android:layout_centerHorizontal="true" />
         </RelativeLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Barre de favoris unique (stations en favori + images), 3 colonnes, remplie par RadioDash -->
+    <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <TextView android:textSize="17.0sp" android:textColor="#FF8A94A6" android:letterSpacing="0.12" android:fontFamily="sans-serif-medium" android:textAllCaps="true" android:tag="rd_favs_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18.0dip" android:layout_marginStart="22.0dip" android:layout_marginBottom="10.0dip" android:text="@string/radio_favorite_list_bar_title" />
+        <ScrollView android:scrollbars="none" android:overScrollMode="never" android:layout_width="fill_parent" android:layout_height="0.0dip" android:layout_weight="1.0" android:paddingStart="12.0dip" android:paddingEnd="12.0dip" android:clipToPadding="false">
+            <LinearLayout android:orientation="vertical" android:tag="rd_favs_grid" android:layout_width="fill_parent" android:layout_height="wrap_content" />
+        </ScrollView>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

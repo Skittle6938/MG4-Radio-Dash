@@ -44,7 +44,7 @@ import java.util.Locale;
  * - dock MG4Dash en bas (heure + Accueil, Véhicule, Clim, Énergie, Android Auto, Paramètres) ;
  * - grande pochette : vues marquées android:tag="rd_art", alimentées par la session média
  *   de la radio (la même image que sur l'accueil), avec le cache DAB du patch en secours ;
- * - tuiles favoris : conteneurs android:tag="rd_favs_dab" / "rd_favs_fm".
+ * - barre de favoris à droite : conteneur android:tag="rd_favs_grid" (3 colonnes, images des stations).
  */
 public final class RadioDash {
     private static final String TAG = "RadioDash";
@@ -58,12 +58,12 @@ public final class RadioDash {
             {"Energy", "Énergie", "Energie", "Energía", "Energia", "Energie"},
             {"Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto"},
             {"Settings", "Paramètres", "Einstellungen", "Ajustes", "Impostazioni", "Instellingen"},
-            {"Add favourites with ♥: the steering wheel and home screen will skip between them",
-                    "Ajoutez des favoris avec ♥ : le volant et l'accueil passeront de l'un à l'autre",
-                    "Favoriten mit ♥ hinzufügen: Lenkrad und Startbildschirm wechseln dann zwischen ihnen",
-                    "Añada favoritos con ♥: el volante y la pantalla de inicio pasarán de uno a otro",
-                    "Aggiungi preferiti con ♥: volante e schermata home passeranno dall'uno all'altro",
-                    "Voeg favorieten toe met ♥: stuur en startscherm schakelen dan tussen deze zenders"},
+            {"Add favourites with ★: the steering wheel and home screen will skip between them",
+                    "Ajoutez des favoris avec ★ : le volant et l'accueil passeront de l'un à l'autre",
+                    "Favoriten mit ★ hinzufügen: Lenkrad und Startbildschirm wechseln dann zwischen ihnen",
+                    "Añada favoritos con ★: el volante y la pantalla de inicio pasarán de uno a otro",
+                    "Aggiungi preferiti con ★: volante e schermata home passeranno dall'uno all'altro",
+                    "Voeg favorieten toe met ★: stuur en startscherm schakelen dan tussen deze zenders"},
     };
 
     private static String tr(int i) {
@@ -119,7 +119,7 @@ public final class RadioDash {
         main.removeCallbacks(tick);
     }
 
-    /** Rafraîchissement : horloge, pochettes, tuiles favoris (toutes les 2 s). */
+    /** Rafraîchissement : horloge, pochettes, barre de favoris (toutes les 2 s). */
     private static final Runnable tick = new Runnable() {
         @Override public void run() {
             Activity a = current;
@@ -138,9 +138,11 @@ public final class RadioDash {
                 renderFavorites(a);
                 updateFmDial(a);
                 Palette.recolor(a.getWindow().getDecorView());
+                Palette.tintStars(a.getWindow().getDecorView());
             } catch (Throwable t) {
                 Log.w(TAG, "rafraîchissement : " + t);
             }
+            main.removeCallbacks(this);   // une seule boucle, même si tune() ou la mise en page l'a relancée
             main.postDelayed(this, 2000);
         }
     };
@@ -344,6 +346,12 @@ public final class RadioDash {
                 tab.setTag(res);
             }
         }
+        // La barre de favoris RadioDash remplace la liste d'origine : on garde ses vues cachées.
+        String[] hidden = {"layout_icon", "btn_dab_favorite_list", "btn_favorite_list"};
+        for (String n : hidden) {
+            View h = byName(a, n);
+            if (h != null && h.getVisibility() != View.GONE) h.setVisibility(View.GONE);
+        }
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);
         if (v != null && v.getLayoutParams() instanceof LinearLayout.LayoutParams) {
@@ -413,98 +421,151 @@ public final class RadioDash {
         }
     }
 
-    // ── Favoris en tuiles ────────────────────────────────────────────────────
+    // ── Favoris : barre unique à droite, 3 colonnes ──────────────────────────
 
+    private static final int COLUMNS = 3;
+
+    /**
+     * Barre de favoris unique (conteneur android:tag="rd_favs_grid" de la carte de droite) :
+     * les stations en favori de la bande en cours, avec leur image (DAB) ou leur fréquence (FM/AM).
+     */
     private static void renderFavorites(final Activity a) throws Exception {
+        View root = a.getWindow().getDecorView().findViewWithTag("rd_favs_grid");
+        if (!(root instanceof LinearLayout)) return;
+        LinearLayout grid = (LinearLayout) root;
+        if (grid.getWidth() <= 0) { main.postDelayed(tick, 250); return; }   // pas encore mis en page
         Object storage = storage(a);
         if (storage == null) return;
-        renderRow(a, "rd_favs_dab", (List<?>) call(storage, "getDabFavorite"), true, storage);
-        Method forBand = storage.getClass().getMethod("getFavoriteForBand", int.class);
-        renderRow(a, "rd_favs_fm", (List<?>) forBand.invoke(storage, 1), false, storage);
-    }
-
-    private static void renderRow(final Activity a, String tag, List<?> favs, final boolean dab, Object storage) throws Exception {
-        View root = a.getWindow().getDecorView().findViewWithTag(tag);
-        if (!(root instanceof LinearLayout)) return;
-        LinearLayout row = (LinearLayout) root;
+        int band = 1;
+        try { band = ((Number) call(storage, "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        boolean dab = band == 4;
+        List<?> favs;
+        if (dab) {
+            favs = (List<?>) call(storage, "getDabFavorite");
+        } else {
+            favs = (List<?>) storage.getClass().getMethod("getFavoriteForBand", int.class).invoke(storage, band == 0 ? 0 : 1);
+        }
         long curDab = dab ? currentDabServiceId(a) : -1;
         int curFm = dab ? -1 : currentFmChannel(storage);
-        String key = signature(favs, dab) + "|" + curDab + "|" + curFm;
-        if (key.equals(row.getContentDescription())) return;   // rien n'a changé
-        row.setContentDescription(key);
-        row.removeAllViews();
+        String key = band + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth()
+                + (dab ? "|" + artStamp(a, favs) : "|" + rdsStamp(favs));
+        if (key.equals(grid.getContentDescription())) return;   // rien n'a changé
+        grid.setContentDescription(key);
+        grid.removeAllViews();
         if (favs == null || favs.isEmpty()) {
             TextView empty = text(a, tr(6), 17, TITLE);
-            row.addView(empty);
+            empty.setPadding(dp(a, 10), dp(a, 6), dp(a, 10), 0);
+            grid.addView(empty);
+            finishFavorites(a, grid);
             return;
         }
-        int n = Math.min(favs.size(), 8);
-        for (int i = 0; i < n; i++) {
+        int gap = dp(a, 5);
+        int tileW = (grid.getWidth() - 2 * gap * COLUMNS) / COLUMNS;
+        int logoSide = tileW - dp(a, 28);
+        LinearLayout row = null;
+        for (int i = 0; i < favs.size(); i++) {
+            if (i % COLUMNS == 0) {
+                row = new LinearLayout(a);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row, new LinearLayout.LayoutParams(-1, -2));
+            }
             final Object st = favs.get(i);
             boolean selected;
-            LinearLayout tile = new LinearLayout(a);
-            tile.setOrientation(LinearLayout.VERTICAL);
-            tile.setGravity(Gravity.CENTER);
-            tile.setPadding(dp(a, 6), dp(a, 6), dp(a, 6), dp(a, 6));
-            ImageView logo = new ImageView(a);
-            logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            round(logo, dp(a, 12));
             String label;
+            View face;
             if (dab) {
                 long id = ((Number) call(st, "getServiceId")).longValue();
                 selected = id == curDab;
+                ImageView logo = new ImageView(a);
+                logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                round(logo, dp(a, 12));
                 Bitmap b = cachedDabArt(a, id);
                 if (b != null) logo.setImageBitmap(b);
-                else logo.setImageResource(a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName()));
+                else {
+                    logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    logo.setPadding(dp(a, 24), dp(a, 24), dp(a, 24), dp(a, 24));
+                    logo.setBackground(panel(a, BORDER, 12, Color.TRANSPARENT));
+                    logo.setImageResource(a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName()));
+                }
                 Object name = callQuiet(st, "getServiceName");
                 if (name == null) name = callQuiet(st, "getEnsembleName");
                 label = name != null ? name.toString().trim() : "DAB";
+                face = logo;
             } else {
-                // FM : nom RDS (s'il existe) + fréquence, sans icône.
                 int ch = ((Number) call(st, "getChannelNumber")).intValue();
                 selected = ch == curFm;
-                String freq = String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 Object rds = callQuiet(st, "getRds");
                 Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
-                String name = ps == null ? "" : ps.toString().trim();
-                tile.setBackground(panel(a, selected ? 0x262979FF : BUTTON, 16, selected ? ACTION : BORDER));
-                TextView big = text(a, name.isEmpty() ? freq : name, 21, selected ? TEXT : 0xFFE6EAF0);
-                big.setSingleLine(true);
-                big.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                big.setGravity(Gravity.CENTER);
-                tile.addView(big, new LinearLayout.LayoutParams(-1, -2));
-                if (!name.isEmpty()) {
-                    TextView small = text(a, freq, 15, SUB);
-                    small.setGravity(Gravity.CENTER);
-                    small.setPadding(0, dp(a, 4), 0, 0);
-                    tile.addView(small, new LinearLayout.LayoutParams(-1, -2));
-                }
-                tile.setOnClickListener(new View.OnClickListener() {
-                    @Override public void onClick(View v) { tune(st, false); }
-                });
-                LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(0, -1, 1f);
-                if (i > 0) flp.leftMargin = dp(a, 8);
-                row.addView(tile, flp);
-                continue;
+                label = ps == null ? "" : ps.toString().trim();
+                // Pas d'image pour une station FM : la fréquence tient lieu de logo.
+                LinearLayout freq = new LinearLayout(a);
+                freq.setOrientation(LinearLayout.VERTICAL);
+                freq.setGravity(Gravity.CENTER);
+                freq.setBackground(panel(a, BORDER, 12, Color.TRANSPARENT));
+                TextView mhz = text(a, String.format(Locale.getDefault(), "%.1f", ch / 1000f), 30, TEXT);
+                mhz.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                TextView unit = text(a, ch < 1000 ? "kHz" : "MHz", 15, SUB);
+                if (ch < 1000) mhz.setText(String.valueOf(ch));
+                freq.addView(mhz);
+                freq.addView(unit);
+                face = freq;
+                if (label.isEmpty()) label = " ";
             }
+            LinearLayout tile = new LinearLayout(a);
+            tile.setOrientation(LinearLayout.VERTICAL);
+            tile.setGravity(Gravity.CENTER_HORIZONTAL);
+            tile.setPadding(dp(a, 8), dp(a, 8), dp(a, 8), dp(a, 6));
             tile.setBackground(panel(a, selected ? 0x262979FF : BUTTON, 16, selected ? ACTION : BORDER));
-            int side = row.getHeight() > 0 ? Math.min(dp(a, 76), row.getHeight() - dp(a, 40)) : dp(a, 76);
-            side = Math.max(side, dp(a, 36));
-            tile.addView(logo, new LinearLayout.LayoutParams(side, side));
-            TextView t = text(a, label, 15, selected ? TEXT : SUB);
+            tile.addView(face, new LinearLayout.LayoutParams(logoSide, logoSide));
+            TextView t = text(a, label, 16, selected ? TEXT : SUB);
             t.setSingleLine(true);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setGravity(Gravity.CENTER);
-            t.setPadding(0, dp(a, 4), 0, 0);
+            t.setPadding(0, dp(a, 6), 0, 0);
             tile.addView(t, new LinearLayout.LayoutParams(-1, -2));
+            tile.setClickable(true);
+            final boolean isDab = dab;
             tile.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { tune(st, dab); }
+                @Override public void onClick(View v) { tune(st, isDab); }
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
-            if (i > 0) lp.leftMargin = dp(a, 8);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(tileW, -2);
+            lp.setMargins(gap, gap, gap, gap);
             row.addView(tile, lp);
         }
-        for (int i = n; i < 6; i++) row.addView(new View(a), new LinearLayout.LayoutParams(0, -1, 1f));
+        // Dernière rangée complétée par des cases vides pour garder la largeur des colonnes
+        for (int k = favs.size(); k % COLUMNS != 0; k++) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(tileW, 1);
+            lp.setMargins(gap, gap, gap, gap);
+            row.addView(new View(a), lp);
+        }
+        finishFavorites(a, grid);
+    }
+
+    /** Les vues neuves reçoivent tout de suite les couleurs du thème : pas d'éclair sombre en mode clair. */
+    private static void finishFavorites(Activity a, View grid) {
+        Palette.recolor(grid);
+        Palette.tintStars(a.getWindow().getDecorView());
+    }
+
+    /** Empreinte des images DAB en cache : redessine les tuiles quand une image arrive. */
+    private static String artStamp(Context c, List<?> favs) {
+        long sum = 0;
+        if (favs != null) for (Object o : favs) {
+            Object id = callQuiet(o, "getServiceId");
+            if (id instanceof Number) sum += new File(c.getFilesDir(), "dab_" + ((Number) id).longValue() + ".jpg").lastModified();
+        }
+        return String.valueOf(sum);
+    }
+
+    /** Empreinte des noms RDS : redessine les tuiles FM quand un nom est reçu. */
+    private static String rdsStamp(List<?> favs) {
+        StringBuilder sb = new StringBuilder();
+        if (favs != null) for (Object o : favs) {
+            Object rds = callQuiet(o, "getRds");
+            Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
+            sb.append(ps).append(',');
+        }
+        return sb.toString();
     }
 
     // ── Cadran FM (remplace la règle d'origine, masquée dans la mise en page) ──
