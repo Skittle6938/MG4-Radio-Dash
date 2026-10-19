@@ -497,19 +497,33 @@ public final class RadioDash {
                 Object rds = callQuiet(st, "getRds");
                 Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
                 label = ps == null ? "" : ps.toString().trim();
-                // Pas d'image pour une station FM : la fréquence tient lieu de logo.
-                LinearLayout freq = new LinearLayout(a);
-                freq.setOrientation(LinearLayout.VERTICAL);
-                freq.setGravity(Gravity.CENTER);
-                freq.setBackground(panel(a, BORDER, 12, Color.TRANSPARENT));
-                TextView mhz = text(a, String.format(Locale.getDefault(), "%.1f", ch / 1000f), 30, TEXT);
-                mhz.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-                TextView unit = text(a, ch < 1000 ? "kHz" : "MHz", 15, SUB);
-                if (ch < 1000) mhz.setText(String.valueOf(ch));
-                freq.addView(mhz);
-                freq.addView(unit);
-                face = freq;
-                if (label.isEmpty()) label = " ";
+                // Pas d'image pour une station FM : carte aux couleurs du thème, nom RDS en grand
+                // au-dessus de la fréquence (la fréquence seule, en grand, si aucun nom n'est reçu).
+                String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
+                LinearLayout card = new LinearLayout(a);
+                card.setOrientation(LinearLayout.VERTICAL);
+                card.setGravity(Gravity.CENTER);
+                card.setPadding(dp(a, 10), dp(a, 10), dp(a, 10), dp(a, 12));
+                GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                        new int[]{selected ? 0xFF2979FF : 0xFF1A4FB0, 0xFF0D2A66});
+                g.setCornerRadius(dp(a, 12));
+                card.setBackground(g);
+                // Blanc hors palette (0xFEFEFE) : reste blanc en mode clair, sur un fond qui reste soutenu.
+                TextView big = text(a, label.isEmpty() ? f : label, 28, 0xFFFEFEFE);
+                big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                big.setGravity(Gravity.CENTER);
+                big.setMaxLines(2);
+                big.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                big.setAutoSizeTextTypeUniformWithConfiguration(15, 30, 1, TypedValue.COMPLEX_UNIT_SP);
+                card.addView(big, new LinearLayout.LayoutParams(-1, 0, 1f));
+                if (!label.isEmpty()) {
+                    TextView small = text(a, f, 17, 0xD9FEFEFE);
+                    small.setGravity(Gravity.CENTER);
+                    small.setPadding(0, dp(a, 6), 0, 0);
+                    card.addView(small, new LinearLayout.LayoutParams(-1, -2));
+                }
+                face = card;
+                label = null;   // tout est sur la carte : pas de légende dessous
             }
             LinearLayout tile = new LinearLayout(a);
             tile.setOrientation(LinearLayout.VERTICAL);
@@ -517,12 +531,14 @@ public final class RadioDash {
             tile.setPadding(dp(a, 8), dp(a, 8), dp(a, 8), dp(a, 6));
             tile.setBackground(panel(a, selected ? 0x262979FF : BUTTON, 16, selected ? ACTION : BORDER));
             tile.addView(face, new LinearLayout.LayoutParams(logoSide, logoSide));
-            TextView t = text(a, label, 16, selected ? TEXT : SUB);
-            t.setSingleLine(true);
-            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            t.setGravity(Gravity.CENTER);
-            t.setPadding(0, dp(a, 6), 0, 0);
-            tile.addView(t, new LinearLayout.LayoutParams(-1, -2));
+            if (label != null) {
+                TextView t = text(a, label, 16, selected ? TEXT : SUB);
+                t.setSingleLine(true);
+                t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                t.setGravity(Gravity.CENTER);
+                t.setPadding(0, dp(a, 6), 0, 0);
+                tile.addView(t, new LinearLayout.LayoutParams(-1, -2));
+            }
             tile.setClickable(true);
             final boolean isDab = dab;
             tile.setOnClickListener(new View.OnClickListener() {
