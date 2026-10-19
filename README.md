@@ -6,14 +6,14 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Photos taken on the car: DAB+ with the station slideshow and favourite tiles, FM with the new dial and its favourite hearts (since replaced by stars).*
+*Screenshots taken on the car (1.4.0): DAB+ with the station slideshow and the favourites bar, FM with the dial and the favourite stations (RDS name in the theme colour).*
 
 ### What's new in this fork
 
 - **Full-screen dark glass design**: the SAIC side bar and top banner are hidden (swipe from the left or top edge to bring them back), DAB / FM tabs as pills, the top-left corner is left free for MG's fog-light overlay button.
 - **MG4Dash dock** at the bottom (clock, Home, Vehicle, Climate, Energy, Android Auto, Settings) to jump straight to the MG4Dash pages.
 - **Large square station artwork**, the same image as on the home screen (DAB+ slideshow, with the per-station cache as fallback).
-- **One favourites bar on the right**, 3 columns: the favourite stations of the current band with their image (DAB) or their frequency and RDS name (FM/AM). One tap tunes the station. The old bottom row is gone and the central controls are bigger.
+- **One favourites bar on the right**, 3 columns: the favourite stations of the current band with their image (DAB) or their RDS name in the theme colour above the frequency (FM/AM). One tap tunes the station. The old bottom row is gone and the central controls are bigger.
 - **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged.
 - **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small stars for favourites. Drag the cursor to tune.
 - **Stars instead of hearts** for favourites, in the colour of the MG4Dash theme you chose.

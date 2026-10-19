@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MG4-Radio-Dash : puce d'onglet DAB / FM / AM. L'état « sélectionné » vient de la radio
+     (TabLayout) et de RadioDash.fixLayout : il survit au fond remis par le chargeur de thèmes. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:drawable="@drawable/rd_bg_tab_sel" />
+    <item android:drawable="@drawable/rd_bg_tab" />
+</selector>

@@ -330,21 +330,15 @@ public final class RadioDash {
      * gravité « début ») : on la remet en pleine largeur pour la nouvelle mise en page.
      */
     private static void fixLayout(Activity a) {
-        // Onglets : le code d'origine peint la barre avec des images ; on garde des puces MG4Dash.
-        View bar = byName(a, "rl_menu_bar");
-        if (bar != null && bar.getBackground() != null) bar.setBackground(null);
+        // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
+        // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
         int band = -1;
         try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
         String[][] tabs = {{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}, {"layout_tab_am", "0"}};
         for (String[] t : tabs) {
             View tab = byName(a, t[0]);
-            if (tab == null) continue;
             boolean sel = String.valueOf(band).equals(t[1]);
-            int res = a.getResources().getIdentifier(sel ? "rd_bg_tab_sel" : "rd_bg_tab", "drawable", a.getPackageName());
-            if (res != 0 && !Integer.valueOf(res).equals(tab.getTag())) {
-                tab.setBackgroundResource(res);
-                tab.setTag(res);
-            }
+            if (tab != null && tab.isSelected() != sel) tab.setSelected(sel);
         }
         // La barre de favoris RadioDash remplace la liste d'origine : on garde ses vues cachées.
         String[] hidden = {"layout_icon", "btn_dab_favorite_list", "btn_favorite_list"};
@@ -497,19 +491,15 @@ public final class RadioDash {
                 Object rds = callQuiet(st, "getRds");
                 Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
                 label = ps == null ? "" : ps.toString().trim();
-                // Pas d'image pour une station FM : carte aux couleurs du thème, nom RDS en grand
-                // au-dessus de la fréquence (la fréquence seule, en grand, si aucun nom n'est reçu).
+                // Pas d'image pour une station FM : carte sombre comme les logos DAB, nom RDS en grand
+                // à la couleur du thème au-dessus de la fréquence (la fréquence seule si aucun nom n'est reçu).
                 String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 LinearLayout card = new LinearLayout(a);
                 card.setOrientation(LinearLayout.VERTICAL);
                 card.setGravity(Gravity.CENTER);
                 card.setPadding(dp(a, 10), dp(a, 10), dp(a, 10), dp(a, 12));
-                GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                        new int[]{selected ? 0xFF2979FF : 0xFF1A4FB0, 0xFF0D2A66});
-                g.setCornerRadius(dp(a, 12));
-                card.setBackground(g);
-                // Blanc hors palette (0xFEFEFE) : reste blanc en mode clair, sur un fond qui reste soutenu.
-                TextView big = text(a, label.isEmpty() ? f : label, 28, 0xFFFEFEFE);
+                card.setBackground(panel(a, 0xFF0B0F17, 12, BORDER));
+                TextView big = text(a, label.isEmpty() ? f : label, 28, selected ? COLD : ACTION);
                 big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 big.setGravity(Gravity.CENTER);
                 big.setMaxLines(2);
@@ -517,7 +507,7 @@ public final class RadioDash {
                 big.setAutoSizeTextTypeUniformWithConfiguration(15, 30, 1, TypedValue.COMPLEX_UNIT_SP);
                 card.addView(big, new LinearLayout.LayoutParams(-1, 0, 1f));
                 if (!label.isEmpty()) {
-                    TextView small = text(a, f, 17, 0xD9FEFEFE);
+                    TextView small = text(a, f, 17, SUB);
                     small.setGravity(Gravity.CENTER);
                     small.setPadding(0, dp(a, 6), 0, 0);
                     card.addView(small, new LinearLayout.LayoutParams(-1, -2));
