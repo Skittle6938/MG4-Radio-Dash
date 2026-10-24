@@ -73,19 +73,29 @@ final class Immersive {
             lastArt = art;
             ImageView pic = (ImageView) holder.getChildAt(0);
             if (art != null) {
-                pic.setImageBitmap(art);
-                edge = edgeColor(art);
-                Integer v = vividColor(art);
+                // Bandes noires en haut et en bas retirées : l'image s'affiche plus large
+                Bitmap img = cropBars(art);
+                pic.setImageBitmap(img);
+                edge = edgeColor(img);
+                Integer v = vividColor(img);
                 accent = v != null ? v : Palette.accent();
+                // Prolongement à gauche ligne par ligne (moyenne des 3 pixels du bord), sans fondu
+                android.graphics.drawable.BitmapDrawable strip = new android.graphics.drawable.BitmapDrawable(a.getResources(), edgeStrip(img));
+                strip.setFilterBitmap(true);
+                holder.setBackground(strip);
+                holder.getChildAt(1).setVisibility(View.GONE);
+                placeFade(holder);
             } else {
                 pic.setImageDrawable(null);
                 edge = 0xFF1C2230;
                 accent = Palette.accent();
             }
-            holder.setBackgroundColor(edge);
-            holder.getChildAt(1).setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{edge, edge & 0x00FFFFFF}));
-            placeFade(holder);
+            if (art == null) {
+                holder.setBackgroundColor(edge);
+                holder.getChildAt(1).setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[]{edge, edge & 0x00FFFFFF}));
+                placeFade(holder);
+            }
         }
         whiteTexts(panel);
         hideBandLabel(panel);
@@ -136,6 +146,18 @@ final class Immersive {
     /** Fondu posé sur le bord gauche de l'image (calée à droite). */
     private static void placeFade(FrameLayout holder) {
         View fade = holder.getChildAt(1);
+        if (holder.getBackground() instanceof android.graphics.drawable.BitmapDrawable) {
+            fade.setVisibility(View.GONE);
+            // Image plus large que le panneau (16:9 recadrée) : elle le remplit ; sinon calée à droite
+            ImageView pic = (ImageView) holder.getChildAt(0);
+            android.graphics.drawable.Drawable d = pic.getDrawable();
+            if (d != null && holder.getWidth() > 0 && holder.getHeight() > 0) {
+                boolean wide = (long) d.getIntrinsicWidth() * holder.getHeight() >= (long) d.getIntrinsicHeight() * holder.getWidth();
+                ImageView.ScaleType st = wide ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_END;
+                if (pic.getScaleType() != st) pic.setScaleType(st);
+            }
+            return;
+        }
         Bitmap art = lastArt;
         int w = holder.getWidth(), h = holder.getHeight();
         if (art == null || w == 0 || h == 0 || art.getHeight() == 0) { fade.setVisibility(View.GONE); return; }
@@ -225,6 +247,38 @@ final class Immersive {
     private static String name(View v) {
         if (v.getId() == View.NO_ID) return "";
         try { return v.getResources().getResourceEntryName(v.getId()); } catch (Exception e) { return ""; }
+    }
+
+    /** Image sans ses bandes noires en haut et en bas (au plus 35 % retirés de chaque côté). */
+    static Bitmap cropBars(Bitmap b) {
+        int h = b.getHeight(), w = b.getWidth();
+        if (h < 20 || w < 20) return b;
+        int max = h * 35 / 100, top = 0, bottom = 0;
+        while (top < max && darkRow(b, top)) top++;
+        while (bottom < max && darkRow(b, h - 1 - bottom)) bottom++;
+        if (top + bottom < h / 20) return b;
+        return Bitmap.createBitmap(b, 0, top, w, h - top - bottom);
+    }
+
+    private static boolean darkRow(Bitmap b, int y) {
+        int step = Math.max(1, b.getWidth() / 60), n = 0, bright = 0;
+        for (int x = 0; x < b.getWidth(); x += step) {
+            int c = b.getPixel(x, y); n++;
+            if (Color.red(c) > 28 || Color.green(c) > 28 || Color.blue(c) > 28) bright++;
+        }
+        return bright * 20 <= n;   // au plus 5 % de pixels clairs
+    }
+
+    /** Colonne d'un pixel de large : pour chaque ligne, la moyenne des 3 pixels les plus à gauche. */
+    static Bitmap edgeStrip(Bitmap b) {
+        Bitmap out = Bitmap.createBitmap(1, b.getHeight(), Bitmap.Config.ARGB_8888);
+        int k = Math.min(3, b.getWidth());
+        for (int y = 0; y < b.getHeight(); y++) {
+            int r = 0, g = 0, bl = 0;
+            for (int x = 0; x < k; x++) { int c = b.getPixel(x, y); r += Color.red(c); g += Color.green(c); bl += Color.blue(c); }
+            out.setPixel(0, y, Color.rgb(r / k, g / k, bl / k));
+        }
+        return out;
     }
 
     /** Couleur moyenne de la bande gauche de l'image (prolongement quand elle n'a pas le format du panneau). */
