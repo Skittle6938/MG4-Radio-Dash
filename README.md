@@ -2,14 +2,23 @@
 
 This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.com/Skittle6938/MG4Dash)** and adds favourites-only station switching. It keeps every fix from the original project ([MG4-Radio-DABplus-Fix](https://github.com/Skittle6938/MG4-Radio-DABplus-Fix), documented below).
 
-![MG4 Radio Dash, DAB+](screenshots/radio-dash.jpg)
+![MG4 Radio Dash, DAB+, dark](screenshots/radio-dash.jpg)
+
+![MG4 Radio Dash, DAB+, light](screenshots/radio-dash-light.jpg)
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Screenshots taken on the car (1.4.0): DAB+ with the station slideshow and the favourites bar, FM with the dial and the favourite stations (RDS name in the theme colour).*
+*Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (1.5.0, dark and light), FM with the dial and the favourite stations (1.4.0).*
 
 ### What's new in this fork
 
+**1.5.0**
+- **Immersive DAB+ player** (default): the station image covers a square player panel, extended by the colour of its edge when it is not square, with the title in white and a play button in the image's main colour, like the Android Auto player. It follows MG4Dash's *Player on the home screen* setting (Immersive or Classic, MG4Dash 1.5.1 or later); FM keeps its dial.
+- **5 columns of square favourites** on DAB+, sized so that 3 full rows fit before scrolling.
+- **★ Favourites window**: every DAB+ station received, alphabetically, with its logo and multiplex; one tap adds or removes a favourite. Favourites already chosen stay ticked, even out of range. *Refresh* asks the tuner for its latest station list.
+- **Bigger DAB+ text** (30 sp on up to 3 lines instead of a single scrolling line), star next to the station name, playback buttons centred.
+
+**Earlier**
 - **Full-screen dark glass design**: the SAIC side bar and top banner are hidden (swipe from the left or top edge to bring them back), DAB / FM tabs as pills, the top-left corner is left free for MG's fog-light overlay button.
 - **MG4Dash dock** at the bottom (clock, Home, Vehicle, Climate, Energy, Android Auto, Settings) to jump straight to the MG4Dash pages.
 - **Large square station artwork**, the same image as on the home screen (DAB+ slideshow, with the per-station cache as fallback).

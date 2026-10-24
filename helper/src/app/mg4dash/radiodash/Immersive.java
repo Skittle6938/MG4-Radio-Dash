@@ -90,7 +90,48 @@ final class Immersive {
         whiteTexts(panel);
         hideBandLabel(panel);
         styleButtons(a, panel);
+        glassButtons(a, panel);
     }
+
+    /**
+     * Boutons posés sur l'image (reprise auto, réglage, liste, ★ Favoris, étoile) : verre sombre et
+     * contenu blanc, en mode clair comme en sombre. Le thème clair les passait en gris clair, illisibles.
+     */
+    private static void glassButtons(Activity a, View root) {
+        for (String n : new String[]{"btn_radio_autostart", "btn_dab_rds_setting", "btn_dab_search_list", "ib_dab_favorite", "btn_dab_program"}) {
+            View v = find(root, n);
+            if (v != null) glass(a, v, n.equals("btn_dab_search_list") ? "radio_btn_search_list" : null);
+        }
+        View fav = root.getRootView().findViewWithTag("rd_favmgr");
+        if (fav != null) glass(a, fav, null);
+    }
+
+    private static void glass(Activity a, View v, String iconRes) {
+        // Contenu blanc à chaque passage : le thème clair le remet en sombre
+        if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != Color.WHITE) ((TextView) v).setTextColor(Color.WHITE);
+        if (v instanceof ImageView && !"ib_dab_favorite".equals(name(v))) ((ImageView) v).setImageTintList(ColorStateList.valueOf(Color.WHITE));
+        if (v.getTag(GLASS) != null && v.getBackground() == v.getTag(GLASS)) return;
+        GradientDrawable g = new GradientDrawable();
+        g.setCornerRadius(dp(a, 14));
+        g.setColor(0x73000000);
+        g.setStroke(1, 0x33FFFFFF);
+        Drawable bg = g;
+        if (iconRes != null) {
+            int res = a.getResources().getIdentifier(iconRes, "drawable", a.getPackageName());
+            if (res != 0) {
+                Drawable ic = a.getDrawable(res).mutate();
+                ic.setTint(Color.WHITE);
+                LayerDrawable ld = new LayerDrawable(new Drawable[]{g, ic});
+                ld.setLayerGravity(1, Gravity.CENTER);
+                ld.setLayerSize(1, dp(a, 48), dp(a, 48));
+                bg = ld;
+            }
+        }
+        v.setBackground(bg);
+        v.setTag(GLASS, bg);
+    }
+
+    private static final int GLASS = 0x7f7a0001;
 
     /** Fondu posé sur le bord gauche de l'image (calée à droite). */
     private static void placeFade(FrameLayout holder) {
