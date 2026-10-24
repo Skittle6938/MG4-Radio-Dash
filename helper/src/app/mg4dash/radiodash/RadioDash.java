@@ -64,6 +64,13 @@ public final class RadioDash {
                     "Añada favoritos con ★: el volante y la pantalla de inicio pasarán de uno a otro",
                     "Aggiungi preferiti con ★: volante e schermata home passeranno dall'uno all'altro",
                     "Voeg favorieten toe met ★: stuur en startscherm schakelen dan tussen deze zenders"},
+            {"Favourites", "Favoris", "Favoriten", "Favoritos", "Preferiti", "Favorieten"},
+            {"DAB+ stations: tap to add or remove a favourite", "Stations DAB+ : touchez pour ajouter ou retirer un favori",
+                    "DAB+-Sender: tippen zum Hinzufügen oder Entfernen", "Emisoras DAB+: toque para añadir o quitar un favorito",
+                    "Stazioni DAB+: tocca per aggiungere o togliere un preferito", "DAB+-zenders: tik om een favoriet toe te voegen of te verwijderen"},
+            {"Refresh", "Actualiser", "Aktualisieren", "Actualizar", "Aggiorna", "Vernieuwen"},
+            {"Close", "Fermer", "Schließen", "Cerrar", "Chiudi", "Sluiten"},
+            {"Searching for stations…", "Recherche des stations…", "Sendersuche…", "Buscando emisoras…", "Ricerca stazioni…", "Zenders zoeken…"},
     };
 
     private static String tr(int i) {
@@ -369,6 +376,7 @@ public final class RadioDash {
             if (h != null && h.getVisibility() != View.GONE) h.setVisibility(View.GONE);
         }
         squarePlayer(a, band);
+        favManagerButton(a);
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);
         if (v != null && v.getLayoutParams() instanceof LinearLayout.LayoutParams) {
@@ -447,6 +455,188 @@ public final class RadioDash {
                 if (res != 0) iv.setImageResource(res);
             }
         }
+    }
+
+    // ── Gestion des favoris DAB+ : toutes les stations, une étoile par ligne ─
+
+    /** Bouton « ★ Favoris » dans la ligne du haut du panneau DAB+ (à côté du réglage et de la liste). */
+    private static void favManagerButton(final Activity a) {
+        View rds = byName(a, "btn_dab_rds_setting");
+        if (rds == null || !(rds.getParent() instanceof LinearLayout)) return;
+        LinearLayout head = (LinearLayout) rds.getParent();
+        // Bouton EPG caché par la radio sans programme : il gardait sa place et poussait la ligne
+        View epg = byName(a, "btn_dab_program");
+        if (epg != null && epg.getVisibility() == View.INVISIBLE) epg.setVisibility(View.GONE);
+        if (head.findViewWithTag("rd_favmgr") != null) return;
+        TextView b = text(a, "★  " + tr(7), 17, TEXT);
+        b.setTag("rd_favmgr");
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(dp(a, 18), 0, dp(a, 18), 0);
+        b.setBackground(panel(a, BUTTON, 14, BORDER));
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { showFavManager(a); }
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(a, 56));
+        lp.setMarginStart(dp(a, 10));
+        head.addView(b, head.indexOfChild(rds), lp);
+    }
+
+    /**
+     * Fenêtre des stations DAB+ : la liste reçue par le tuner (actualisable) et les favoris déjà choisis,
+     * même s'ils ne sont pas reçus en ce moment. Toucher une ligne ajoute ou retire le favori, aussitôt
+     * enregistré par la radio (même base que l'étoile du lecteur).
+     */
+    private static void showFavManager(final Activity a) {
+        final android.app.Dialog d = new android.app.Dialog(a, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        LinearLayout root = new LinearLayout(a);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(0xF20B0F17);
+        root.setPadding(dp(a, 40), dp(a, 24), dp(a, 40), dp(a, 16));
+        LinearLayout top = new LinearLayout(a);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setPadding(dp(a, 70), 0, 0, 0);   // place du bouton antibrouillards de MG en haut à gauche
+        top.addView(text(a, tr(8), 26, TEXT), new LinearLayout.LayoutParams(0, -2, 1f));
+        final TextView status = text(a, "", 18, SUB);
+        top.addView(status, new LinearLayout.LayoutParams(-2, -2));
+        TextView refresh = text(a, tr(9), 20, TEXT);
+        TextView close = text(a, tr(10), 20, COLD);
+        for (TextView t : new TextView[]{refresh, close}) {
+            t.setGravity(Gravity.CENTER);
+            t.setPadding(dp(a, 26), 0, dp(a, 26), 0);
+            t.setBackground(panel(a, BUTTON, 14, BORDER));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(a, 64));
+            lp.setMarginStart(dp(a, 14));
+            top.addView(t, lp);
+        }
+        root.addView(top, new LinearLayout.LayoutParams(-1, -2));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(a);
+        final LinearLayout list = new LinearLayout(a);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(list, new FrameLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, 0, 1f);
+        slp.topMargin = dp(a, 16);
+        root.addView(scroll, slp);
+        final Runnable fill = new Runnable() {
+            @Override public void run() { fillFavManager(a, list); }
+        };
+        refresh.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                // Demande au tuner sa liste de stations à jour, puis relit la base après quelques secondes
+                status.setText(tr(11));
+                try {
+                    Object rm = radioManager;
+                    if (rm != null) rm.getClass().getMethod("queryDabStationList").invoke(rm);
+                } catch (Throwable t) { Log.w(TAG, "liste DAB : " + t); }
+                main.postDelayed(new Runnable() {
+                    @Override public void run() { status.setText(""); fill.run(); }
+                }, 4000);
+            }
+        });
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { d.dismiss(); }
+        });
+        d.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
+            @Override public void onDismiss(android.content.DialogInterface di) { main.post(tick); }
+        });
+        d.setContentView(root);
+        fill.run();
+        d.show();
+        // Plein écran comme la radio : sans la barre SAIC à gauche
+        if (d.getWindow() != null) d.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+    }
+
+    private static void fillFavManager(final Activity a, final LinearLayout list) {
+        list.removeAllViews();
+        final Object storage = storage(a);
+        if (storage == null) return;
+        List<Object> all = new ArrayList<>();
+        java.util.Set<Long> favIds = new java.util.HashSet<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        try {
+            List<?> favs = (List<?>) call(storage, "getDabFavorite");
+            if (favs != null) for (Object f : favs) favIds.add(((Number) call(f, "getServiceId")).longValue());
+            List<?> stations = (List<?>) call(storage, "getDabStationList");
+            if (stations != null) for (Object st : stations) {
+                if (seen.add(((Number) call(st, "getServiceId")).longValue())) all.add(st);
+            }
+            // Favoris d'avant, même hors de portée : on les garde dans la liste, cochés
+            if (favs != null) for (Object f : favs) {
+                if (seen.add(((Number) call(f, "getServiceId")).longValue())) all.add(f);
+            }
+        } catch (Throwable t) { Log.w(TAG, "stations DAB : " + t); return; }
+        java.util.Collections.sort(all, new java.util.Comparator<Object>() {
+            @Override public int compare(Object x, Object y) { return label(x).compareToIgnoreCase(label(y)); }
+        });
+        // Deux colonnes de lignes larges, faciles à toucher
+        LinearLayout row = null;
+        for (int i = 0; i < all.size(); i++) {
+            final Object st = all.get(i);
+            if (i % 2 == 0) {
+                row = new LinearLayout(a);
+                list.addView(row, new LinearLayout.LayoutParams(-1, -2));
+            }
+            long id;
+            try { id = ((Number) call(st, "getServiceId")).longValue(); } catch (Throwable t) { continue; }
+            final boolean[] on = {favIds.contains(id)};
+            final LinearLayout line = new LinearLayout(a);
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.setPadding(dp(a, 12), dp(a, 10), dp(a, 18), dp(a, 10));
+            ImageView logo = new ImageView(a);
+            logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            round(logo, dp(a, 10));
+            Bitmap b = cachedDabArt(a, id);
+            if (b != null) logo.setImageBitmap(b);
+            else {
+                logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                logo.setImageResource(a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName()));
+            }
+            line.addView(logo, new LinearLayout.LayoutParams(dp(a, 72), dp(a, 72)));
+            LinearLayout col = new LinearLayout(a);
+            col.setOrientation(LinearLayout.VERTICAL);
+            TextView name = text(a, label(st), 24, TEXT);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            col.addView(name);
+            Object ens = callQuiet(st, "getEnsembleName");
+            if (ens != null && !ens.toString().trim().isEmpty()) col.addView(text(a, ens.toString().trim(), 17, SUB));
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, -2, 1f);
+            clp.setMarginStart(dp(a, 16));
+            line.addView(col, clp);
+            final TextView star = text(a, "★", 40, ACTION);
+            line.addView(star, new LinearLayout.LayoutParams(-2, -2));
+            final Runnable paint = new Runnable() {
+                @Override public void run() {
+                    star.setTextColor(on[0] ? Palette.starColor() : 0xFF3A4254);
+                    line.setBackground(panel(a, on[0] ? 0x262979FF : BUTTON, 16, on[0] ? Palette.starColor() : BORDER));
+                }
+            };
+            paint.run();
+            line.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    try {
+                        Method m = null;
+                        for (Method x : storage.getClass().getMethods())
+                            if (x.getName().equals(on[0] ? "removeDabFavorite" : "storeDabFavorite") && x.getParameterTypes().length == 1) m = x;
+                        if (m == null) return;
+                        m.invoke(storage, st);
+                        on[0] = !on[0];
+                        paint.run();
+                    } catch (Throwable t) { Log.w(TAG, "favori DAB : " + t); }
+                }
+            });
+            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(0, -2, 1f);
+            llp.setMargins(dp(a, 6), dp(a, 6), dp(a, 6), dp(a, 6));
+            row.addView(line, llp);
+        }
+        if (all.size() % 2 == 1 && row != null) row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
+    }
+
+    private static String label(Object st) {
+        Object n = callQuiet(st, "getServiceName");
+        if (n == null || n.toString().trim().isEmpty()) n = callQuiet(st, "getEnsembleName");
+        return n == null ? "DAB" : n.toString().trim();
     }
 
     // ── Favoris : barre unique à droite, 3 colonnes ──────────────────────────

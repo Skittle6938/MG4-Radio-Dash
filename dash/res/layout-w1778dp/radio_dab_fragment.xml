@@ -35,7 +35,7 @@
                     <ImageView android:id="@id/iv_radio_dab_type" android:background="@mipmap/icon_radio_dab_type_img" android:layout_width="26.0dip" android:layout_height="21.0dip" />
                     <TextView android:textSize="21.0sp" android:textColor="#FFA0AEC0" android:id="@id/tv_dab_radio_ensemble_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:layout_marginStart="10.0dip" />
                 </LinearLayout>
-                <com.saicmotor.radio.view.widget.MarqueTextView android:textSize="21.0sp" android:textColor="#FF00D2FF" android:ellipsize="marquee" android:id="@id/tv_dab_frequency_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:singleLine="true" android:includeFontPadding="false" android:marqueeRepeatLimit="marquee_forever" />
+                <com.saicmotor.radio.view.widget.MarqueTextView android:textSize="30.0sp" android:textColor="#FF00D2FF" android:ellipsize="end" android:id="@id/tv_dab_frequency_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:maxLines="3" android:lineSpacingMultiplier="1.05" android:includeFontPadding="false" />
 
                 <Space android:layout_width="1.0dip" android:layout_height="0.0dip" android:layout_weight="1.0" />
 
