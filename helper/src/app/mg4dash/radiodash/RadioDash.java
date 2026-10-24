@@ -103,6 +103,7 @@ public final class RadioDash {
             Palette.load(a);
             fullscreen(a);
             installDock(a);
+            watchSquare(a);
             connectSession(a);
             bindRadioService(a);
         } catch (Throwable t) {
@@ -342,10 +343,29 @@ public final class RadioDash {
      * DAB+ immersif : le panneau du lecteur devient carré (largeur = hauteur) et la carte des favoris
      * prend la place libérée, avec plus de colonnes. FM, ou présentation classique : carte de 640 dp.
      */
-    private static void squarePlayer(Activity a, int band) {
+    /**
+     * Le lecteur carré est posé avant la première image (à l'ouverture et après un changement de thème),
+     * sinon la carte des favoris s'affichait un instant sur 3 colonnes avant de passer à 5.
+     */
+    private static void watchSquare(final Activity a) {
+        final View root = a.getWindow().getDecorView();
+        if (root.getTag(SQUARE_TAG) != null) return;
+        android.view.ViewTreeObserver.OnPreDrawListener l = new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                int band = -1;
+                try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+                return !squarePlayer(a, band);   // largeur changée : on saute cette image, la suivante est juste
+            }
+        };
+        root.getViewTreeObserver().addOnPreDrawListener(l);
+        root.setTag(SQUARE_TAG, l);
+    }
+    private static final int SQUARE_TAG = 0x7f7a0002;
+
+    private static boolean squarePlayer(Activity a, int band) {
         View cont = byName(a, "fragment_container");
         View card = byName(a, "fragment_container_card");
-        if (cont == null || card == null || !(card.getParent() instanceof View)) return;
+        if (cont == null || card == null || !(card.getParent() instanceof View)) return false;
         int parentW = ((View) card.getParent()).getWidth();
         int h = cont.getHeight();
         int want = dp(a, 640);
@@ -356,7 +376,8 @@ public final class RadioDash {
             want = Math.max(dp(a, 640), parentW - side - dp(a, 44));
         }
         ViewGroup.LayoutParams lp = card.getLayoutParams();
-        if (lp.width != want) { lp.width = want; card.setLayoutParams(lp); }
+        if (lp.width != want) { lp.width = want; card.setLayoutParams(lp); return true; }
+        return false;
     }
 
     private static void fixLayout(Activity a) {
@@ -656,6 +677,10 @@ public final class RadioDash {
         if (!(root instanceof LinearLayout)) return;
         LinearLayout grid = (LinearLayout) root;
         if (grid.getWidth() <= 0) { main.postDelayed(tick, 250); return; }   // pas encore mis en page
+        // Carte en train de s'élargir (lecteur carré) : on attend sa largeur finale, sinon 3 colonnes un instant
+        View favCard = byName(a, "fragment_container_card");
+        if (favCard != null && favCard.getLayoutParams() != null && favCard.getLayoutParams().width > 0
+                && favCard.getWidth() != favCard.getLayoutParams().width) { main.postDelayed(tick, 50); return; }
         Object storage = storage(a);
         if (storage == null) return;
         int band = 1;
