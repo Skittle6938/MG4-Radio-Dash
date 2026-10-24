@@ -570,11 +570,12 @@ public final class RadioDash {
         java.util.Collections.sort(all, new java.util.Comparator<Object>() {
             @Override public int compare(Object x, Object y) { return label(x).compareToIgnoreCase(label(y)); }
         });
-        // Deux colonnes de lignes larges, faciles à toucher
+        // Trois colonnes de lignes, faciles à toucher
+        final int cols = 3;
         LinearLayout row = null;
         for (int i = 0; i < all.size(); i++) {
             final Object st = all.get(i);
-            if (i % 2 == 0) {
+            if (i % cols == 0) {
                 row = new LinearLayout(a);
                 list.addView(row, new LinearLayout.LayoutParams(-1, -2));
             }
@@ -596,7 +597,7 @@ public final class RadioDash {
             line.addView(logo, new LinearLayout.LayoutParams(dp(a, 72), dp(a, 72)));
             LinearLayout col = new LinearLayout(a);
             col.setOrientation(LinearLayout.VERTICAL);
-            TextView name = text(a, label(st), 24, TEXT);
+            TextView name = text(a, label(st), 22, TEXT);
             name.setSingleLine(true);
             name.setEllipsize(android.text.TextUtils.TruncateAt.END);
             col.addView(name);
@@ -631,7 +632,7 @@ public final class RadioDash {
             llp.setMargins(dp(a, 6), dp(a, 6), dp(a, 6), dp(a, 6));
             row.addView(line, llp);
         }
-        if (all.size() % 2 == 1 && row != null) row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
+        for (int k = all.size(); k % cols != 0 && row != null; k++) row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
     }
 
     private static String label(Object st) {
