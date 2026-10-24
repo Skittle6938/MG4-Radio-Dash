@@ -121,8 +121,8 @@ public final class Palette {
         return n == null ? color : (color & 0xFF000000) | n;
     }
 
-    /** Lecteur DAB+ immersif (carré, image en fond) : le réglage Immersif de MG4Dash. */
-    public static boolean immersiveDab() { return mediaStyle == 0; }
+    /** Lecteur DAB+ immersif (carré, image en fond) : toujours, le choix Immersif / Classique ne vaut que pour MG4Dash. */
+    public static boolean immersiveDab() { return true; }
 
     /** Couleur d'action du thème (bouton lecture), quand l'image n'en donne pas. */
     public static int accent() { return map(0xFF2979FF); }

@@ -13,7 +13,7 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 ### What's new in this fork
 
 **1.5.0**
-- **Immersive DAB+ player** (default): the station image covers a square player panel, extended by the colour of its edge when it is not square, with the title in white and a play button in the image's main colour, like the Android Auto player. It follows MG4Dash's *Player on the home screen* setting (Immersive or Classic, MG4Dash 1.5.1 or later); FM keeps its dial.
+- **Immersive DAB+ player**: the station image covers a square player panel, extended by the colour of its edge when it is not square, with the title in white and a play button in the image's main colour, like the Android Auto player. FM keeps its dial.
 - **5 columns of square favourites** on DAB+, sized so that 3 full rows fit before scrolling.
 - **★ Favourites window**: every DAB+ station received, alphabetically, with its logo and multiplex; one tap adds or removes a favourite. Favourites already chosen stay ticked, even out of range. *Refresh* asks the tuner for its latest station list.
 - **Bigger DAB+ text** (30 sp on up to 3 lines instead of a single scrolling line), star next to the station name, playback buttons centred.
