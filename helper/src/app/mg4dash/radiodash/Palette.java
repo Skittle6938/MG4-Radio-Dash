@@ -60,6 +60,8 @@ public final class Palette {
     private static boolean lightMode = false;
     /** Barre verticale à gauche choisie dans MG4Dash (4e champ de mg4dash_theme). */
     public static boolean verticalDock = false;
+    /** Lecteur choisi dans MG4Dash (5e champ) : 0 = Immersif (défaut), 1 = Classique. */
+    public static int mediaStyle = 0;
     private static String loaded = null;
     private static boolean identity = true;
     private static final Map<TextView, ColorStateList> textDone = new WeakHashMap<>();
@@ -82,6 +84,7 @@ public final class Palette {
             a = Math.max(0, Math.min(ACC.length - 1, Integer.parseInt(p[1].trim())));
             if (p.length > 2) lm = "1".equals(p[2].trim());
             verticalDock = p.length > 3 && "1".equals(p[3].trim());
+            mediaStyle = p.length > 4 && "1".equals(p[4].trim()) ? 1 : 0;
         } catch (Throwable ignored) {}
         lightMode = lm;
         identity = b == 0 && a == 0 && !lm;
@@ -117,6 +120,9 @@ public final class Palette {
         Integer n = MAP.get(color & 0xFFFFFF);
         return n == null ? color : (color & 0xFF000000) | n;
     }
+
+    /** Couleur d'action du thème (bouton lecture), quand l'image n'en donne pas. */
+    public static int accent() { return map(0xFF2979FF); }
 
     /** Couleur des étoiles de favoris : le bouton d'action du thème MG4Dash choisi. */
     public static int starColor() {

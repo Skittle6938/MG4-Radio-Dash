@@ -139,6 +139,7 @@ public final class RadioDash {
                 updateFmDial(a);
                 Palette.recolor(a.getWindow().getDecorView());
                 Palette.tintStars(a.getWindow().getDecorView());
+                immersive(a);
             } catch (Throwable t) {
                 Log.w(TAG, "rafraîchissement : " + t);
             }
@@ -385,6 +386,17 @@ public final class RadioDash {
         if (b == null) b = md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON);
         if (b != null) art = b;
         if (current != null) applyArt(current);
+    }
+
+    /** Lecteur Immersif (réglage de MG4Dash) : l'image de la station derrière tout le panneau. */
+    private static void immersive(Activity a) {
+        List<View> views = new ArrayList<>();
+        findTagged(a.getWindow().getDecorView(), "rd_art", views);
+        Bitmap b = art;
+        if (b == null) b = cachedDabArt(a, currentDabServiceId(a));
+        for (View v : views) {
+            Immersive.apply(a, v, b);
+        }
     }
 
     private static void applyArt(Activity a) {

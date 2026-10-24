@@ -25,8 +25,12 @@
                     <Button android:textSize="17.0sp" android:textColor="#FFA0AEC0" android:id="@id/btn_dab_program" android:background="@drawable/rd_bg_button" android:paddingStart="18.0dip" android:paddingEnd="18.0dip" android:layout_width="wrap_content" android:layout_height="56.0dip" android:text="@string/radio_btn_program_list_text_EPG" android:textAllCaps="false" />
                     <Button android:textSize="17.0sp" android:textColor="#FFA0AEC0" android:id="@id/btn_radio_autostart" android:background="@drawable/rd_bg_button" android:paddingStart="18.0dip" android:paddingEnd="18.0dip" android:layout_width="wrap_content" android:layout_height="56.0dip" android:text="@string/radio_autostart_on" android:textAllCaps="false" android:layout_marginStart="10.0dip" />
                     <ImageButton android:id="@id/btn_dab_rds_setting" android:background="@drawable/rd_bg_button" android:padding="10.0dip" android:layout_width="56.0dip" android:layout_height="56.0dip" android:src="@drawable/radio_btn_dab_setting" android:scaleType="fitCenter" android:layout_marginStart="10.0dip" />
+                    <Button android:id="@id/btn_dab_search_list" android:background="@drawable/rd_btn_search_list" android:layout_width="56.0dip" android:layout_height="56.0dip" android:layout_marginStart="10.0dip" />
                 </LinearLayout>
-                <TextView android:textSize="52.0sp" android:textColor="#FFFFFFFF" android:ellipsize="marquee" android:id="@id/tv_dab_program_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:fontFamily="sans-serif-light" android:marqueeRepeatLimit="marquee_forever" />
+                <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip">
+                    <TextView android:textSize="52.0sp" android:textColor="#FFFFFFFF" android:ellipsize="marquee" android:id="@id/tv_dab_program_name" android:layout_width="0.0dip" android:layout_weight="1.0" android:layout_height="wrap_content" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:fontFamily="sans-serif-light" android:marqueeRepeatLimit="marquee_forever" />
+                    <ImageButton android:id="@id/ib_dab_favorite" android:background="@drawable/rd_bg_button" android:layout_width="72.0dip" android:layout_height="72.0dip" android:scaleType="center" android:layout_marginStart="16.0dip" />
+                </LinearLayout>
                 <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="10.0dip">
                     <ImageView android:id="@id/iv_radio_dab_type" android:background="@mipmap/icon_radio_dab_type_img" android:layout_width="26.0dip" android:layout_height="21.0dip" />
                     <TextView android:textSize="21.0sp" android:textColor="#FFA0AEC0" android:id="@id/tv_dab_radio_ensemble_name" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="_" android:singleLine="true" android:includeFontPadding="false" android:layout_marginStart="10.0dip" />
@@ -37,14 +41,12 @@
 
                 <!-- Commandes -->
                 <LinearLayout android:orientation="horizontal" android:gravity="center_vertical" android:id="@id/ll_dab_base_function" android:layout_width="fill_parent" android:layout_height="wrap_content">
-                    <ImageButton android:id="@id/ib_dab_favorite" android:background="@drawable/rd_bg_button" android:layout_width="108.0dip" android:layout_height="108.0dip" android:scaleType="center" />
                     <Space android:layout_width="0.0dip" android:layout_height="1.0dip" android:layout_weight="1.0" />
                     <Button android:id="@id/btn_dab_previous" android:background="@drawable/rd_btn_prev" android:layout_width="116.0dip" android:layout_height="108.0dip" />
                     <ImageButton android:id="@id/ib_dab_play_pause" android:background="@drawable/rd_bg_play" android:layout_width="132.0dip" android:layout_height="132.0dip" android:scaleType="center" android:layout_marginStart="24.0dip" android:layout_marginEnd="24.0dip" />
                     <Button android:id="@id/btn_dab_next" android:background="@drawable/rd_btn_next" android:layout_width="116.0dip" android:layout_height="108.0dip" />
                     <Space android:layout_width="0.0dip" android:layout_height="1.0dip" android:layout_weight="1.0" />
                     <Button android:id="@id/btn_dab_favorite_list" android:background="@drawable/rd_btn_fav_list" android:visibility="gone" android:layout_width="1.0dip" android:layout_height="1.0dip" />
-                    <Button android:id="@id/btn_dab_search_list" android:background="@drawable/rd_btn_search_list" android:layout_width="108.0dip" android:layout_height="108.0dip" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
