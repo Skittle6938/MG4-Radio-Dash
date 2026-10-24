@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Outline;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaMetadata;
@@ -666,7 +667,7 @@ public final class RadioDash {
         }
         long curDab = dab ? currentDabServiceId(a) : -1;
         int curFm = dab ? -1 : currentFmChannel(storage);
-        String key = band + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth()
+        String key = band + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth() + "x" + ((View) grid.getParent()).getHeight()
                 + (dab ? "|" + artStamp(a, favs) : "|" + rdsStamp(favs));
         if (key.equals(grid.getContentDescription())) return;   // rien n'a changé
         grid.setContentDescription(key);
@@ -681,7 +682,22 @@ public final class RadioDash {
         int gap = dp(a, 5);
         COLUMNS = Math.max(3, Math.round(grid.getWidth() / (float) dp(a, 215)));
         int tileW = (grid.getWidth() - 2 * gap * COLUMNS) / COLUMNS;
+        // Exactement 3 rangées visibles avant de faire défiler : la case rapetisse si la hauteur manque
+        // (marges, bords de la case, légende du nom en DAB)
         int logoSide = tileW - dp(a, 28);
+        View scroll = (View) grid.getParent();
+        int visible = scroll.getHeight() - scroll.getPaddingTop() - scroll.getPaddingBottom();
+        if (visible > 0) {
+            int label = 0;
+            if (dab) {
+                android.text.TextPaint tp = new android.text.TextPaint();
+                tp.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, a.getResources().getDisplayMetrics()));
+                Paint.FontMetricsInt fm = tp.getFontMetricsInt();
+                label = fm.bottom - fm.top + dp(a, 6);
+            }
+            int fit = visible / 3 - 2 * gap - dp(a, 14) - label - 2;
+            logoSide = Math.min(logoSide, fit);
+        }
         LinearLayout row = null;
         for (int i = 0; i < favs.size(); i++) {
             if (i % COLUMNS == 0) {
