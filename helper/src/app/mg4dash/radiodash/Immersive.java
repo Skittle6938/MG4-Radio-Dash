@@ -79,23 +79,16 @@ final class Immersive {
                 edge = edgeColor(img);
                 Integer v = vividColor(img);
                 accent = v != null ? v : Palette.accent();
-                // Prolongement à gauche ligne par ligne (moyenne des 3 pixels du bord), sans fondu
-                android.graphics.drawable.BitmapDrawable strip = new android.graphics.drawable.BitmapDrawable(a.getResources(), edgeStrip(img));
-                strip.setFilterBitmap(true);
-                holder.setBackground(strip);
-                holder.getChildAt(1).setVisibility(View.GONE);
-                placeFade(holder);
             } else {
                 pic.setImageDrawable(null);
                 edge = 0xFF1C2230;
                 accent = Palette.accent();
             }
-            if (art == null) {
-                holder.setBackgroundColor(edge);
-                holder.getChildAt(1).setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                        new int[]{edge, edge & 0x00FFFFFF}));
-                placeFade(holder);
-            }
+            // Prolongement à gauche : couleur moyenne de la bande de gauche, avec un fondu sur le bord
+            holder.setBackgroundColor(edge);
+            holder.getChildAt(1).setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{edge, edge & 0x00FFFFFF}));
+            placeFade(holder);
         }
         whiteTexts(panel);
         hideBandLabel(panel);
@@ -144,27 +137,24 @@ final class Immersive {
     private static final int GLASS = 0x7f7a0001;
 
     /** Fondu posé sur le bord gauche de l'image (calée à droite). */
+    /**
+     * Image plus large que le panneau (16:9 recadrée) : elle le remplit. Sinon elle est calée à droite et
+     * le fondu se pose sur son bord gauche.
+     */
     private static void placeFade(FrameLayout holder) {
         View fade = holder.getChildAt(1);
-        if (holder.getBackground() instanceof android.graphics.drawable.BitmapDrawable) {
-            fade.setVisibility(View.GONE);
-            // Image plus large que le panneau (16:9 recadrée) : elle le remplit ; sinon calée à droite
-            ImageView pic = (ImageView) holder.getChildAt(0);
-            android.graphics.drawable.Drawable d = pic.getDrawable();
-            if (d != null && holder.getWidth() > 0 && holder.getHeight() > 0) {
-                boolean wide = (long) d.getIntrinsicWidth() * holder.getHeight() >= (long) d.getIntrinsicHeight() * holder.getWidth();
-                ImageView.ScaleType st = wide ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_END;
-                if (pic.getScaleType() != st) pic.setScaleType(st);
-            }
-            return;
-        }
-        Bitmap art = lastArt;
+        ImageView pic = (ImageView) holder.getChildAt(0);
+        android.graphics.drawable.Drawable d = pic.getDrawable();
         int w = holder.getWidth(), h = holder.getHeight();
-        if (art == null || w == 0 || h == 0 || art.getHeight() == 0) { fade.setVisibility(View.GONE); return; }
-        int imgW = Math.min(w, h * art.getWidth() / art.getHeight());
-        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) fade.getLayoutParams();
+        if (lastArt == null || d == null || w == 0 || h == 0 || d.getIntrinsicHeight() <= 0) { fade.setVisibility(View.GONE); return; }
+        boolean wide = (long) d.getIntrinsicWidth() * h >= (long) d.getIntrinsicHeight() * w;
+        ImageView.ScaleType st = wide ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_END;
+        if (pic.getScaleType() != st) pic.setScaleType(st);
+        if (wide) { fade.setVisibility(View.GONE); return; }
+        int imgW = h * d.getIntrinsicWidth() / d.getIntrinsicHeight();
+        final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) fade.getLayoutParams();
         int fw = imgW * 2 / 5;
-        fade.setVisibility(imgW < w ? View.VISIBLE : View.GONE);
+        fade.setVisibility(View.VISIBLE);
         if (lp.leftMargin != w - imgW || lp.width != fw) {
             lp.leftMargin = w - imgW; lp.width = fw;
             fade.post(() -> fade.setLayoutParams(lp));
@@ -267,18 +257,6 @@ final class Immersive {
             if (Color.red(c) > 28 || Color.green(c) > 28 || Color.blue(c) > 28) bright++;
         }
         return bright * 20 <= n;   // au plus 5 % de pixels clairs
-    }
-
-    /** Colonne d'un pixel de large : pour chaque ligne, la moyenne des 3 pixels les plus à gauche. */
-    static Bitmap edgeStrip(Bitmap b) {
-        Bitmap out = Bitmap.createBitmap(1, b.getHeight(), Bitmap.Config.ARGB_8888);
-        int k = Math.min(3, b.getWidth());
-        for (int y = 0; y < b.getHeight(); y++) {
-            int r = 0, g = 0, bl = 0;
-            for (int x = 0; x < k; x++) { int c = b.getPixel(x, y); r += Color.red(c); g += Color.green(c); bl += Color.blue(c); }
-            out.setPixel(0, y, Color.rgb(r / k, g / k, bl / k));
-        }
-        return out;
     }
 
     /** Couleur moyenne de la bande gauche de l'image (prolongement quand elle n'a pas le format du panneau). */
