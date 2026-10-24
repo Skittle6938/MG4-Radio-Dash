@@ -330,6 +330,27 @@ public final class RadioDash {
      * Sur écran 1920, DabFragment décale la rangée de commandes (marge gauche de 144 px,
      * gravité « début ») : on la remet en pleine largeur pour la nouvelle mise en page.
      */
+    /**
+     * DAB+ immersif : le panneau du lecteur devient carré (largeur = hauteur) et la carte des favoris
+     * prend la place libérée, avec plus de colonnes. FM, ou présentation classique : carte de 640 dp.
+     */
+    private static void squarePlayer(Activity a, int band) {
+        View cont = byName(a, "fragment_container");
+        View card = byName(a, "fragment_container_card");
+        if (cont == null || card == null || !(card.getParent() instanceof View)) return;
+        int parentW = ((View) card.getParent()).getWidth();
+        int h = cont.getHeight();
+        int want = dp(a, 640);
+        if (band == 4 && Palette.immersiveDab() && parentW > 0 && h > 0) {
+            // Panneau = hauteur du conteneur moins sa marge du haut (12 dp) ; à sa largeur s'ajoutent la
+            // marge de gauche (16), la marge de droite du panneau (12) et celle de la carte (16)
+            int side = h - dp(a, 12);
+            want = Math.max(dp(a, 640), parentW - side - dp(a, 44));
+        }
+        ViewGroup.LayoutParams lp = card.getLayoutParams();
+        if (lp.width != want) { lp.width = want; card.setLayoutParams(lp); }
+    }
+
     private static void fixLayout(Activity a) {
         // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
         // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
@@ -347,6 +368,7 @@ public final class RadioDash {
             View h = byName(a, n);
             if (h != null && h.getVisibility() != View.GONE) h.setVisibility(View.GONE);
         }
+        squarePlayer(a, band);
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);
         if (v != null && v.getLayoutParams() instanceof LinearLayout.LayoutParams) {
@@ -429,7 +451,8 @@ public final class RadioDash {
 
     // ── Favoris : barre unique à droite, 3 colonnes ──────────────────────────
 
-    private static final int COLUMNS = 3;
+    /** Colonnes de favoris : 3 sur la carte de 640 dp, davantage quand elle s'élargit (DAB+ immersif). */
+    private static int COLUMNS = 3;
 
     /**
      * Barre de favoris unique (conteneur android:tag="rd_favs_grid" de la carte de droite) :
@@ -466,6 +489,7 @@ public final class RadioDash {
             return;
         }
         int gap = dp(a, 5);
+        COLUMNS = Math.max(3, Math.round(grid.getWidth() / (float) dp(a, 215)));
         int tileW = (grid.getWidth() - 2 * gap * COLUMNS) / COLUMNS;
         int logoSide = tileW - dp(a, 28);
         LinearLayout row = null;

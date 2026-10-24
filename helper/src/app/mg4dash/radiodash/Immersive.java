@@ -34,7 +34,7 @@ final class Immersive {
 
     /** Appelé à chaque rafraîchissement, après la recoloration du thème. */
     static void apply(Activity a, View artView, Bitmap art) {
-        if (Palette.mediaStyle != 0 || artView == null) return;
+        if (!Palette.immersiveDab() || artView == null) return;
         View frame = (View) artView.getParent();
         if (!(frame.getParent() instanceof ViewGroup)) return;
         ViewGroup row = (ViewGroup) frame.getParent();
@@ -42,6 +42,8 @@ final class Immersive {
         ViewGroup panel = (ViewGroup) row.getParent();
         if (!(panel.getParent() instanceof RelativeLayout)) return;
         RelativeLayout container = (RelativeLayout) panel.getParent();
+        // DAB+ seulement : l'écran FM garde sa présentation (cadran, fréquence)
+        if (find(panel, "ll_dab_info") == null) return;
         frame.setVisibility(View.GONE);
         panel.setBackground(null);
         FrameLayout holder = (FrameLayout) container.findViewWithTag(TAG_HOLDER);
@@ -86,6 +88,7 @@ final class Immersive {
             placeFade(holder);
         }
         whiteTexts(panel);
+        hideBandLabel(panel);
         styleButtons(a, panel);
     }
 
@@ -105,6 +108,19 @@ final class Immersive {
         }
     }
 
+    /** « RADIO DAB+ » en haut du panneau : l'onglet DAB le dit déjà, et le panneau carré n'a pas la place. */
+    private static void hideBandLabel(View v) {
+        if (v instanceof TextView && !(v instanceof android.widget.Button) && v.getId() == View.NO_ID
+                && "RADIO DAB+".contentEquals(((TextView) v).getText())) {
+            ((TextView) v).setText("");
+            return;
+        }
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) hideBandLabel(g.getChildAt(i));
+        }
+    }
+
     private static void whiteTexts(View v) {
         if (v instanceof TextView && !(v instanceof android.widget.Button)) {
             TextView t = (TextView) v;
@@ -117,10 +133,10 @@ final class Immersive {
         }
     }
 
-    /** Texte « en cours de diffusion » (couleur du thème) : il prend la couleur vive de l'image. */
+    /** Texte « en cours de diffusion » : en blanc, la couleur de l'image le rendait illisible sur elle-même. */
     private static boolean isAccentText(TextView t) {
         String n = name(t);
-        if (n.equals("tv_dab_frequency_name") || n.equals("tv_radio_channel_nowplaying_text")) { t.setTextColor(accent); return true; }
+        if (n.equals("tv_dab_frequency_name") || n.equals("tv_radio_channel_nowplaying_text")) { t.setTextColor(Color.WHITE); return true; }
         return false;
     }
 
@@ -143,7 +159,8 @@ final class Immersive {
     /** Précédent / suivant : l'icône seule, en blanc, sans pavé. */
     private static void icon(Activity a, View root, String name, String iconRes) {
         View b = find(root, name);
-        if (b == null || "rd_imm_icon".equals(b.getTag())) return;
+        // Le code SAIC remet parfois son fond : on repose l'icône dès qu'elle n'est plus la nôtre
+        if (b == null || (b.getTag() instanceof Drawable && b.getBackground() == b.getTag())) return;
         int res = a.getResources().getIdentifier(iconRes, "drawable", a.getPackageName());
         if (res == 0) return;
         Drawable ic = a.getDrawable(res).mutate();
@@ -152,7 +169,7 @@ final class Immersive {
         ld.setLayerGravity(0, Gravity.CENTER);
         ld.setLayerSize(0, dp(a, 56), dp(a, 56));
         b.setBackground(ld);
-        b.setTag("rd_imm_icon");
+        b.setTag(ld);
     }
 
     private static View find(View v, String n) {
