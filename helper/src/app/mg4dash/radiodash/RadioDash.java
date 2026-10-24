@@ -352,7 +352,7 @@ public final class RadioDash {
         if (band == 4 && Palette.immersiveDab() && parentW > 0 && h > 0) {
             // Panneau = hauteur du conteneur moins sa marge du haut (12 dp) ; à sa largeur s'ajoutent la
             // marge de gauche (16), la marge de droite du panneau (12) et celle de la carte (16)
-            int side = h - dp(a, 12);
+            int side = h - dp(a, 24);   // marge du haut (12) et du bas (12, alignée sur la barre de gauche)
             want = Math.max(dp(a, 640), parentW - side - dp(a, 44));
         }
         ViewGroup.LayoutParams lp = card.getLayoutParams();

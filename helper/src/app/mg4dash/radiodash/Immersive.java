@@ -48,6 +48,11 @@ final class Immersive {
         if (find(panel, "ll_dab_info") == null) return;
         frame.setVisibility(View.GONE);
         panel.setBackground(null);
+        // Panneau (boutons compris) remonté comme l'image : même bas que la barre de gauche
+        if (panel.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+            RelativeLayout.LayoutParams pl = (RelativeLayout.LayoutParams) panel.getLayoutParams();
+            if (pl.bottomMargin != dp(a, 12)) { pl.bottomMargin = dp(a, 12); panel.setLayoutParams(pl); }
+        }
         FrameLayout holder = (FrameLayout) container.findViewWithTag(TAG_HOLDER);
         if (holder == null) {
             holder = new FrameLayout(a);
@@ -68,18 +73,20 @@ final class Immersive {
             holder.addView(shade, new FrameLayout.LayoutParams(-1, -1));
             final FrameLayout h = holder;
             holder.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> placeFade(h));
-            container.addView(holder, 0, new RelativeLayout.LayoutParams(-1, -1));
+            RelativeLayout.LayoutParams hl = new RelativeLayout.LayoutParams(-1, -1);
+            hl.bottomMargin = dp(a, 12);   // bas aligné sur la barre de gauche et la 3e rangée des favoris
+            container.addView(holder, 0, hl);
             lastArt = null; painted = false;
         }
         if (art != lastArt || !painted) {
             lastArt = art; painted = true;
             ImageView pic = (ImageView) holder.getChildAt(0);
             if (art != null) {
-                // Bandes noires en haut et en bas retirées : l'image s'affiche plus large
-                Bitmap img = cropBars(art);
-                pic.setImageBitmap(img);
-                edge = edgeColor(img);
-                Integer v = vividColor(img);
+                // Image recadrée à la taille du panneau dans placeFade (rappelé à chaque mise en page)
+                pic.setScaleType(ImageView.ScaleType.FIT_END);
+                shownFor = 0;
+                edge = edgeColor(art);
+                Integer v = vividColor(art);
                 accent = v != null ? v : Palette.accent();
             } else {
                 // Pas d'image pour cette station : fond blanc ou noir selon le thème, icône radio discrète
@@ -147,28 +154,37 @@ final class Immersive {
 
     /** Fondu posé sur le bord gauche de l'image (calée à droite). */
     /**
-     * Image plus large que le panneau (16:9 recadrée) : elle le remplit. Sinon elle est calée à droite et
-     * le fondu se pose sur son bord gauche.
+     * Image calée à droite à la hauteur du panneau, jamais rognée sur les côtés : ses bandes noires du haut
+     * et du bas ne sont retirées que tant que l'image agrandie tient dans la largeur du panneau. Le fondu
+     * se pose sur son bord gauche.
      */
     private static void placeFade(FrameLayout holder) {
         View fade = holder.getChildAt(1);
         ImageView pic = (ImageView) holder.getChildAt(0);
-        android.graphics.drawable.Drawable d = pic.getDrawable();
         int w = holder.getWidth(), h = holder.getHeight();
-        if (lastArt == null || d == null || w == 0 || h == 0 || d.getIntrinsicHeight() <= 0) { fade.setVisibility(View.GONE); return; }
-        boolean wide = (long) d.getIntrinsicWidth() * h >= (long) d.getIntrinsicHeight() * w;
-        ImageView.ScaleType st = wide ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_END;
-        if (pic.getScaleType() != st) pic.setScaleType(st);
-        if (wide) { fade.setVisibility(View.GONE); return; }
-        int imgW = h * d.getIntrinsicWidth() / d.getIntrinsicHeight();
+        Bitmap art = lastArt;
+        if (art == null || w == 0 || h == 0) { fade.setVisibility(View.GONE); return; }
+        if (shownFor != w * 10000 + h) {
+            shownFor = w * 10000 + h;
+            Bitmap img = cropBars(art, w, h);
+            pic.setImageBitmap(img);
+            int edge = edgeColor(img);
+            holder.setBackgroundColor(edge);
+            fade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{edge, edge & 0x00FFFFFF}));
+        }
+        android.graphics.drawable.Drawable d = pic.getDrawable();
+        if (d == null || d.getIntrinsicHeight() <= 0) return;
+        if (pic.getScaleType() != ImageView.ScaleType.FIT_END) pic.setScaleType(ImageView.ScaleType.FIT_END);
+        int imgW = (int) Math.min(w, (long) h * d.getIntrinsicWidth() / d.getIntrinsicHeight());
         final FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) fade.getLayoutParams();
         int fw = imgW * 2 / 5;
-        fade.setVisibility(View.VISIBLE);
+        fade.setVisibility(imgW < w ? View.VISIBLE : View.GONE);
         if (lp.leftMargin != w - imgW || lp.width != fw) {
             lp.leftMargin = w - imgW; lp.width = fw;
             fade.post(() -> fade.setLayoutParams(lp));
         }
     }
+    private static int shownFor = 0;
 
     /** « RADIO DAB+ » en haut du panneau : l'onglet DAB le dit déjà, et le panneau carré n'a pas la place. */
     private static void hideBandLabel(View v) {
@@ -259,14 +275,20 @@ final class Immersive {
     }
 
     /** Image sans ses bandes noires en haut et en bas (au plus 35 % retirés de chaque côté). */
-    static Bitmap cropBars(Bitmap b) {
+    static Bitmap cropBars(Bitmap b, int frameW, int frameH) {
         int h = b.getHeight(), w = b.getWidth();
         if (h < 20 || w < 20) return b;
         int max = h * 35 / 100, top = 0, bottom = 0;
         while (top < max && darkRow(b, top)) top++;
         while (bottom < max && darkRow(b, h - 1 - bottom)) bottom++;
         if (top + bottom < h / 20) return b;
-        return Bitmap.createBitmap(b, 0, top, w, h - top - bottom);
+        // Pas plus que ce qui garde l'image agrandie dans la largeur du panneau (jamais rognée sur les côtés)
+        int minH = (int) (((long) w * frameH + frameW - 1) / frameW);
+        int newH = Math.max(h - top - bottom, minH);
+        if (newH >= h) return b;
+        int cut = h - newH;
+        int cutTop = Math.min(top, Math.round(cut * top / (float) (top + bottom)));
+        return Bitmap.createBitmap(b, 0, cutTop, w, newH);
     }
 
     private static boolean darkRow(Bitmap b, int y) {
