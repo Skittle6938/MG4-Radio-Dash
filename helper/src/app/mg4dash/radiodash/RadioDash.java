@@ -570,8 +570,8 @@ public final class RadioDash {
         java.util.Collections.sort(all, new java.util.Comparator<Object>() {
             @Override public int compare(Object x, Object y) { return label(x).compareToIgnoreCase(label(y)); }
         });
-        // Trois colonnes de lignes, faciles à toucher
-        final int cols = 3;
+        // Quatre colonnes de lignes, faciles à toucher
+        final int cols = 4;
         LinearLayout row = null;
         for (int i = 0; i < all.size(); i++) {
             final Object st = all.get(i);
