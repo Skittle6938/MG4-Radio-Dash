@@ -8,7 +8,7 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (1.5.0, dark and light), FM with the dial and the favourite stations (1.4.0).*
+*Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (1.5.2, dark and light), FM with the dial and the favourite stations (1.4.0).*
 
 ### ★ Favourites window
 
