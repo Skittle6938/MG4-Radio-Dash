@@ -10,6 +10,12 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 *Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (1.5.0, dark and light), FM with the dial and the favourite stations (1.4.0).*
 
+### ★ Favourites window
+
+![Favourites window](screenshots/radio-dash-favourites.jpg)
+
+The **★ Favourites** button at the top of the DAB+ player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 4 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio.
+
 ### What's new in this fork
 
 **1.5.0**
