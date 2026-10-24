@@ -28,6 +28,7 @@ import android.widget.TextView;
 final class Immersive {
     private static final String TAG_HOLDER = "rd_imm";
     private static Bitmap lastArt;
+    private static boolean painted;
     private static int accent = 0xFF2979FF, edge = 0xFF1C2230;
 
     private Immersive() {}
@@ -35,6 +36,7 @@ final class Immersive {
     /** Appelé à chaque rafraîchissement, après la recoloration du thème. */
     static void apply(Activity a, View artView, Bitmap art) {
         if (!Palette.immersiveDab() || artView == null) return;
+        if (art != null && isBlank(art)) art = null;   // image toute noire : comme sans image
         View frame = (View) artView.getParent();
         if (!(frame.getParent() instanceof ViewGroup)) return;
         ViewGroup row = (ViewGroup) frame.getParent();
@@ -67,10 +69,10 @@ final class Immersive {
             final FrameLayout h = holder;
             holder.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> placeFade(h));
             container.addView(holder, 0, new RelativeLayout.LayoutParams(-1, -1));
-            lastArt = null;
+            lastArt = null; painted = false;
         }
-        if (art != lastArt) {
-            lastArt = art;
+        if (art != lastArt || !painted) {
+            lastArt = art; painted = true;
             ImageView pic = (ImageView) holder.getChildAt(0);
             if (art != null) {
                 // Bandes noires en haut et en bas retirées : l'image s'affiche plus large
@@ -80,8 +82,15 @@ final class Immersive {
                 Integer v = vividColor(img);
                 accent = v != null ? v : Palette.accent();
             } else {
-                pic.setImageDrawable(null);
-                edge = 0xFF1C2230;
+                // Pas d'image pour cette station : fond blanc ou noir selon le thème, icône radio discrète
+                int res = a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName());
+                if (res != 0) {
+                    Drawable ic = a.getDrawable(res).mutate();
+                    ic.setTint(Palette.isLight() ? 0x33000000 : 0x33FFFFFF);
+                    pic.setImageDrawable(ic);
+                    pic.setScaleType(ImageView.ScaleType.CENTER);
+                } else pic.setImageDrawable(null);
+                edge = Palette.isLight() ? 0xFFF2F4F8 : 0xFF0B0E14;
                 accent = Palette.accent();
             }
             // Prolongement à gauche : couleur moyenne de la bande de gauche, avec un fondu sur le bord
@@ -237,6 +246,16 @@ final class Immersive {
     private static String name(View v) {
         if (v.getId() == View.NO_ID) return "";
         try { return v.getResources().getResourceEntryName(v.getId()); } catch (Exception e) { return ""; }
+    }
+
+    /** Image presque uniformément noire. */
+    static boolean isBlank(Bitmap b) {
+        int step = Math.max(1, b.getWidth() / 24), bright = 0, n = 0;
+        for (int x = 0; x < b.getWidth(); x += step) for (int y = 0; y < b.getHeight(); y += step) {
+            int c = b.getPixel(x, y); n++;
+            if (Color.red(c) > 24 || Color.green(c) > 24 || Color.blue(c) > 24) bright++;
+        }
+        return n > 0 && bright * 50 < n;
     }
 
     /** Image sans ses bandes noires en haut et en bas (au plus 35 % retirés de chaque côté). */

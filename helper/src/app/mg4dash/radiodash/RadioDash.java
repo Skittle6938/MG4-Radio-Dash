@@ -415,7 +415,8 @@ public final class RadioDash {
         Bitmap b = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
         if (b == null) b = md.getBitmap(MediaMetadata.METADATA_KEY_ART);
         if (b == null) b = md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON);
-        if (b != null) art = b;
+        // Station sans image : on oublie celle de la station précédente (cache de la station, sinon fond uni)
+        art = b;
         if (current != null) applyArt(current);
     }
 

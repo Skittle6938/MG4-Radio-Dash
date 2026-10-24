@@ -58,6 +58,8 @@ public final class Palette {
 
     private static final Map<Integer, Integer> MAP = new HashMap<>();
     private static boolean lightMode = false;
+    /** Thème clair publié par MG4Dash. */
+    public static boolean isLight() { return lightMode; }
     /** Barre verticale à gauche choisie dans MG4Dash (4e champ de mg4dash_theme). */
     public static boolean verticalDock = false;
     /** Lecteur choisi dans MG4Dash (5e champ) : 0 = Immersif (défaut), 1 = Classique. */
