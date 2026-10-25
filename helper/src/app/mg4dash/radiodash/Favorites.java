@@ -1,7 +1,5 @@
 package app.mg4dash.radiodash;
 
-import android.content.Context;
-import android.media.AudioManager;
 import android.util.Log;
 
 import java.lang.reflect.Field;
@@ -97,28 +95,6 @@ public final class Favorites {
             }
         } catch (Throwable t) {
             Log.w(TAG, "favoris FM indisponibles : " + t);
-        }
-        return false;
-    }
-
-    /**
-     * Suivant/précédent reçu alors qu'une autre source a le son (DiAuto, Android Auto, Bluetooth,
-     * USB…) : le launcher d'origine, qui ne reconnaît pas les applis tierces, envoie quand même
-     * les boutons du volant à la radio, qui reprenait alors le son. On ignore la commande.
-     * Types de source SAIC : 1-3 radio, 5 Bluetooth, 6/7/14 USB, 50 CarPlay, 70 Android Auto.
-     * @param listener l'instance RadioService$6 (écouteur du binder)
-     */
-    public static boolean otherSource(Object listener) {
-        try {
-            Object service = field(listener, "this$0");
-            AudioManager am = (AudioManager) ((Context) service).getSystemService(Context.AUDIO_SERVICE);
-            int source = ((Number) AudioManager.class.getMethod("getLastSource").invoke(am)).intValue();
-            if (source >= 5) {
-                Log.i(TAG, "suivant/précédent ignoré : la source " + source + " a le son");
-                return true;
-            }
-        } catch (Throwable t) {
-            Log.w(TAG, "source en cours inconnue : " + t);
         }
         return false;
     }
