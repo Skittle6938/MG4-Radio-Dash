@@ -186,3 +186,13 @@ Check your version before installing:
 ```bash
 adb shell dumpsys package com.saicmotor.radio | grep versionName
 ```
+
+---
+
+## Licence
+
+The code of this project (the `helper/` sources, the `dash/` overlay, the `patches/` and the build script) is free software under the [GNU General Public License v3](COPYING) or later.
+
+The original radio application it patches (`com.saicmotor.radio`) belongs to SAIC Motor and is not covered by this licence.
+
+Personal project, not affiliated with SAIC / MG. Use at your own risk.
