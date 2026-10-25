@@ -1931,6 +1931,16 @@
 
     invoke-virtual {v0, v1}, Lcom/saicmotor/radio/utils/log/Logger;->i(Ljava/lang/String;)V
 
+    invoke-static {p0}, Lapp/mg4dash/radiodash/Favorites;->otherSource(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :mg4_radio_src
+
+    return-void
+
+    :mg4_radio_src
+
     .line 1706
     iget-object v0, p0, Lcom/saicmotor/radio/service/RadioService$6;->this$0:Lcom/saicmotor/radio/service/RadioService;
 
@@ -2089,6 +2099,16 @@
     const-string v1, "onMediaSessionSkipToPrevious()"
 
     invoke-virtual {v0, v1}, Lcom/saicmotor/radio/utils/log/Logger;->i(Ljava/lang/String;)V
+
+    invoke-static {p0}, Lapp/mg4dash/radiodash/Favorites;->otherSource(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-eqz v0, :mg4_radio_src
+
+    return-void
+
+    :mg4_radio_src
 
     .line 1740
     iget-object v0, p0, Lcom/saicmotor/radio/service/RadioService$6;->this$0:Lcom/saicmotor/radio/service/RadioService;
