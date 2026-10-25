@@ -78,6 +78,8 @@ After this patch, **the artwork appears directly on the launcher home screen**, 
 
 ### 2. Auto-resume on car start
 
+> **In MG4 Radio Dash this auto-resume is turned off** (its toggle is hidden): playback at car start is now set in **MG4Dash**, for every source, under Settings › Home › Audio source › *Playback at startup* (as when the car was switched off, always paused or always playing). The section below describes the original DAB+ patch.
+
 If the radio was playing when you switched the car off, it now **starts playing again automatically** the next time you start the car — no need to open the radio app or press play.
 
 - Controlled by an **on-screen toggle** added to the FM and DAB pages ("Auto-resume: ON / OFF"). Default is **ON**.
