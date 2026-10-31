@@ -16,7 +16,7 @@ body:
     id: firmware
     attributes:
       label: Firmware
-      description: Settings › System › Diagnostic, first line (for example SWI69-29958-1100R45)
+      description: MG4Dash › Settings › System › Diagnostic, first line (for example SWI69-29958-1100R45)
     validations:
       required: true
   - type: dropdown
