@@ -18,6 +18,15 @@ The **★ Favourites** button at the top of the DAB+ player opens a full-screen 
 
 ### What's new in this fork
 
+**1.5.2**
+- **Immersive DAB+ player refined**: black bars are cropped as long as the image still fits the panel, and the rest takes the average colour of the image's left edge with a fade. No more image from the previous station: without an image the panel is white or black following the theme.
+- **FM page without album art box**: FM stations never send artwork; the station name and frequency take the whole width.
+- **Auto-resume removed**: the radio stays paused at boot, as stock. Playback at car start is set in MG4Dash, for every source.
+- No more flash of 3 columns of favourites when opening the radio or changing theme.
+
+**1.5.1**
+- **Always Immersive on DAB+**, and the **★ Favourites window in 4 columns** (20 stations visible at once).
+
 **1.5.0**
 - **Immersive DAB+ player**: the station image covers a square player panel, extended by the colour of its edge when it is not square, with the title in white and a play button in the image's main colour, like the Android Auto player. FM keeps its dial.
 - **5 columns of square favourites** on DAB+, sized so that 3 full rows fit before scrolling.
