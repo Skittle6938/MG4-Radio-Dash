@@ -704,7 +704,7 @@ public final class RadioDash {
      */
     private static final class FmAmScan {
         private static final int FM_MIN = 87500, FM_MAX = 108000, AM_MIN = 522, AM_MAX = 1620;
-        private static final int STILL_MS = 10_000, MAX_MS = 600_000, POLL_MS = 500;
+        private static final int STILL_MS = 10_000, MAX_MS = 600_000, POLL_MS = 500, MIN_LISTEN_MS = 1_000;
         private final Activity a; private final int band; private final TextView button, status;
         private final android.widget.ProgressBar bar; private final Runnable fill;
         private boolean running; private int origin, last, highest, found; private long lastMove, lastSeek, started;
@@ -729,11 +729,27 @@ public final class RadioDash {
                 if (ch > highest) highest = ch;
                 int waitMs = seekWaitSeconds(a) * 1000;
                 if (wrapped || now - lastMove > STILL_MS + waitMs || now - started > MAX_MS) { finish(); return; }
-                // FM : station écoutée le temps réglé (pour son nom RDS), puis la suivante
-                if (band != 0 && now - lastMove > waitMs && now - lastSeek > waitMs) { seek(); lastSeek = now; }
+                // FM : le temps réglé est un maximum pour capter le nom RDS : une fois le nom connu, station suivante
+                boolean named = now - lastMove > MIN_LISTEN_MS && now - lastSeek > MIN_LISTEN_MS && hasRdsName(ch);
+                if (band != 0 && (named || now - lastMove > waitMs && now - lastSeek > waitMs)) { seek(); lastSeek = now; }
                 main.postDelayed(this, POLL_MS);
             }
         };
+
+        /** La radio a enregistré un nom RDS pour cette fréquence pendant ce balayage. */
+        private boolean hasRdsName(int ch) {
+            try {
+                Object st = storage(a);
+                List<?> l = (List<?>) st.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(st, 1);
+                if (l != null) for (Object o : l) {
+                    if (((Number) call(o, "getChannelNumber")).intValue() != ch) continue;
+                    Object rds = callQuiet(o, "getRds");
+                    Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
+                    return ps != null && !ps.toString().trim().isEmpty();
+                }
+            } catch (Throwable ignored) {}
+            return false;
+        }
 
         private int scannedCount() {
             try {
