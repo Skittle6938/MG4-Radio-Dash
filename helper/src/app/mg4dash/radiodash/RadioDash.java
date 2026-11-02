@@ -72,6 +72,11 @@ public final class RadioDash {
             {"Refresh", "Actualiser", "Aktualisieren", "Actualizar", "Aggiorna", "Vernieuwen"},
             {"Close", "Fermer", "Schließen", "Cerrar", "Chiudi", "Sluiten"},
             {"Searching for stations…", "Recherche des stations…", "Sendersuche…", "Buscando emisoras…", "Ricerca stazioni…", "Zenders zoeken…"},
+            {"%s stations: tap to add or remove a favourite", "Stations %s : touchez pour ajouter ou retirer un favori",
+                    "%s-Sender: tippen zum Hinzufügen oder Entfernen", "Emisoras %s: toque para añadir o quitar un favorito",
+                    "Stazioni %s: tocca per aggiungere o togliere un preferito", "%s-zenders: tik om een favoriet toe te voegen of te verwijderen"},
+            {"Search for stations", "Chercher les stations", "Sender suchen", "Buscar emisoras", "Cerca stazioni", "Zenders zoeken"},
+            {"Cancel", "Annuler", "Abbrechen", "Cancelar", "Annulla", "Annuleren"},
     };
 
     private static String tr(int i) {
@@ -362,6 +367,63 @@ public final class RadioDash {
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
 
+    /** Hauteur prise sous le lecteur et les favoris en FM / AM, marge comprise (dp). */
+    private static final int STRIP_DP = 112;
+    private static final String STRIP_TAG = "rd_fm_dial";
+
+    /**
+     * FM / AM : bandeau du curseur sur toute la largeur, sous le lecteur et les favoris. Le contenu de l'activité
+     * accueille ce bandeau : il se place d'après les deux panneaux et se cache en DAB et sur les listes SAIC.
+     */
+    private static void fmStrip(Activity a, int band) {
+        View cont = byName(a, "fragment_container");
+        View card = byName(a, "fragment_container_card");
+        View content = a.findViewById(android.R.id.content);
+        if (cont == null || card == null || !(content instanceof android.widget.FrameLayout)) return;
+        boolean fm = band != 4;
+        int reserve = fm ? dp(a, STRIP_DP) : 0;
+        if (cont.getPaddingBottom() != reserve) cont.setPadding(cont.getPaddingLeft(), cont.getPaddingTop(), cont.getPaddingRight(), reserve);
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) card.getLayoutParams();
+        if (lp.bottomMargin != reserve) { lp.bottomMargin = reserve; card.setLayoutParams(lp); }
+        android.widget.FrameLayout root = (android.widget.FrameLayout) content;
+        View old = root.findViewWithTag(STRIP_TAG);
+        android.widget.FrameLayout strip;
+        if (old instanceof android.widget.FrameLayout) strip = (android.widget.FrameLayout) old;
+        else {
+            strip = new android.widget.FrameLayout(a);
+            strip.setTag(STRIP_TAG);
+            strip.setBackground(panel(a, PANEL, 20, BORDER));
+            strip.setPadding(dp(a, 16), 0, dp(a, 16), 0);
+            root.addView(strip, new android.widget.FrameLayout.LayoutParams(1, 1));
+        }
+        View fmList = byName(a, "fl_fm_am_list");
+        View dabList = byName(a, "fl_dab_list");
+        boolean show = fm && (fmList == null || fmList.getVisibility() != View.VISIBLE) && (dabList == null || dabList.getVisibility() != View.VISIBLE);
+        strip.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (!show || cont.getWidth() <= 0 || card.getWidth() <= 0) return;
+        int[] c = new int[2], k = new int[2], r = new int[2];
+        cont.getLocationInWindow(c);
+        card.getLocationInWindow(k);
+        root.getLocationInWindow(r);
+        int left = Math.min(c[0], k[0]) + dp(a, 16) - r[0];
+        int right = k[0] + card.getWidth() - r[0];
+        if (c[0] > k[0]) { left = k[0] - r[0]; right = c[0] + cont.getWidth() - dp(a, 16) - r[0]; }
+        int top = k[1] + card.getHeight() + dp(a, 12) - r[1];
+        android.widget.FrameLayout.LayoutParams s = (android.widget.FrameLayout.LayoutParams) strip.getLayoutParams();
+        int w = right - left, hh = dp(a, STRIP_DP - 12);
+        if (s.leftMargin != left || s.topMargin != top || s.width != w || s.height != hh) {
+            s.leftMargin = left; s.topMargin = top; s.width = w; s.height = hh;
+            strip.setLayoutParams(s);
+        }
+    }
+
+    /** Texte RDS de la station FM : envoyé à MG4Dash, la session média de la radio ne le contient pas. */
+    public static void rdsText(Context c, String text) {
+        try {
+            c.sendBroadcast(new android.content.Intent("app.mg4dash.RDS_TEXT").setPackage("app.mg4dash").putExtra("text", text == null ? "" : text.trim()));
+        } catch (Throwable t) { Log.w(TAG, "texte RDS : " + t); }
+    }
+
     private static boolean squarePlayer(Activity a, int band) {
         View cont = byName(a, "fragment_container");
         View card = byName(a, "fragment_container_card");
@@ -369,7 +431,8 @@ public final class RadioDash {
         int parentW = ((View) card.getParent()).getWidth();
         int h = cont.getHeight();
         int want = dp(a, 640);
-        if (band == 4 && Palette.immersiveDab() && parentW > 0 && h > 0) {
+        // FM / AM : même partage que le DAB, le curseur passe sur toute la largeur en dessous (fmStrip)
+        if ((band != 4 || Palette.immersiveDab()) && parentW > 0 && h > 0) {
             // Panneau = hauteur du conteneur moins sa marge du haut (12 dp) ; à sa largeur s'ajoutent la
             // marge de gauche (16), la marge de droite du panneau (12) et celle de la carte (16)
             int side = h - dp(a, 24);   // marge du haut (12) et du bas (12, alignée sur la barre de gauche)
@@ -398,6 +461,7 @@ public final class RadioDash {
             if (h != null && h.getVisibility() != View.GONE) h.setVisibility(View.GONE);
         }
         squarePlayer(a, band);
+        fmStrip(a, band);
         favManagerButton(a);
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);
@@ -505,9 +569,9 @@ public final class RadioDash {
     }
 
     /**
-     * Fenêtre des stations DAB+ : la liste reçue par le tuner (actualisable) et les favoris déjà choisis,
-     * même s'ils ne sont pas reçus en ce moment. Toucher une ligne ajoute ou retire le favori, aussitôt
-     * enregistré par la radio (même base que l'étoile du lecteur).
+     * Fenêtre des stations de la bande affichée : la liste du tuner et les favoris déjà choisis, même s'ils ne sont
+     * pas reçus en ce moment. Toucher une ligne ajoute ou retire le favori, aussitôt enregistré par la radio (même
+     * base que l'étoile du lecteur). DAB+ : liste actualisable. FM / AM : balayage de la bande, avec sa progression.
      */
     private static void showFavManager(final Activity a) {
         final android.app.Dialog d = new android.app.Dialog(a, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
@@ -518,10 +582,14 @@ public final class RadioDash {
         LinearLayout top = new LinearLayout(a);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(a, 70), 0, 0, 0);   // place du bouton antibrouillards de MG en haut à gauche
-        top.addView(text(a, tr(8), 26, TEXT), new LinearLayout.LayoutParams(0, -2, 1f));
+        int bandNow = 4;
+        try { bandNow = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        final int band = bandNow;
+        final boolean dab = band == 4;
+        top.addView(text(a, dab ? tr(8) : String.format(tr(12), band == 0 ? "AM" : "FM"), 26, TEXT), new LinearLayout.LayoutParams(0, -2, 1f));
         final TextView status = text(a, "", 18, SUB);
         top.addView(status, new LinearLayout.LayoutParams(-2, -2));
-        TextView refresh = text(a, tr(9), 20, TEXT);
+        final TextView refresh = text(a, dab ? tr(9) : tr(13), 20, TEXT);
         TextView close = text(a, tr(10), 20, COLD);
         for (TextView t : new TextView[]{refresh, close}) {
             t.setGravity(Gravity.CENTER);
@@ -532,6 +600,13 @@ public final class RadioDash {
             top.addView(t, lp);
         }
         root.addView(top, new LinearLayout.LayoutParams(-1, -2));
+        // Progression du balayage FM / AM
+        final android.widget.ProgressBar bar = new android.widget.ProgressBar(a, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(1000);
+        bar.setVisibility(View.GONE);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(-1, dp(a, 10));
+        blp.topMargin = dp(a, 12);
+        root.addView(bar, blp);
         android.widget.ScrollView scroll = new android.widget.ScrollView(a);
         final LinearLayout list = new LinearLayout(a);
         list.setOrientation(LinearLayout.VERTICAL);
@@ -540,10 +615,12 @@ public final class RadioDash {
         slp.topMargin = dp(a, 16);
         root.addView(scroll, slp);
         final Runnable fill = new Runnable() {
-            @Override public void run() { fillFavManager(a, list); }
+            @Override public void run() { if (dab) fillFavManager(a, list); else fillFmAmManager(a, list, band); }
         };
+        final FmAmScan scan = dab ? null : new FmAmScan(a, band, refresh, status, bar, fill);
         refresh.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
+                if (scan != null) { scan.toggle(); return; }
                 // Demande au tuner sa liste de stations à jour, puis relit la base après quelques secondes
                 status.setText(tr(11));
                 try {
@@ -559,7 +636,10 @@ public final class RadioDash {
             @Override public void onClick(View v) { d.dismiss(); }
         });
         d.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
-            @Override public void onDismiss(android.content.DialogInterface di) { main.post(tick); }
+            @Override public void onDismiss(android.content.DialogInterface di) {
+                if (scan != null) scan.stop();
+                main.post(tick);
+            }
         });
         d.setContentView(root);
         fill.run();
@@ -568,6 +648,141 @@ public final class RadioDash {
         if (d.getWindow() != null) d.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+    }
+
+    /**
+     * Balayage FM / AM par le service radio. La radio ne publie ses résultats qu'à la fin : la progression suit la
+     * fréquence en cours, et le balayage est considéré fini quand elle ne bouge plus.
+     */
+    private static final class FmAmScan {
+        private static final int STILL_MS = 10_000, MAX_MS = 300_000, POLL_MS = 500;
+        private final Activity a; private final int band; private final TextView button, status;
+        private final android.widget.ProgressBar bar; private final Runnable fill;
+        private boolean running; private int last; private long lastMove, started;
+
+        FmAmScan(Activity a, int band, TextView button, TextView status, android.widget.ProgressBar bar, Runnable fill) {
+            this.a = a; this.band = band; this.button = button; this.status = status; this.bar = bar; this.fill = fill;
+        }
+
+        private final Runnable poll = new Runnable() {
+            @Override public void run() {
+                if (!running) return;
+                long now = android.os.SystemClock.uptimeMillis();
+                int ch = currentFmChannel(storage(a));
+                if (ch != last) { last = ch; lastMove = now; }
+                int min = band == 0 ? 522 : 87500, max = band == 0 ? 1620 : 108000;
+                bar.setProgress(Math.max(0, Math.min(1000, (ch - min) * 1000 / (max - min))));
+                status.setText(ch < 0 ? tr(11) : ch < 1000 || band == 0 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f));
+                if (now - lastMove > STILL_MS || now - started > MAX_MS) finish();
+                else main.postDelayed(this, POLL_MS);
+            }
+        };
+
+        void toggle() { if (running) stop(); else start(); }
+
+        private void start() {
+            Object rm = radioManager;
+            if (rm == null) { Log.w(TAG, "service radio non lié"); return; }
+            try { rm.getClass().getMethod("scan").invoke(rm); }
+            catch (Throwable t) { Log.w(TAG, "balayage : " + t); return; }
+            running = true;
+            started = lastMove = android.os.SystemClock.uptimeMillis();
+            last = currentFmChannel(storage(a));
+            button.setText(tr(14));
+            bar.setProgress(0);
+            bar.setVisibility(View.VISIBLE);
+            main.postDelayed(poll, POLL_MS);
+        }
+
+        void stop() {
+            if (!running) return;
+            try { Object rm = radioManager; if (rm != null) rm.getClass().getMethod("cancelSeekingOrScanning").invoke(rm); }
+            catch (Throwable t) { Log.w(TAG, "arrêt du balayage : " + t); }
+            finish();
+        }
+
+        private void finish() {
+            running = false;
+            main.removeCallbacks(poll);
+            button.setText(tr(13));
+            status.setText("");
+            bar.setVisibility(View.GONE);
+            fill.run();
+        }
+    }
+
+    private static void fillFmAmManager(final Activity a, final LinearLayout list, int band) {
+        list.removeAllViews();
+        final Object storage = storage(a);
+        if (storage == null) return;
+        int key = band == 0 ? 0 : 1;
+        java.util.Map<Integer, Object> all = new java.util.TreeMap<>();
+        java.util.Set<Integer> favChannels = new java.util.HashSet<>();
+        try {
+            List<?> scanned = (List<?>) storage.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(storage, key);
+            if (scanned != null) for (Object st : scanned) all.put(((Number) call(st, "getChannelNumber")).intValue(), st);
+            List<?> favs = (List<?>) storage.getClass().getMethod("getFavoriteForBand", int.class).invoke(storage, key);
+            // Favoris d'avant, même hors de portée : on les garde dans la liste, cochés
+            if (favs != null) for (Object f : favs) {
+                int ch = ((Number) call(f, "getChannelNumber")).intValue();
+                favChannels.add(ch);
+                if (!all.containsKey(ch)) all.put(ch, f);
+            }
+        } catch (Throwable t) { Log.w(TAG, "stations FM / AM : " + t); return; }
+        final int cols = 5;
+        LinearLayout row = null;
+        int i = 0;
+        for (java.util.Map.Entry<Integer, Object> e : all.entrySet()) {
+            final Object st = e.getValue();
+            int ch = e.getKey();
+            if (i++ % cols == 0) {
+                row = new LinearLayout(a);
+                list.addView(row, new LinearLayout.LayoutParams(-1, -2));
+            }
+            final boolean[] on = {favChannels.contains(ch)};
+            final LinearLayout line = new LinearLayout(a);
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.setMinimumHeight(dp(a, 92));
+            line.setPadding(dp(a, 20), dp(a, 10), dp(a, 14), dp(a, 10));
+            Object rds = callQuiet(st, "getRds");
+            Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
+            String nm = ps == null ? "" : ps.toString().trim();
+            String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
+            LinearLayout col = new LinearLayout(a);
+            col.setOrientation(LinearLayout.VERTICAL);
+            TextView name = text(a, nm.isEmpty() ? f : nm, 22, TEXT);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            col.addView(name);
+            if (!nm.isEmpty()) col.addView(text(a, f, 17, SUB));
+            line.addView(col, new LinearLayout.LayoutParams(0, -2, 1f));
+            final TextView star = text(a, "★", 36, ACTION);
+            line.addView(star, new LinearLayout.LayoutParams(-2, -2));
+            final Runnable paint = new Runnable() {
+                @Override public void run() {
+                    star.setTextColor(on[0] ? Palette.starColor() : 0xFF3A4254);
+                    line.setBackground(panel(a, on[0] ? 0x262979FF : BUTTON, 16, on[0] ? Palette.starColor() : BORDER));
+                }
+            };
+            paint.run();
+            line.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    try {
+                        Method m = null;
+                        for (Method x : storage.getClass().getMethods())
+                            if (x.getName().equals(on[0] ? "removeFavorite" : "storeFavorite") && x.getParameterTypes().length == 1) m = x;
+                        if (m == null) return;
+                        m.invoke(storage, st);
+                        on[0] = !on[0];
+                        paint.run();
+                    } catch (Throwable t) { Log.w(TAG, "favori FM / AM : " + t); }
+                }
+            });
+            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(0, -2, 1f);
+            llp.setMargins(dp(a, 6), dp(a, 6), dp(a, 6), dp(a, 6));
+            row.addView(line, llp);
+        }
+        for (int k = i; k % cols != 0 && row != null; k++) row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
     }
 
     private static void fillFavManager(final Activity a, final LinearLayout list) {
@@ -592,8 +807,8 @@ public final class RadioDash {
         java.util.Collections.sort(all, new java.util.Comparator<Object>() {
             @Override public int compare(Object x, Object y) { return label(x).compareToIgnoreCase(label(y)); }
         });
-        // Quatre colonnes de lignes, faciles à toucher
-        final int cols = 4;
+        // Cinq colonnes de lignes, comme en FM / AM
+        final int cols = 5;
         LinearLayout row = null;
         for (int i = 0; i < all.size(); i++) {
             final Object st = all.get(i);
@@ -760,15 +975,14 @@ public final class RadioDash {
                 Object rds = callQuiet(st, "getRds");
                 Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
                 label = ps == null ? "" : ps.toString().trim();
-                // Pas d'image pour une station FM : carte sombre comme les logos DAB, nom RDS en grand
-                // à la couleur du thème au-dessus de la fréquence (la fréquence seule si aucun nom n'est reçu).
+                // Pas d'image pour une station FM : vignette moins haute, nom RDS en grand et en blanc
+                // au-dessus de la fréquence (la fréquence seule si aucun nom n'est reçu).
                 String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 LinearLayout card = new LinearLayout(a);
                 card.setOrientation(LinearLayout.VERTICAL);
                 card.setGravity(Gravity.CENTER);
                 card.setPadding(dp(a, 10), dp(a, 10), dp(a, 10), dp(a, 12));
-                card.setBackground(panel(a, 0xFF0B0F17, 12, BORDER));
-                TextView big = text(a, label.isEmpty() ? f : label, 28, selected ? COLD : ACTION);
+                TextView big = text(a, label.isEmpty() ? f : label, 28, TEXT);
                 big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 big.setGravity(Gravity.CENTER);
                 big.setMaxLines(2);
@@ -789,7 +1003,7 @@ public final class RadioDash {
             tile.setGravity(Gravity.CENTER_HORIZONTAL);
             tile.setPadding(dp(a, 8), dp(a, 8), dp(a, 8), dp(a, 6));
             tile.setBackground(panel(a, selected ? 0x262979FF : BUTTON, 16, selected ? ACTION : BORDER));
-            tile.addView(face, new LinearLayout.LayoutParams(logoSide, logoSide));
+            tile.addView(face, new LinearLayout.LayoutParams(dab ? logoSide : tileW - dp(a, 16), logoSide));
             if (label != null) {
                 TextView t = text(a, label, 16, selected ? TEXT : SUB);
                 t.setSingleLine(true);
