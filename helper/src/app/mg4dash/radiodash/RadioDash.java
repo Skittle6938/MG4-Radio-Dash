@@ -359,13 +359,19 @@ public final class RadioDash {
             @Override public boolean onPreDraw() {
                 int band = -1;
                 try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
-                return !squarePlayer(a, band);   // largeur changée : on saute cette image, la suivante est juste
+                // Changement de bande : le rafraîchissement de fond n'a lieu que toutes les 2 s, d'où un écran
+                // redimensionné puis rempli bien plus tard. On le lance aussitôt.
+                if (band != drawnBand) { drawnBand = band; main.post(tick); }
+                boolean moved = squarePlayer(a, band);
+                moved |= fmStrip(a, band);
+                return !moved;   // dimensions changées : on saute cette image, la suivante est juste
             }
         };
         root.getViewTreeObserver().addOnPreDrawListener(l);
         root.setTag(SQUARE_TAG, l);
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
+    private static int drawnBand = -2;
 
     /** Hauteur prise sous le lecteur et les favoris en FM / AM, marge comprise (dp). */
     private static final int STRIP_DP = 112;
@@ -375,16 +381,17 @@ public final class RadioDash {
      * FM / AM : bandeau du curseur sur toute la largeur, sous le lecteur et les favoris. Le contenu de l'activité
      * accueille ce bandeau : il se place d'après les deux panneaux et se cache en DAB et sur les listes SAIC.
      */
-    private static void fmStrip(Activity a, int band) {
+    private static boolean fmStrip(Activity a, int band) {
         View cont = byName(a, "fragment_container");
         View card = byName(a, "fragment_container_card");
         View content = a.findViewById(android.R.id.content);
-        if (cont == null || card == null || !(content instanceof android.widget.FrameLayout)) return;
+        if (cont == null || card == null || !(content instanceof android.widget.FrameLayout)) return false;
         boolean fm = band != 4;
+        boolean moved = false;
         int reserve = fm ? dp(a, STRIP_DP) : 0;
-        if (cont.getPaddingBottom() != reserve) cont.setPadding(cont.getPaddingLeft(), cont.getPaddingTop(), cont.getPaddingRight(), reserve);
+        if (cont.getPaddingBottom() != reserve) { cont.setPadding(cont.getPaddingLeft(), cont.getPaddingTop(), cont.getPaddingRight(), reserve); moved = true; }
         ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) card.getLayoutParams();
-        if (lp.bottomMargin != reserve) { lp.bottomMargin = reserve; card.setLayoutParams(lp); }
+        if (lp.bottomMargin != reserve) { lp.bottomMargin = reserve; card.setLayoutParams(lp); moved = true; }
         android.widget.FrameLayout root = (android.widget.FrameLayout) content;
         View old = root.findViewWithTag(STRIP_TAG);
         android.widget.FrameLayout strip;
@@ -399,8 +406,8 @@ public final class RadioDash {
         View fmList = byName(a, "fl_fm_am_list");
         View dabList = byName(a, "fl_dab_list");
         boolean show = fm && (fmList == null || fmList.getVisibility() != View.VISIBLE) && (dabList == null || dabList.getVisibility() != View.VISIBLE);
-        strip.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (!show || cont.getWidth() <= 0 || card.getWidth() <= 0) return;
+        if (strip.getVisibility() != (show ? View.VISIBLE : View.GONE)) { strip.setVisibility(show ? View.VISIBLE : View.GONE); moved = true; }
+        if (!show || cont.getWidth() <= 0 || card.getWidth() <= 0) return moved;
         int[] c = new int[2], k = new int[2], r = new int[2];
         cont.getLocationInWindow(c);
         card.getLocationInWindow(k);
@@ -414,7 +421,9 @@ public final class RadioDash {
         if (s.leftMargin != left || s.topMargin != top || s.width != w || s.height != hh) {
             s.leftMargin = left; s.topMargin = top; s.width = w; s.height = hh;
             strip.setLayoutParams(s);
+            moved = true;
         }
+        return moved;
     }
 
     /** Texte RDS de la station FM : envoyé à MG4Dash, la session média de la radio ne le contient pas. */
@@ -462,6 +471,9 @@ public final class RadioDash {
         }
         squarePlayer(a, band);
         fmStrip(a, band);
+        // Ici et pas avant chaque image : changer un fond redemande une image, l'écran se redessinerait sans fin
+        View player = byName(a, "fragment_container");
+        if (band != 4 && player != null) Immersive.styleFmButtons(a, player);
         favManagerButton(a);
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);

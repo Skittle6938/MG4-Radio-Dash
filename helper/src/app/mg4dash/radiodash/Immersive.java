@@ -218,6 +218,12 @@ final class Immersive {
         return false;
     }
 
+    /** FM / AM : mêmes boutons de lecture que le DAB, dans la couleur du thème (pas d'image à laquelle l'accorder). */
+    static void styleFmButtons(Activity a, View root) {
+        accent = Palette.starColor();
+        styleButtons(a, root);
+    }
+
     private static void styleButtons(Activity a, View root) {
         for (String n : new String[]{"btn_dab_previous", "btn_previous"}) icon(a, root, n, "rd_ic_prev");
         for (String n : new String[]{"btn_dab_next", "btn_next"}) icon(a, root, n, "rd_ic_next");
