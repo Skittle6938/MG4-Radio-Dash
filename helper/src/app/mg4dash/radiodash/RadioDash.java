@@ -663,14 +663,17 @@ public final class RadioDash {
     }
 
     /**
-     * Balayage FM / AM par le service radio. La radio ne publie ses résultats qu'à la fin : la progression suit la
-     * fréquence en cours, et le balayage est considéré fini quand elle ne bouge plus.
+     * Balayage de la bande. En AM, le scan du tuner parcourt la bande. En FM, le scan de la radio passe par
+     * startBackgroundScan, refusé par le tuner (« scan ret -> false » sur SWI69) : on enchaîne donc les recherches de la
+     * station suivante depuis le bas de la bande, et la radio enregistre elle-même chaque station trouvée. Le son
+     * suit les stations pendant le balayage, puis revient à celle d'avant. La progression suit la fréquence.
      */
     private static final class FmAmScan {
-        private static final int STILL_MS = 10_000, MAX_MS = 300_000, POLL_MS = 500;
+        private static final int FM_MIN = 87500, FM_MAX = 108000, AM_MIN = 522, AM_MAX = 1620;
+        private static final int NEXT_SEEK_MS = 2_500, STILL_MS = 12_000, MAX_MS = 300_000, POLL_MS = 500;
         private final Activity a; private final int band; private final TextView button, status;
         private final android.widget.ProgressBar bar; private final Runnable fill;
-        private boolean running; private int last; private long lastMove, started;
+        private boolean running; private int origin, last, highest, found; private long lastMove, lastSeek, started;
 
         FmAmScan(Activity a, int band, TextView button, TextView status, android.widget.ProgressBar bar, Runnable fill) {
             this.a = a; this.band = band; this.button = button; this.status = status; this.bar = bar; this.fill = fill;
@@ -680,26 +683,52 @@ public final class RadioDash {
             @Override public void run() {
                 if (!running) return;
                 long now = android.os.SystemClock.uptimeMillis();
+                int count = scannedCount();
+                if (count != found) { found = count; fill.run(); }
                 int ch = currentFmChannel(storage(a));
                 if (ch != last) { last = ch; lastMove = now; }
-                int min = band == 0 ? 522 : 87500, max = band == 0 ? 1620 : 108000;
+                int min = band == 0 ? AM_MIN : FM_MIN, max = band == 0 ? AM_MAX : FM_MAX;
                 bar.setProgress(Math.max(0, Math.min(1000, (ch - min) * 1000 / (max - min))));
-                status.setText(ch < 0 ? tr(11) : ch < 1000 || band == 0 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f));
-                if (now - lastMove > STILL_MS || now - started > MAX_MS) finish();
-                else main.postDelayed(this, POLL_MS);
+                status.setText(ch < 0 ? tr(11) : band == 0 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f));
+                // Revenu en bas de bande après être monté : tout est parcouru
+                boolean wrapped = band != 0 && highest > FM_MIN + 1000 && ch >= 0 && ch < highest - 1000;
+                if (ch > highest) highest = ch;
+                if (wrapped || now - lastMove > STILL_MS || now - started > MAX_MS) { finish(); return; }
+                // FM : station entendue un instant (pour son nom RDS), puis la suivante
+                if (band != 0 && now - lastMove > NEXT_SEEK_MS && now - lastSeek > NEXT_SEEK_MS) { seek(); lastSeek = now; }
+                main.postDelayed(this, POLL_MS);
             }
         };
+
+        private int scannedCount() {
+            try {
+                Object st = storage(a);
+                List<?> l = (List<?>) st.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(st, band == 0 ? 0 : 1);
+                return l == null ? 0 : l.size();
+            } catch (Throwable t) { return found; }
+        }
+
+        private boolean command(String name) {
+            Object rm = radioManager;
+            if (rm == null) { Log.w(TAG, "service radio non lié"); return false; }
+            try { rm.getClass().getMethod(name).invoke(rm); return true; }
+            catch (Throwable t) { Log.w(TAG, name + " : " + t); return false; }
+        }
+
+        private void seek() { command("seekForward"); }
 
         void toggle() { if (running) stop(); else start(); }
 
         private void start() {
-            Object rm = radioManager;
-            if (rm == null) { Log.w(TAG, "service radio non lié"); return; }
-            try { rm.getClass().getMethod("scan").invoke(rm); }
-            catch (Throwable t) { Log.w(TAG, "balayage : " + t); return; }
+            origin = currentFmChannel(storage(a));
+            if (band == 0) { if (!command("scan")) return; }
+            else { tuneFm(FM_MIN); }
             running = true;
             started = lastMove = android.os.SystemClock.uptimeMillis();
-            last = currentFmChannel(storage(a));
+            lastSeek = band == 0 ? started : started - NEXT_SEEK_MS + 1_000;
+            last = origin;
+            highest = -1;
+            found = scannedCount();
             button.setText(tr(14));
             bar.setProgress(0);
             bar.setVisibility(View.VISIBLE);
@@ -708,14 +737,14 @@ public final class RadioDash {
 
         void stop() {
             if (!running) return;
-            try { Object rm = radioManager; if (rm != null) rm.getClass().getMethod("cancelSeekingOrScanning").invoke(rm); }
-            catch (Throwable t) { Log.w(TAG, "arrêt du balayage : " + t); }
+            command("cancelSeekingOrScanning");
             finish();
         }
 
         private void finish() {
             running = false;
             main.removeCallbacks(poll);
+            if (band != 0 && origin > 0) tuneFm(origin);
             button.setText(tr(13));
             status.setText("");
             bar.setVisibility(View.GONE);
