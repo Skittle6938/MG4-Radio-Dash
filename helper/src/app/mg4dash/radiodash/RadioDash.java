@@ -601,6 +601,7 @@ public final class RadioDash {
         top.addView(text(a, dab ? tr(8) : String.format(tr(12), band == 0 ? "AM" : "FM"), 26, TEXT), new LinearLayout.LayoutParams(0, -2, 1f));
         final TextView status = text(a, "", 18, SUB);
         top.addView(status, new LinearLayout.LayoutParams(-2, -2));
+        if (band == 1) top.addView(seekWaitControl(a));
         final TextView refresh = text(a, dab ? tr(9) : tr(13), 20, TEXT);
         TextView close = text(a, tr(10), 20, COLD);
         for (TextView t : new TextView[]{refresh, close}) {
@@ -662,15 +663,48 @@ public final class RadioDash {
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }
 
+    private static final String SEEK_WAIT_KEY = "rd_seek_wait_s";
+    private static final int SEEK_WAIT_MIN = 1, SEEK_WAIT_MAX = 15, SEEK_WAIT_DEFAULT = 3;
+
+    private static int seekWaitSeconds(Context c) {
+        return c.getSharedPreferences("radio_dash", Context.MODE_PRIVATE).getInt(SEEK_WAIT_KEY, SEEK_WAIT_DEFAULT);
+    }
+
+    /** Temps d'écoute de chaque station pendant le balayage FM : ◀ 3 s ▶, de 1 à 15 s. */
+    private static View seekWaitControl(final Activity a) {
+        LinearLayout box = new LinearLayout(a);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        box.setBackground(panel(a, BUTTON, 14, BORDER));
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 64));
+        boxLp.setMarginStart(dp(a, 14));
+        box.setLayoutParams(boxLp);
+        final TextView value = text(a, seekWaitSeconds(a) + " s", 20, TEXT);
+        value.setGravity(Gravity.CENTER);
+        for (final int step : new int[]{-1, 1}) {
+            TextView arrow = text(a, step < 0 ? "◀" : "▶", 20, TEXT);
+            arrow.setGravity(Gravity.CENTER);
+            arrow.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    int w = Math.max(SEEK_WAIT_MIN, Math.min(SEEK_WAIT_MAX, seekWaitSeconds(a) + step));
+                    a.getSharedPreferences("radio_dash", Context.MODE_PRIVATE).edit().putInt(SEEK_WAIT_KEY, w).apply();
+                    value.setText(w + " s");
+                }
+            });
+            if (step > 0) box.addView(value, new LinearLayout.LayoutParams(dp(a, 64), -1));
+            box.addView(arrow, new LinearLayout.LayoutParams(dp(a, 64), -1));
+        }
+        return box;
+    }
+
     /**
      * Balayage de la bande. En AM, le scan du tuner parcourt la bande. En FM, le scan de la radio passe par
      * startBackgroundScan, refusé par le tuner (« scan ret -> false » sur SWI69) : on enchaîne donc les recherches de la
      * station suivante depuis le bas de la bande, et la radio enregistre elle-même chaque station trouvée. Le son
-     * suit les stations pendant le balayage, puis revient à celle d'avant. La progression suit la fréquence.
+     * suit les stations pendant le balayage (temps d'écoute réglable), puis revient à celle d'avant. La progression suit la fréquence.
      */
     private static final class FmAmScan {
         private static final int FM_MIN = 87500, FM_MAX = 108000, AM_MIN = 522, AM_MAX = 1620;
-        private static final int NEXT_SEEK_MS = 2_500, STILL_MS = 12_000, MAX_MS = 300_000, POLL_MS = 500;
+        private static final int STILL_MS = 10_000, MAX_MS = 600_000, POLL_MS = 500;
         private final Activity a; private final int band; private final TextView button, status;
         private final android.widget.ProgressBar bar; private final Runnable fill;
         private boolean running; private int origin, last, highest, found; private long lastMove, lastSeek, started;
@@ -693,9 +727,10 @@ public final class RadioDash {
                 // Revenu en bas de bande après être monté : tout est parcouru
                 boolean wrapped = band != 0 && highest > FM_MIN + 1000 && ch >= 0 && ch < highest - 1000;
                 if (ch > highest) highest = ch;
-                if (wrapped || now - lastMove > STILL_MS || now - started > MAX_MS) { finish(); return; }
-                // FM : station entendue un instant (pour son nom RDS), puis la suivante
-                if (band != 0 && now - lastMove > NEXT_SEEK_MS && now - lastSeek > NEXT_SEEK_MS) { seek(); lastSeek = now; }
+                int waitMs = seekWaitSeconds(a) * 1000;
+                if (wrapped || now - lastMove > STILL_MS + waitMs || now - started > MAX_MS) { finish(); return; }
+                // FM : station écoutée le temps réglé (pour son nom RDS), puis la suivante
+                if (band != 0 && now - lastMove > waitMs && now - lastSeek > waitMs) { seek(); lastSeek = now; }
                 main.postDelayed(this, POLL_MS);
             }
         };
@@ -725,7 +760,7 @@ public final class RadioDash {
             else { tuneFm(FM_MIN); }
             running = true;
             started = lastMove = android.os.SystemClock.uptimeMillis();
-            lastSeek = band == 0 ? started : started - NEXT_SEEK_MS + 1_000;
+            lastSeek = started;
             last = origin;
             highest = -1;
             found = scannedCount();
