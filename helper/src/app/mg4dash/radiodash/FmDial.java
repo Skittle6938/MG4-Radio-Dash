@@ -21,7 +21,7 @@ import java.util.Locale;
 public final class FmDial extends View {
     public interface OnTune { void tune(int channelKHz); }
 
-    private static final int MIN = 87500, MAX = 108000, STEP = 50;
+    private static final int MIN = 87500, MAX = 108000, STEP = 100;
     private int value = -1;          // fréquence en kHz
     private int dragValue = -1;
     private List<Integer> favorites = new ArrayList<>();
