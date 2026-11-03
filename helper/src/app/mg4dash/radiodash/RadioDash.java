@@ -149,6 +149,7 @@ public final class RadioDash {
                 }
                 fixLayout(a);
                 applyArt(a);
+                rdsFavoriteName(a);
                 renderFavorites(a);
                 updateFmDial(a);
                 Palette.recolor(a.getWindow().getDecorView());
@@ -1168,6 +1169,64 @@ public final class RadioDash {
             sb.append(ps).append(',');
         }
         return sb.toString();
+    }
+
+    // ── Nom RDS des favoris FM ────────────────────────────────────────────────
+    // La radio SAIC enregistre le nom RDS d'un favori à chaque métadonnée reçue, mais juste après un
+    // changement de fréquence elle peut recevoir le nom de la station d'avant et le garder (le 104,3
+    // nommé comme le 101,9). Ici, un nom RDS apparu après l'accord, sur une fréquence écoutée depuis au
+    // moins 6 s, remplace le nom enregistré du favori s'il est différent.
+    private static int rdsChannel = -1;
+    private static long rdsTunedAt, rdsSeenAt;
+    private static String rdsLastPs = "";
+    private static final long RDS_SETTLE_MS = 6000;
+
+    private static void rdsFavoriteName(Activity a) {
+        try {
+            Object storage = storage(a);
+            if (storage == null) return;
+            if (((Number) call(storage, "getStoredRadioBand")).intValue() != 1) { rdsChannel = -1; return; }
+            long now = android.os.SystemClock.uptimeMillis();
+            int ch = currentFmChannel(storage);
+            Object rds = callQuiet(storage, "getRadioRds");
+            Object psObj = rds == null ? null : callQuiet(rds, "getProgramService");
+            String ps = psObj == null ? "" : psObj.toString().trim();
+            if (ch != rdsChannel) {
+                // Un nom déjà différent de celui de la station d'avant compte comme reçu après l'accord
+                rdsSeenAt = ps.equals(rdsLastPs) ? 0 : now;
+                rdsChannel = ch; rdsTunedAt = now; rdsLastPs = ps;
+                return;
+            }
+            if (!ps.equals(rdsLastPs)) { rdsLastPs = ps; rdsSeenAt = now; }
+            // Nom reçu après l'accord (pas un reste de la station d'avant), fréquence écoutée assez longtemps
+            if (ps.length() < 2 || rdsSeenAt < rdsTunedAt || rdsSeenAt == 0 || now - rdsTunedAt < RDS_SETTLE_MS) return;
+            Method forBand = storage.getClass().getMethod("getFavoriteForBand", int.class);
+            List<?> favs = (List<?>) forBand.invoke(storage, 1);
+            if (favs == null) return;
+            Object mine = null;
+            for (Object f : favs) {
+                Object c = callQuiet(f, "getChannelNumber");
+                if (!(c instanceof Number)) continue;
+                if (((Number) c).intValue() == ch) { mine = f; continue; }
+                // Nom déjà porté par un autre favori : sans doute un reste de cette station, on n'y touche pas
+                Object r = callQuiet(f, "getRds");
+                Object p = r == null ? null : callQuiet(r, "getProgramService");
+                if (p != null && ps.equalsIgnoreCase(p.toString().trim())) return;
+            }
+            for (Object f : mine == null ? java.util.Collections.emptyList() : java.util.Collections.singletonList(mine)) {
+                Object old = callQuiet(f, "getRds");
+                Object oldPs = old == null ? null : callQuiet(old, "getProgramService");
+                if (oldPs != null && ps.equals(oldPs.toString().trim())) return;
+                Class<?> rs = Class.forName("com.android.car.radio.service.RadioStation");
+                Class<?> rdsCls = Class.forName("com.android.car.radio.service.RadioRds");
+                Object station = rs.getConstructor(int.class, int.class, int.class, rdsCls).newInstance(ch, 0, 1, rds);
+                storage.getClass().getMethod("storeFavorite", rs).invoke(storage, station);
+                Log.i(TAG, "favori " + ch + " : nom RDS « " + oldPs + " » remplacé par « " + ps + " »");
+                return;
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "nom RDS du favori : " + t);
+        }
     }
 
     // ── Cadran FM (remplace la règle d'origine, masquée dans la mise en page) ──
