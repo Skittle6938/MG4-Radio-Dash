@@ -12,17 +12,24 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 *Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (1.5.2, dark and light), FM with the dial and the favourite stations (1.4.0).*
 
-### ★ Favourites window
+### ★ Stations window
 
-![Favourites window](screenshots/radio-dash-favourites.jpg)
+![Stations window](screenshots/radio-dash-favourites.jpg)
 
-The **★ Favourites** button at the top of the DAB+ player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 4 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio.
+The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of the player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 4 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio.
 
 ### What's new in this fork
 
+**Next version (in testing, not released yet)**
+- **AM page with the same layout as FM**: frequency, favourite star, playback buttons and the full-width dial at the bottom, from 522 to 1620 kHz in 9 kHz steps, with the AM favourites. The stock AM ruler is hidden. AM favourites are shown in kHz (1098 kHz instead of 1,1 MHz).
+- **Band tabs aligned on the player** when the AM tab is shown (SWI68), so the third tab no longer covers the favourites.
+- **★ Favourites button renamed ★ Stations**: it lists every station received, the favourites are already on the right.
+- **FM dial**: while dragging, only the labels under the frequency bubble are hidden.
+- **RDS name of FM favourites kept up to date**: a new RDS name received after tuning (after 6 s on the frequency) replaces the stored name, so a favourite no longer keeps the name of the previous station.
+
 **1.6.0**
 - **New FM and AM page**: full-width dial under the same panels as DAB+, 0.1 MHz steps on FM, 3 rows of favourites, same playback buttons and favourite star as DAB+.
-- **FM scan** in the Favourites window: stations found one after the other, with an adjustable listening time per station; it moves on as soon as the RDS name is known.
+- **FM scan** in the Stations window: stations found one after the other, with an adjustable listening time per station; it moves on as soon as the RDS name is known.
 - **Band change at once**, and the **Favourites window in 5 columns**, replacing the DAB+ search list button.
 - **RDS text** sent to the music card of MG4Dash (1.7.2 beta 6 or later).
 
