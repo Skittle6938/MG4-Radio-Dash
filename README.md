@@ -16,7 +16,7 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 ![Stations window](screenshots/radio-dash-favourites.jpg)
 
-The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of the player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 5 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio. On FM and AM, the same window lists the stations of that band and offers the scan described under 1.6.0. On FM and AM, the same window lists the stations of that band and offers the scan described under 1.6.0.
+The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of the player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 5 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio. On FM and AM, the same window lists the stations of that band and offers the scan described under 1.6.0.
 
 ### What's new in this fork
 
