@@ -860,7 +860,7 @@ public final class RadioDash {
             Object rds = callQuiet(st, "getRds");
             Object ps = rds == null ? null : callQuiet(rds, "getProgramService");
             String nm = ps == null ? "" : ps.toString().trim();
-            String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
+            String f = ch < 30000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
             LinearLayout col = new LinearLayout(a);
             col.setOrientation(LinearLayout.VERTICAL);
             TextView name = text(a, nm.isEmpty() ? f : nm, 22, TEXT);
@@ -1090,7 +1090,7 @@ public final class RadioDash {
                 label = ps == null ? "" : ps.toString().trim();
                 // Pas d'image pour une station FM : vignette moins haute, nom RDS en grand et en blanc
                 // au-dessus de la fréquence (la fréquence seule si aucun nom n'est reçu).
-                String f = ch < 1000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
+                String f = ch < 30000 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 LinearLayout card = new LinearLayout(a);
                 card.setOrientation(LinearLayout.VERTICAL);
                 card.setGravity(Gravity.CENTER);
