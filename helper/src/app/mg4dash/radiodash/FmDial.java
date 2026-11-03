@@ -21,7 +21,8 @@ import java.util.Locale;
 public final class FmDial extends View {
     public interface OnTune { void tune(int channelKHz); }
 
-    private static final int MIN = 87500, MAX = 108000, STEP = 100;
+    private boolean am;              // AM : 522 à 1620 kHz par pas de 9 kHz, sinon FM 87,5 à 108 MHz
+    private int MIN = 87500, MAX = 108000, STEP = 100;
     private int value = -1;          // fréquence en kHz
     private int dragValue = -1;
     private List<Integer> favorites = new ArrayList<>();
@@ -62,6 +63,18 @@ public final class FmDial extends View {
 
     public void setOnTune(OnTune t) { onTune = t; }
 
+    public void setAm(boolean on) {
+        if (on == am) return;
+        am = on;
+        MIN = am ? 522 : 87500; MAX = am ? 1620 : 108000; STEP = am ? 9 : 100;
+        value = -1; dragValue = -1;
+        invalidate();
+    }
+
+    private String format(int khz) {
+        return am ? khz + " kHz" : String.format(Locale.getDefault(), "%.1f", khz / 1000f);
+    }
+
     public void setValue(int khz) {
         if (dragValue < 0 && khz != value) { value = khz; invalidate(); }
     }
@@ -80,26 +93,34 @@ public final class FmDial extends View {
     private int valueAt(float x) {
         float w = getWidth() - 2 * pad();
         float f = Math.max(0f, Math.min(1f, (x - pad()) / w));
-        int v = MIN + Math.round(f * (MAX - MIN) / STEP) * STEP;
+        int v = MIN + Math.round(f * (MAX - MIN) / (float) STEP) * STEP;
         return Math.max(MIN, Math.min(MAX, v));
     }
 
     @Override protected void onDraw(Canvas c) {
         float cy = 30 * d;
         float th = 6 * d;
-        // Graduations : petite marque tous les 1 MHz, libellé tous les 4 MHz
-        for (int f = 88000; f <= 108000; f += 1000) {
+        // Graduations : FM, petite marque tous les 1 MHz, libellé tous les 4 MHz ; AM, marque tous les
+        // 100 kHz, libellé tous les 200 kHz. Pendant le glissement, seuls les libellés sous la bulle se cachent.
+        int v0 = dragValue >= 0 ? dragValue : value;
+        float bx = dragValue >= 0 ? xOf(dragValue) : 0;
+        float bhalf = dragValue >= 0 ? (bubbleText.measureText(format(dragValue)) + 20 * d) / 2 : 0;
+        int first = am ? 600 : 88000, last = am ? 1600 : 108000, step = am ? 100 : 1000, major = am ? 200 : 4000;
+        for (int f = first; f <= last; f += step) {
             float x = xOf(f);
-            boolean major = (f - 88000) % 4000 == 0;
-            float h = major ? 10 * d : 5 * d;
+            boolean big = (f - first) % major == 0;
+            float h = big ? 10 * d : 5 * d;
             c.drawRect(x - 0.75f * d, cy + th + 6 * d, x + 0.75f * d, cy + th + 6 * d + h, tick);
-            if (major && dragValue < 0) c.drawText(String.valueOf(f / 1000), x, cy + th + 28 * d, label);
+            if (!big) continue;
+            String s = String.valueOf(am ? f : f / 1000);
+            float half = label.measureText(s) / 2 + 6 * d;
+            if (dragValue < 0 || Math.abs(x - bx) > bhalf + half) c.drawText(s, x, cy + th + 28 * d, label);
         }
         // Piste
         rect.set(pad(), cy - th / 2, getWidth() - pad(), cy + th / 2);
         c.drawRoundRect(rect, th, th, track);
-        int v = dragValue >= 0 ? dragValue : value;
-        if (v >= MIN) {
+        int v = v0;
+        if (v >= MIN && v <= MAX) {
             float x = xOf(v);
             active.setShader(new LinearGradient(pad(), 0, x, 0, Palette.map(0xFF00D2FF), Palette.map(0xFF2979FF), Shader.TileMode.CLAMP));
             rect.set(pad(), cy - th / 2, x, cy + th / 2);
@@ -108,17 +129,18 @@ public final class FmDial extends View {
         // Favoris
         if (heart != null) heart.setTint(Palette.starColor());
         if (heart != null) for (Integer f : favorites) {
+            if (f < MIN || f > MAX) continue;
             float hs = 16 * d, hx = xOf(f);
             heart.setBounds((int) (hx - hs / 2), (int) (cy - th - 4 * d - hs), (int) (hx + hs / 2), (int) (cy - th - 4 * d));
             heart.draw(c);
         }
         // Curseur
-        if (v >= MIN) {
+        if (v >= MIN && v <= MAX) {
             float x = xOf(v);
             c.drawCircle(x, cy, 15 * d, glow);
             c.drawCircle(x, cy, 9 * d, thumb);
             if (dragValue >= 0) {
-                String s = String.format(Locale.getDefault(), "%.1f", dragValue / 1000f);
+                String s = format(dragValue);
                 float bw = bubbleText.measureText(s) + 20 * d;
                 rect.set(x - bw / 2, cy + 16 * d, x + bw / 2, cy + 44 * d);
                 c.drawRoundRect(rect, 12 * d, 12 * d, bubble);

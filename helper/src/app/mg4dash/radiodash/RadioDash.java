@@ -65,7 +65,7 @@ public final class RadioDash {
                     "Añada favoritos con ★: el volante y la pantalla de inicio pasarán de uno a otro",
                     "Aggiungi preferiti con ★: volante e schermata home passeranno dall'uno all'altro",
                     "Voeg favorieten toe met ★: stuur en startscherm schakelen dan tussen deze zenders"},
-            {"Favourites", "Favoris", "Favoriten", "Favoritos", "Preferiti", "Favorieten"},
+            {"Stations", "Stations", "Sender", "Emisoras", "Stazioni", "Zenders"},
             {"DAB+ stations: tap to add or remove a favourite", "Stations DAB+ : touchez pour ajouter ou retirer un favori",
                     "DAB+-Sender: tippen zum Hinzufügen oder Entfernen", "Emisoras DAB+: toque para añadir o quitar un favorito",
                     "Stazioni DAB+: tocca per aggiungere o togliere un preferito", "DAB+-zenders: tik om een favoriet toe te voegen of te verwijderen"},
@@ -773,7 +773,7 @@ public final class RadioDash {
         private void start() {
             origin = currentFmChannel(storage(a));
             if (band == 0) { if (!command("scan")) return; }
-            else { tuneFm(FM_MIN); }
+            else { tuneAmFm(FM_MIN, false); }
             running = true;
             started = lastMove = android.os.SystemClock.uptimeMillis();
             lastSeek = started;
@@ -795,7 +795,7 @@ public final class RadioDash {
         private void finish() {
             running = false;
             main.removeCallbacks(poll);
-            if (band != 0 && origin > 0) tuneFm(origin);
+            if (band != 0 && origin > 0) tuneAmFm(origin, false);
             button.setText(tr(13));
             status.setText("");
             bar.setVisibility(View.GONE);
@@ -1161,16 +1161,21 @@ public final class RadioDash {
         } else {
             dial = new FmDial(a);
             dial.setOnTune(new FmDial.OnTune() {
-                @Override public void tune(int khz) { tuneFm(khz); }
+                @Override public void tune(int khz) { tuneAmFm(khz, amBand); }
             });
             box.addView(dial, new ViewGroup.LayoutParams(-1, -1));
         }
         Object storage = storage(a);
         if (storage == null) return;
+        int band = -1;
+        try { band = ((Number) call(storage, "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        if (band == 4) return;   // DAB : le bandeau est caché
+        amBand = band == 0;
+        dial.setAm(amBand);
         dial.setValue(currentFmChannel(storage));
         List<Integer> chans = new ArrayList<>();
         Method forBand = storage.getClass().getMethod("getFavoriteForBand", int.class);
-        List<?> favs = (List<?>) forBand.invoke(storage, 1);
+        List<?> favs = (List<?>) forBand.invoke(storage, amBand ? 0 : 1);
         if (favs != null) for (Object f : favs) {
             Object ch = callQuiet(f, "getChannelNumber");
             if (ch instanceof Number) chans.add(((Number) ch).intValue());
@@ -1178,14 +1183,17 @@ public final class RadioDash {
         dial.setFavorites(chans);
     }
 
-    private static void tuneFm(int khz) {
+    private static boolean amBand;
+
+    /** Accord direct depuis le cadran : bande 0 = AM, 1 = FM. */
+    private static void tuneAmFm(int khz, boolean am) {
         try {
             Class<?> rs = Class.forName("com.android.car.radio.service.RadioStation");
             Class<?> rds = Class.forName("com.android.car.radio.service.RadioRds");
-            Object station = rs.getConstructor(int.class, int.class, int.class, rds).newInstance(khz, 0, 1, null);
+            Object station = rs.getConstructor(int.class, int.class, int.class, rds).newInstance(khz, 0, am ? 0 : 1, null);
             tune(station, false);
         } catch (Throwable t) {
-            Log.w(TAG, "accord FM " + khz + " : " + t);
+            Log.w(TAG, "accord " + (am ? "AM " : "FM ") + khz + " : " + t);
         }
     }
 
