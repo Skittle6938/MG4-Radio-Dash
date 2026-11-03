@@ -20,6 +20,12 @@ The **★ Favourites** button at the top of the DAB+ player opens a full-screen 
 
 ### What's new in this fork
 
+**1.6.0**
+- **New FM and AM page**: full-width dial under the same panels as DAB+, 0.1 MHz steps on FM, 3 rows of favourites, same playback buttons and favourite star as DAB+.
+- **FM scan** in the Favourites window: stations found one after the other, with an adjustable listening time per station; it moves on as soon as the RDS name is known.
+- **Band change at once**, and the **Favourites window in 5 columns**, replacing the DAB+ search list button.
+- **RDS text** sent to the music card of MG4Dash (1.7.2 beta 6 or later).
+
 **1.5.2**
 - **Immersive DAB+ player refined**: black bars are cropped as long as the image still fits the panel, and the rest takes the average colour of the image's left edge with a fade. No more image from the previous station: without an image the panel is white or black following the theme.
 - **FM page without album art box**: FM stations never send artwork; the station name and frequency take the whole width.
