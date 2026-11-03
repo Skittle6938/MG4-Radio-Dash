@@ -452,6 +452,26 @@ public final class RadioDash {
         return false;
     }
 
+    /**
+     * Onglets de bande : avec l'onglet AM en plus (SWI68), le troisième débordait sur le panneau des favoris.
+     * Dans ce cas la rangée se cale à gauche, sur le bord du lecteur ; sinon elle garde sa marge de 92 dp.
+     */
+    private static void alignTabs(Activity a) {
+        View bar = byName(a, "rl_menu_bar");
+        View am = byName(a, "layout_tab_am");
+        View cont = byName(a, "fragment_container");
+        if (bar == null || cont == null || !(bar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) bar.getLayoutParams();
+        int want = dp(a, 92);
+        if (am != null && am.getVisibility() == View.VISIBLE && bar.getParent() instanceof View && cont.getWidth() > 0) {
+            int[] c = new int[2], p = new int[2];
+            cont.getLocationInWindow(c);
+            ((View) bar.getParent()).getLocationInWindow(p);
+            want = Math.max(0, c[0] + dp(a, 16) - p[0]);
+        }
+        if (lp.getMarginStart() != want) { lp.setMarginStart(want); bar.setLayoutParams(lp); }
+    }
+
     private static void fixLayout(Activity a) {
         // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
         // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
@@ -471,6 +491,7 @@ public final class RadioDash {
         }
         squarePlayer(a, band);
         fmStrip(a, band);
+        alignTabs(a);
         // Ici et pas avant chaque image : changer un fond redemande une image, l'écran se redessinerait sans fin
         View player = byName(a, "fragment_container");
         if (band != 4 && player != null) Immersive.styleFmButtons(a, player);
