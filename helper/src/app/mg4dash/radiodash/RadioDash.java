@@ -369,6 +369,18 @@ public final class RadioDash {
                 // Changement de bande : le rafraîchissement de fond n'a lieu que toutes les 2 s, d'où un écran
                 // redimensionné puis rempli bien plus tard. On le lance aussitôt.
                 if (band != drawnBand) { drawnBand = band; favsDirty = true; main.post(tick); }
+                // Nouveau lecteur (la radio change de fragment avec la bande) : boutons, couleurs et image
+                // sont posés avant sa première image, pas au rafraîchissement suivant
+                View player = byName(a, "fragment_container");
+                if (player instanceof ViewGroup) {
+                    ViewGroup g = (ViewGroup) player;
+                    boolean fresh = false;
+                    for (int i = 0; i < g.getChildCount(); i++) {
+                        View page = g.getChildAt(i);
+                        if (page.getTag(STYLED_TAG) == null) { page.setTag(STYLED_TAG, Boolean.TRUE); fresh = true; }
+                    }
+                    if (fresh) { tick.run(); return false; }
+                }
                 boolean moved = squarePlayer(a, band);
                 moved |= fmStrip(a, band);
                 if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
@@ -426,6 +438,7 @@ public final class RadioDash {
         }
     }
     private static final int TAB_TAG = 0x7f7a0003;
+    private static final int STYLED_TAG = 0x7f7a0004;
 
     /** Hauteur prise sous le lecteur et les favoris en FM / AM, marge comprise (dp). */
     private static final int STRIP_DP = 112;
