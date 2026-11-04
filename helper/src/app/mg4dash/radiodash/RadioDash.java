@@ -501,6 +501,9 @@ public final class RadioDash {
         squarePlayer(a, band);
         fmStrip(a, band);
         alignTabs(a);
+        // AM : la radio écrit « KHz », les cartes et le cadran disent « kHz »
+        View hz = byName(a, "tx_radio_hz_type");
+        if (hz instanceof TextView && "KHz".contentEquals(((TextView) hz).getText())) ((TextView) hz).setText("kHz");
         // Ici et pas avant chaque image : changer un fond redemande une image, l'écran se redessinerait sans fin
         View player = byName(a, "fragment_container");
         if (band != 4 && player != null) Immersive.styleFmButtons(a, player);
