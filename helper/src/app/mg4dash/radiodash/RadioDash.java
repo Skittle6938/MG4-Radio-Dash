@@ -419,9 +419,11 @@ public final class RadioDash {
         cont.getLocationInWindow(c);
         card.getLocationInWindow(k);
         root.getLocationInWindow(r);
-        int left = Math.min(c[0], k[0]) + dp(a, 16) - r[0];
+        // Bord gauche du bandeau = bord gauche du panneau du lecteur (le conteneur n'a pas de marge à gauche),
+        // bord droit = bord droit des favoris. Lecteur à droite : l'inverse, moins la marge de droite du lecteur (12 dp).
+        int left = c[0] - r[0];
         int right = k[0] + card.getWidth() - r[0];
-        if (c[0] > k[0]) { left = k[0] - r[0]; right = c[0] + cont.getWidth() - dp(a, 16) - r[0]; }
+        if (c[0] > k[0]) { left = k[0] - r[0]; right = c[0] + cont.getWidth() - dp(a, 12) - r[0]; }
         int top = k[1] + card.getHeight() + dp(a, 12) - r[1];
         android.widget.FrameLayout.LayoutParams s = (android.widget.FrameLayout.LayoutParams) strip.getLayoutParams();
         int w = right - left, hh = dp(a, STRIP_DP - 12);
@@ -1360,12 +1362,15 @@ public final class RadioDash {
         }
     }
 
+    /** Fréquence en cours de la bande FM ou AM affichée (kHz). La radio la garde par bande : 0 = AM, 1 = FM. */
     private static int currentFmChannel(Object storage) {
         Object ch = callQuiet(storage, "getStoredRadioChannel");
         if (ch instanceof Number) return ((Number) ch).intValue();
         try {
+            int band = 1;
+            try { band = ((Number) call(storage, "getStoredRadioBand")).intValue() == 0 ? 0 : 1; } catch (Throwable ignored) {}
             Method m = storage.getClass().getMethod("getStoredRadioChannel", int.class);
-            return ((Number) m.invoke(storage, 1)).intValue();
+            return ((Number) m.invoke(storage, band)).intValue();
         } catch (Throwable t) {
             return -1;
         }
