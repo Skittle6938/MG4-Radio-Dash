@@ -365,13 +365,21 @@ public final class RadioDash {
         android.view.ViewTreeObserver.OnPreDrawListener l = new android.view.ViewTreeObserver.OnPreDrawListener() {
             @Override public boolean onPreDraw() {
                 int band = -1;
-                try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+                band = shownBand(a);
                 // Changement de bande : le rafraîchissement de fond n'a lieu que toutes les 2 s, d'où un écran
                 // redimensionné puis rempli bien plus tard. On le lance aussitôt.
-                if (band != drawnBand) { drawnBand = band; main.post(tick); }
+                if (band != drawnBand) { drawnBand = band; favsDirty = true; main.post(tick); }
                 boolean moved = squarePlayer(a, band);
                 moved |= fmStrip(a, band);
-                return !moved;   // dimensions changées : on saute cette image, la suivante est juste
+                if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
+                // Carte à sa nouvelle taille : les favoris de la nouvelle bande sont posés avant cette image,
+                // sans attendre le rafraîchissement de fond (sinon l'ancienne grille s'affichait étirée)
+                if (favsDirty) {
+                    favsDirty = false;
+                    try { renderFavorites(a); } catch (Throwable t) { Log.w(TAG, "favoris : " + t); }
+                    return false;
+                }
+                return true;
             }
         };
         root.getViewTreeObserver().addOnPreDrawListener(l);
@@ -379,6 +387,45 @@ public final class RadioDash {
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
     private static int drawnBand = -2;
+    private static boolean favsDirty;
+
+    /**
+     * Bande affichée. La radio n'enregistre la nouvelle bande qu'une fois le tuner calé, une à deux secondes
+     * après l'appui sur l'onglet : la mise en page suivait avec ce retard. L'onglet touché fait foi en attendant.
+     */
+    private static int shownBand(Activity a) {
+        int band = -1;
+        try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        if (pendingBand >= 0) {
+            if (band != pendingBand && android.os.SystemClock.uptimeMillis() - pendingAt < 5000) return pendingBand;
+            pendingBand = -1;
+        }
+        return band;
+    }
+    private static int pendingBand = -1;
+    private static long pendingAt;
+
+    /** Onglets de bande : un appui annonce la nouvelle bande tout de suite (sans gêner le clic d'origine). */
+    private static void watchTabs(final Activity a, String[][] tabs) {
+        for (String[] t : tabs) {
+            View tab = byName(a, t[0]);
+            if (tab == null || tab.getTag(TAB_TAG) != null) continue;
+            final int b = Integer.parseInt(t[1]);
+            tab.setTag(TAB_TAG, Boolean.TRUE);
+            tab.setOnTouchListener(new View.OnTouchListener() {
+                @Override public boolean onTouch(View v, android.view.MotionEvent e) {
+                    if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                            && e.getX() >= 0 && e.getY() >= 0 && e.getX() <= v.getWidth() && e.getY() <= v.getHeight()) {
+                        pendingBand = b;
+                        pendingAt = android.os.SystemClock.uptimeMillis();
+                        a.getWindow().getDecorView().invalidate();   // l'écouteur d'image pose la mise en page
+                    }
+                    return false;
+                }
+            });
+        }
+    }
+    private static final int TAB_TAG = 0x7f7a0003;
 
     /** Hauteur prise sous le lecteur et les favoris en FM / AM, marge comprise (dp). */
     private static final int STRIP_DP = 112;
@@ -484,9 +531,9 @@ public final class RadioDash {
     private static void fixLayout(Activity a) {
         // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
         // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
-        int band = -1;
-        try { band = ((Number) call(storage(a), "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        int band = shownBand(a);
         String[][] tabs = {{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}, {"layout_tab_am", "0"}};
+        watchTabs(a, tabs);
         for (String[] t : tabs) {
             View tab = byName(a, t[0]);
             boolean sel = String.valueOf(band).equals(t[1]);
@@ -1034,8 +1081,8 @@ public final class RadioDash {
                 && favCard.getWidth() != favCard.getLayoutParams().width) { main.postDelayed(tick, 50); return; }
         Object storage = storage(a);
         if (storage == null) return;
-        int band = 1;
-        try { band = ((Number) call(storage, "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        int band = shownBand(a);
+        if (band < 0) band = 1;
         boolean dab = band == 4;
         List<?> favs;
         if (dab) {
@@ -1044,7 +1091,7 @@ public final class RadioDash {
             favs = (List<?>) storage.getClass().getMethod("getFavoriteForBand", int.class).invoke(storage, band == 0 ? 0 : 1);
         }
         long curDab = dab ? currentDabServiceId(a) : -1;
-        int curFm = dab ? -1 : currentFmChannel(storage);
+        int curFm = dab ? -1 : currentFmChannel(storage, band == 0 ? 0 : 1);
         boolean noStations = (favs == null || favs.isEmpty()) && knownStations(storage, band) == 0;
         String key = band + "|" + noStations + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth() + "x" + ((View) grid.getParent()).getHeight()
                 + (dab ? "|" + artStamp(a, favs) : "|" + rdsStamp(favs));
@@ -1209,6 +1256,7 @@ public final class RadioDash {
         try {
             Object storage = storage(a);
             if (storage == null) return;
+            keepFavoriteNames(a, storage);
             if (((Number) call(storage, "getStoredRadioBand")).intValue() != 1) { rdsChannel = -1; return; }
             long now = android.os.SystemClock.uptimeMillis();
             int ch = currentFmChannel(storage);
@@ -1243,8 +1291,11 @@ public final class RadioDash {
                 if (oldPs != null && ps.equals(oldPs.toString().trim())) return;
                 Class<?> rs = Class.forName("com.android.car.radio.service.RadioStation");
                 Class<?> rdsCls = Class.forName("com.android.car.radio.service.RadioRds");
-                Object station = rs.getConstructor(int.class, int.class, int.class, rdsCls).newInstance(ch, 0, 1, rds);
+                // Objet RDS à nous : celui de la radio change pendant l'écriture en tâche de fond
+                Object own = rdsCls.getConstructor(String.class, String.class, String.class).newInstance(ps, null, null);
+                Object station = rs.getConstructor(int.class, int.class, int.class, rdsCls).newInstance(ch, 0, 1, own);
                 storage.getClass().getMethod("storeFavorite", rs).invoke(storage, station);
+                a.getSharedPreferences("radio_dash", Context.MODE_PRIVATE).edit().putString(NAME_KEY + ch, ps).apply();
                 Log.i(TAG, "favori " + ch + " : nom RDS « " + oldPs + " » remplacé par « " + ps + " »");
                 return;
             }
@@ -1252,6 +1303,50 @@ public final class RadioDash {
             Log.w(TAG, "nom RDS du favori : " + t);
         }
     }
+
+    /**
+     * À chaque nouvelle liste de stations (balayage de fond ou ★ Stations), la radio SAIC réécrit le nom de
+     * tous les favoris FM d'après cette liste (RadioStorage.updateFavoriteStationNameForFM) : un favori absent
+     * de la liste, ou listé sans RDS, perd son nom. On garde ici le dernier nom connu de chaque favori FM et on
+     * le remet quand il disparaît.
+     */
+    private static void keepFavoriteNames(Activity a, Object storage) {
+        try {
+            List<?> favs = (List<?>) storage.getClass().getMethod("getFavoriteForBand", int.class).invoke(storage, 1);
+            if (favs == null || favs.isEmpty()) return;
+            android.content.SharedPreferences prefs = a.getSharedPreferences("radio_dash", Context.MODE_PRIVATE);
+            android.content.SharedPreferences.Editor ed = null;
+            long now = android.os.SystemClock.uptimeMillis();
+            for (Object f : favs) {
+                Object c = callQuiet(f, "getChannelNumber");
+                if (!(c instanceof Number)) continue;
+                int ch = ((Number) c).intValue();
+                Object r = callQuiet(f, "getRds");
+                Object p = r == null ? null : callQuiet(r, "getProgramService");
+                String ps = p == null ? "" : p.toString().trim();
+                String kept = prefs.getString(NAME_KEY + ch, "");
+                if (ps.length() >= 2) {
+                    if (!ps.equals(kept)) { if (ed == null) ed = prefs.edit(); ed.putString(NAME_KEY + ch, ps); }
+                    continue;
+                }
+                if (kept.length() < 2) continue;
+                Long last = nameRestoredAt.get(ch);
+                if (last != null && now - last < 30000) continue;   // écriture en cours, ou la radio l'efface aussitôt
+                nameRestoredAt.put(ch, now);
+                Class<?> rs = Class.forName("com.android.car.radio.service.RadioStation");
+                Class<?> rdsCls = Class.forName("com.android.car.radio.service.RadioRds");
+                Object own = rdsCls.getConstructor(String.class, String.class, String.class).newInstance(kept, null, null);
+                Object station = rs.getConstructor(int.class, int.class, int.class, rdsCls).newInstance(ch, 0, 1, own);
+                storage.getClass().getMethod("storeFavorite", rs).invoke(storage, station);
+                Log.i(TAG, "favori " + ch + " : nom « " + kept + " » remis (effacé par la liste de stations)");
+            }
+            if (ed != null) ed.apply();
+        } catch (Throwable t) {
+            Log.w(TAG, "noms des favoris : " + t);
+        }
+    }
+    private static final String NAME_KEY = "rd_fm_name_";
+    private static final java.util.Map<Integer, Long> nameRestoredAt = new java.util.HashMap<>();
 
     // ── Cadran FM (remplace la règle d'origine, masquée dans la mise en page) ──
 
@@ -1271,12 +1366,11 @@ public final class RadioDash {
         }
         Object storage = storage(a);
         if (storage == null) return;
-        int band = -1;
-        try { band = ((Number) call(storage, "getStoredRadioBand")).intValue(); } catch (Throwable ignored) {}
+        int band = shownBand(a);
         if (band == 4) return;   // DAB : le bandeau est caché
         amBand = band == 0;
         dial.setAm(amBand);
-        dial.setValue(currentFmChannel(storage));
+        dial.setValue(currentFmChannel(storage, amBand ? 0 : 1));
         List<Integer> chans = new ArrayList<>();
         Method forBand = storage.getClass().getMethod("getFavoriteForBand", int.class);
         List<?> favs = (List<?>) forBand.invoke(storage, amBand ? 0 : 1);
@@ -1366,6 +1460,14 @@ public final class RadioDash {
     }
 
     /** Fréquence en cours de la bande FM ou AM affichée (kHz). La radio la garde par bande : 0 = AM, 1 = FM. */
+    private static int currentFmChannel(Object storage, int band) {
+        try {
+            Method m = storage.getClass().getMethod("getStoredRadioChannel", int.class);
+            return ((Number) m.invoke(storage, band)).intValue();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
     private static int currentFmChannel(Object storage) {
         Object ch = callQuiet(storage, "getStoredRadioChannel");
         if (ch instanceof Number) return ((Number) ch).intValue();
