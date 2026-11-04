@@ -77,6 +77,12 @@ public final class RadioDash {
                     "Stazioni %s: tocca per aggiungere o togliere un preferito", "%s-zenders: tik om een favoriet toe te voegen of te verwijderen"},
             {"Search for stations", "Chercher les stations", "Sender suchen", "Buscar emisoras", "Cerca stazioni", "Zenders zoeken"},
             {"Cancel", "Annuler", "Abbrechen", "Cancelar", "Annulla", "Annuleren"},
+            {"No stations known yet: open ★ Stations at the top of the player to search for them",
+                    "Aucune station connue pour l'instant : ouvrez ★ Stations en haut du lecteur pour les chercher",
+                    "Noch keine Sender bekannt: Öffnen Sie ★ Sender oben im Player, um danach zu suchen",
+                    "Aún no hay emisoras conocidas: abra ★ Emisoras arriba del reproductor para buscarlas",
+                    "Nessuna stazione ancora nota: apri ★ Stazioni in alto nel lettore per cercarle",
+                    "Nog geen zenders bekend: open ★ Zenders bovenaan de speler om ernaar te zoeken"},
     };
 
     private static String tr(int i) {
@@ -1001,6 +1007,17 @@ public final class RadioDash {
      * Barre de favoris unique (conteneur android:tag="rd_favs_grid" de la carte de droite) :
      * les stations en favori de la bande en cours, avec leur image (DAB) ou leur fréquence (FM/AM).
      */
+    /** Nombre de stations connues de la radio pour cette bande (liste DAB+ ou dernier balayage FM / AM), -1 si inconnu. */
+    private static int knownStations(Object storage, int band) {
+        try {
+            List<?> l = band == 4 ? (List<?>) call(storage, "getDabStationList")
+                    : (List<?>) storage.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(storage, band == 0 ? 0 : 1);
+            return l == null ? 0 : l.size();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
     private static void renderFavorites(final Activity a) throws Exception {
         View root = a.getWindow().getDecorView().findViewWithTag("rd_favs_grid");
         if (!(root instanceof LinearLayout)) return;
@@ -1023,13 +1040,15 @@ public final class RadioDash {
         }
         long curDab = dab ? currentDabServiceId(a) : -1;
         int curFm = dab ? -1 : currentFmChannel(storage);
-        String key = band + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth() + "x" + ((View) grid.getParent()).getHeight()
+        boolean noStations = (favs == null || favs.isEmpty()) && knownStations(storage, band) == 0;
+        String key = band + "|" + noStations + "|" + signature(favs, dab) + "|" + curDab + "|" + curFm + "|" + grid.getWidth() + "x" + ((View) grid.getParent()).getHeight()
                 + (dab ? "|" + artStamp(a, favs) : "|" + rdsStamp(favs));
         if (key.equals(grid.getContentDescription())) return;   // rien n'a changé
         grid.setContentDescription(key);
         grid.removeAllViews();
         if (favs == null || favs.isEmpty()) {
-            TextView empty = text(a, tr(6), 17, TITLE);
+            // Premier démarrage : la radio ne connaît encore aucune station, on dit où les chercher
+            TextView empty = text(a, tr(noStations ? 15 : 6), 17, TITLE);
             empty.setPadding(dp(a, 10), dp(a, 6), dp(a, 10), 0);
             grid.addView(empty);
             finishFavorites(a, grid);

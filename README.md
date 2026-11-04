@@ -25,6 +25,7 @@ The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of th
 - **Band tabs aligned on the player** when the AM tab is shown (SWI68), so the third tab no longer covers the favourites.
 - **★ Favourites button renamed ★ Stations**: it lists every station received, the favourites are already on the right.
 - **FM dial**: while dragging, only the labels under the frequency bubble are hidden.
+- **First start**: while the radio knows no station yet, the favourites bar says to open ★ Stations to search for them.
 - **RDS name of FM favourites kept up to date**: a new RDS name received after tuning (after 6 s on the frequency) replaces the stored name, so a favourite no longer keeps the name of the previous station.
 
 **1.6.0**
@@ -68,6 +69,11 @@ The redesign is applied on top of `apk/Radio_patched_signed.apk`:
 - `build.ps1` — compiles the module, decodes the base APK, applies `dash/`, rebuilds and signs with the AOSP platform test key (not included: see MG4Dash's README to download it).
 
 Install exactly like the original patch below (`adb push` + `pm install -r -f`, or USB stick), then **reboot the head unit**. To go back, reinstall the original `Radio_patched_signed.apk`, or `adb shell pm uninstall com.saicmotor.radio` for the factory radio.
+
+**Good to know**
+- Radio Dash **replaces** the stock radio app (same package, `com.saicmotor.radio`): while it is installed, the stock radio cannot be opened separately. Uninstalling Radio Dash brings the factory radio back.
+- Favourites and the station list are stored by the radio app itself, so **uninstalling Radio Dash also removes them**. Updating Radio Dash (`pm install -r`) keeps them.
+- **At first start the station lists are empty** until the tuner has found stations. The favourites bar then says so: open **★ Stations** at the top of the player to search for them (band scan on FM and AM, refreshed list on DAB+).
 
 ---
 
