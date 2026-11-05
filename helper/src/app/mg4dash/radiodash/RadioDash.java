@@ -785,20 +785,13 @@ public final class RadioDash {
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(dp(a, 22), 0, dp(a, 16), 0);
             row.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-            TextView status = text(a, "", 16, SUB);
+            TextView status = text(a, "", 24, TEXT);
+            status.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             status.setTag("rd_scan_status");
             status.setSingleLine(true);
             row.addView(status, new LinearLayout.LayoutParams(-2, -2));
             row.addView(seekWaitControl(a));
             box.addView(row, new FrameLayout.LayoutParams(-1, -1));
-            android.widget.ProgressBar bar = new android.widget.ProgressBar(a, null, android.R.attr.progressBarStyleHorizontal);
-            bar.setTag("rd_scan_bar");
-            bar.setMax(1000);
-            bar.setVisibility(View.GONE);
-            FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(-1, dp(a, 6), Gravity.BOTTOM);
-            blp.setMargins(dp(a, 22), 0, dp(a, 22), 0);
-            box.addView(bar, blp);
-            // Hauteur d'origine : marge de 18 dp, une ligne de texte, marge de 10 dp
             LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(a, 44));
             hlp.topMargin = dp(a, 8);
             hlp.bottomMargin = dp(a, 2);
@@ -807,13 +800,25 @@ public final class RadioDash {
         }
         CharSequence want = favOnly ? favsTitle : tr(8);
         if (want != null && !want.toString().contentEquals(title.getText())) title.setText(want);
+        // Favoris : hauteur du titre seul d'origine (marge de 18 dp, une ligne, marge de 10 dp). Toutes les stations :
+        // en-tête plus haut, texte plus gros, pour lire la fréquence du scan ; même hauteur avant, pendant et après le
+        // scan, les cases ne changent pas de taille quand il démarre
+        View box = decor.findViewWithTag("rd_favs_head");
+        if (box != null && box.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            LinearLayout.LayoutParams hlp = (LinearLayout.LayoutParams) box.getLayoutParams();
+            int h = dp(a, favOnly ? 44 : 68);
+            if (hlp.height != h) { hlp.height = h; box.setLayoutParams(hlp); }
+        }
+        float titleSp = favOnly ? 17 : 21;
+        if (Math.abs(title.getTextSize() - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, titleSp, a.getResources().getDisplayMetrics())) > 0.5f)
+            title.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp);
         View wait = decor.findViewWithTag("rd_scan_wait");
         int vis = !favOnly && band != 4 ? View.VISIBLE : View.GONE;
         if (wait != null && wait.getVisibility() != vis) wait.setVisibility(vis);
     }
     private static CharSequence favsTitle;
 
-    /** Libellé du bouton Scan, fréquence et nombre de stations trouvées, barre de progression. */
+    /** Libellé du bouton Scan, fréquence et nombre de stations trouvées (le cadran du bas suit la fréquence). */
     private static void scanUi(Activity a) {
         View decor = a.getWindow().getDecorView();
         boolean dabBusy = android.os.SystemClock.uptimeMillis() < dabRefreshUntil;
@@ -828,12 +833,6 @@ public final class RadioDash {
             if (!s.contentEquals(((TextView) st).getText())) ((TextView) st).setText(s);
             int vis = s.isEmpty() ? View.GONE : View.VISIBLE;
             if (st.getVisibility() != vis) st.setVisibility(vis);
-        }
-        View bar = decor.findViewWithTag("rd_scan_bar");
-        if (bar instanceof android.widget.ProgressBar) {
-            int vis = scan != null ? View.VISIBLE : View.GONE;
-            if (bar.getVisibility() != vis) bar.setVisibility(vis);
-            if (scan != null) ((android.widget.ProgressBar) bar).setProgress(scan.progress);
         }
     }
 
@@ -890,7 +889,7 @@ public final class RadioDash {
         private final Activity a; final int band;
         private boolean running; private int origin, last, highest; private long lastMove, lastSeek, started;
         private final java.util.TreeSet<Integer> seen = new java.util.TreeSet<>();
-        int progress; String status = "";
+        String status = "";
 
         FmAmScan(Activity a, int band) { this.a = a; this.band = band; }
 
@@ -903,7 +902,6 @@ public final class RadioDash {
                 int ch = currentFmChannel(storage);
                 if (ch != last) { last = ch; lastMove = now; }
                 int min = band == 0 ? AM_MIN : FM_MIN, max = band == 0 ? AM_MAX : FM_MAX;
-                progress = Math.max(0, Math.min(1000, (ch - min) * 1000 / (max - min)));
                 String f = ch < 0 ? tr(11) : band == 0 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f);
                 status = f + "  ·  " + String.format(Locale.getDefault(), tr(12), seen.size());
                 // Revenu en bas de bande après être monté : tout est parcouru
@@ -911,6 +909,8 @@ public final class RadioDash {
                         : highest > FM_MIN + 1000 && ch >= 0 && ch < highest - 1000;
                 if (ch > highest) highest = ch;
                 int waitMs = seekWaitSeconds(a) * 1000;
+                // Départ : bas de bande accordé, la recherche part tout de suite (pas d'écoute sur la butée)
+                if (lastSeek == started) { seek(); lastSeek = now; scanUi(a); main.postDelayed(this, POLL_MS); return; }
                 if (wrapped) { finish(true, true); return; }
                 if (now - lastMove > STILL_MS + waitMs || now - started > MAX_MS) { finish(false, true); return; }
                 // FM : le temps réglé est un maximum pour capter le nom RDS : une fois le nom connu, station suivante
@@ -960,7 +960,6 @@ public final class RadioDash {
             started = lastMove = lastSeek = android.os.SystemClock.uptimeMillis();
             last = origin;
             highest = -1;
-            progress = 0;
             status = tr(11);
             Log.i(TAG, "scan " + (band == 0 ? "AM" : "FM") + " lancé");
             scanUi(a);
