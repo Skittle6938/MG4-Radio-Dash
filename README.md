@@ -26,15 +26,17 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**Next version (1.7, in development)**
+**[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5) (in testing)**
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
 - **FM / AM dial easier to read**: much bigger frequency numbers under the track, and while dragging, the frequency bubble shows above the finger instead of under it.
 - **◀ ▶ and the settings wheel of the FM / AM player in the theme's text colour**: they were white or light grey, hard to see in light mode.
 - **Band tabs centred** in the free space above the player, horizontally and vertically, with two or three tabs (AM on SWI68).
+- **Boxes aligned at the bottom**: on DAB+ the favourites box ends at the same height as the player, and on FM / AM the dial bar leaves the same gap to the screen edge as at the top and on the right.
+- **Theme change applied to the whole screen at once**, instead of the background first and the panels after.
 - **Scan button** in the player when ★ Favourites is off, with the frequency and the number of stations found in the header above the stations. A complete scan removes the stations no longer received, except favourites. The default listening time per station is now 5 s.
 
-**1.6.1 beta 4 (in testing)**
+**1.6.1 beta 1 to 4**
 - **AM page with the same layout as FM**: frequency, favourite star, playback buttons and the full-width dial at the bottom, from 522 to 1620 kHz in 9 kHz steps, with the AM favourites. The stock AM ruler is hidden. AM favourites are shown in kHz (1098 kHz instead of 1,1 MHz).
 - **Band tabs aligned on the player** when the AM tab is shown (SWI68), so the third tab no longer covers the favourites.
 - **★ Favourites button renamed ★ Stations**: it lists every station received, the favourites are already on the right.
@@ -90,7 +92,7 @@ Install exactly like the original patch below (`adb push` + `pm install -r -f`, 
 **Good to know**
 - Radio Dash **replaces** the stock radio app (same package, `com.saicmotor.radio`): while it is installed, the stock radio cannot be opened separately. Uninstalling Radio Dash brings the factory radio back.
 - Favourites and the station list are stored by the radio app itself, so **uninstalling Radio Dash also removes them**. Updating Radio Dash (`pm install -r`) keeps them.
-- **At first start the station lists are empty** until the tuner has found stations. The favourites bar then says so: open **★ Stations** at the top of the player to search for them (band scan on FM and AM, refreshed list on DAB+).
+- **At first start the station lists are empty** until the tuner has found stations. The box on the right then says so: turn off **★ Favourites** at the top of the player and press **Scan** to search for them (band scan on FM and AM, refreshed list on DAB+).
 
 ---
 
