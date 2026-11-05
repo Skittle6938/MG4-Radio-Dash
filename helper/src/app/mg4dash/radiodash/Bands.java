@@ -30,6 +30,16 @@ public final class Bands {
     /** Remplace {@code session.setCallback(original)} dans RadioMBService.onCreate. */
     public static void session(final Context service, MediaSession session, final MediaSession.Callback original) {
         if (original == null) { session.setCallback(null); return; }
+        try {
+            wrap(service, session, original);
+        } catch (Throwable t) {
+            // Jamais de session sans écouteur : volant et carte MG4Dash en dépendent
+            Log.w(TAG, "session média non enveloppée : " + t);
+            session.setCallback(original);
+        }
+    }
+
+    private static void wrap(final Context service, MediaSession session, final MediaSession.Callback original) {
         session.setCallback(new MediaSession.Callback() {
             @Override public void onCommand(String command, Bundle args, ResultReceiver cb) { original.onCommand(command, args, cb); }
             // Écouteur d'origine d'abord ; s'il ne traite pas la touche (il n'est pas lui-même attaché à la session),
