@@ -84,6 +84,8 @@ public final class RadioDash {
                     "Aún no hay emisoras conocidas: desactive ★ Favoritos y toque Buscar",
                     "Nessuna stazione ancora nota: disattiva ★ Preferiti, poi tocca Scansione",
                     "Nog geen zenders bekend: zet ★ Favorieten uit en tik op Scannen"},
+            {"Scan done: %d stations", "Scan terminé : %d stations", "Suchlauf beendet: %d Sender",
+                    "Búsqueda terminada: %d emisoras", "Scansione finita: %d stazioni", "Scan klaar: %d zenders"},
     };
 
     private static String tr(int i) {
@@ -184,6 +186,7 @@ public final class RadioDash {
                 rdsFavoriteName(a);
                 renderFavorites(a);
                 scanUi(a);
+                dabInfo(a);
                 updateFmDial(a);
                 Palette.recolor(a.getWindow().getDecorView());
                 Palette.tintStars(a.getWindow().getDecorView());
@@ -399,7 +402,11 @@ public final class RadioDash {
                 band = shownBand(a);
                 // Changement de bande : le rafraîchissement de fond n'a lieu que toutes les 2 s, d'où un écran
                 // redimensionné puis rempli bien plus tard. On le lance aussitôt.
-                if (band != drawnBand) { drawnBand = band; favsDirty = true; main.post(tick); }
+                if (band != drawnBand) {
+                    if (band != 4 && drawnBand == 4) rdsText(a, "");   // carte musique de MG4Dash : plus de texte DAB+
+                    drawnBand = band; favsDirty = true; main.post(tick);
+                }
+                staleText(a, band);
                 // Nouveau lecteur (la radio change de fragment avec la bande) : boutons, couleurs et image
                 // sont posés avant sa première image, pas au rafraîchissement suivant
                 View player = byName(a, "fragment_container");
@@ -431,6 +438,81 @@ public final class RadioDash {
         root.setTag(SQUARE_TAG, l);
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
+
+    /**
+     * Texte DAB+ (DLS) resté sur la page FM / AM : la radio y remet le dernier texte reçu, quelle que soit la bande,
+     * jusqu'au premier texte RDS. Il est effacé tant qu'il est identique au dernier texte de la page DAB+.
+     */
+    private static void staleText(Activity a, int band) {
+        if (band == 4) {
+            View dls = byName(a, "tv_dab_frequency_name");
+            if (dls instanceof TextView && dls.isShown()) {
+                CharSequence t = ((TextView) dls).getText();
+                if (t != null && t.toString().trim().length() > 0) lastDls = t.toString().trim();
+            }
+            return;
+        }
+        if (lastDls == null) return;
+        View np = byName(a, "tv_radio_channel_nowplaying_text");
+        if (!(np instanceof TextView)) return;
+        CharSequence t = ((TextView) np).getText();
+        if (t != null && t.toString().trim().equals(lastDls)) ((TextView) np).setText("");
+    }
+    private static String lastDls;
+
+    // ── DAB+ : canal (bloc de la bande III) et identifiant de la station, après le nom du multiplex ──
+
+    private static final String[] BLOCKS = {"5A", "5B", "5C", "5D", "6A", "6B", "6C", "6D", "7A", "7B", "7C", "7D",
+            "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D", "10A", "10N", "10B", "10C", "10D", "11A", "11N", "11B", "11C", "11D",
+            "12A", "12N", "12B", "12C", "12D", "13A", "13B", "13C", "13D", "13E", "13F"};
+    private static final int[] BLOCK_KHZ = {174928, 176640, 178352, 180064, 181936, 183648, 185360, 187072, 188928, 190640,
+            192352, 194064, 195936, 197648, 199360, 201072, 202928, 204640, 206352, 208064, 209936, 210096, 211648, 213360,
+            215072, 216928, 217088, 218640, 220352, 222064, 223936, 224096, 225648, 227360, 229072, 230784, 232496, 234208,
+            235776, 237488, 239200};
+
+    /** Bloc DAB (11C…) d'après la fréquence de la station, en kHz (ou en Hz / MHz selon la radio) ; null si inconnue. */
+    static String dabBlock(Object st) {
+        Object f = callQuiet(st, "getFrequencyChannel");
+        if (!(f instanceof Number)) f = callQuiet(st, "getFrequency");
+        if (!(f instanceof Number)) return null;
+        double v = ((Number) f).doubleValue();
+        double[] tries = {v, v / 1000, v * 1000};
+        for (double khz : tries)
+            for (int i = 0; i < BLOCK_KHZ.length; i++)
+                if (Math.abs(khz - BLOCK_KHZ[i]) < 20) return BLOCKS[i];
+        return null;
+    }
+
+    private static String dabInfoSet;
+    private static long dabInfoLogged = -1;
+
+    private static void dabInfo(Activity a) {
+        if (shownBand(a) != 4) return;
+        View v = byName(a, "tv_dab_radio_ensemble_name");
+        if (!(v instanceof TextView)) return;
+        TextView tv = (TextView) v;
+        String shown = tv.getText() == null ? "" : tv.getText().toString();
+        if (shown.equals(dabInfoSet)) return;   // déjà complété, la radio n'a rien réécrit
+        Object st = callQuiet(storage(a), "getCurrentDabStation");
+        if (st == null) return;
+        String base = shown;
+        int k = base.indexOf("  ·  ");   // ajout précédent encore affiché (écran recréé)
+        if (k >= 0) base = base.substring(0, k);
+        base = base.trim();
+        String block = dabBlock(st);
+        Object sid = callQuiet(st, "getServiceId");
+        long id = sid instanceof Number ? ((Number) sid).longValue() : 0;
+        if (id != dabInfoLogged) {
+            dabInfoLogged = id;
+            Log.i(TAG, "DAB : " + base + " fréquence " + callQuiet(st, "getFrequencyChannel") + " index " + callQuiet(st, "getFrequencyIndex")
+                    + " ensemble " + callQuiet(st, "getEnsembleId") + " service " + Long.toHexString(id) + " → " + block);
+        }
+        StringBuilder b = new StringBuilder(base);
+        if (block != null && !base.toUpperCase(Locale.ROOT).matches(".*\\b" + block + "\\b.*")) b.append(b.length() > 0 ? "  ·  " : "").append(block);
+        if (id > 0) b.append(b.length() > 0 ? "  ·  " : "").append("ID ").append(Long.toHexString(id).toUpperCase(Locale.ROOT));
+        dabInfoSet = b.toString();
+        if (!dabInfoSet.equals(shown)) tv.setText(dabInfoSet);
+    }
     private static long createdAt;
     private static int drawnBand = -2;
     private static boolean favsDirty;
@@ -835,6 +917,7 @@ public final class RadioDash {
 
     private static void scanPressed(final Activity a) {
         if (scan != null) { scan.stop(true, "bouton Arrêter"); return; }
+        scanResultUntil = 0;
         int band = shownBand(a);
         if (band == 4) { dabRefresh(a); return; }
         if (band != 0 && band != 1) return;
@@ -851,10 +934,34 @@ public final class RadioDash {
         dabRefreshUntil = android.os.SystemClock.uptimeMillis() + 4000;
         scanUi(a);
         main.postDelayed(new Runnable() {
-            @Override public void run() { scanUi(a); refreshGrid(a); }
+            @Override public void run() { showScanResult(a, 4, 0); refreshGrid(a); }
         }, 4100);
     }
     private static long dabRefreshUntil;
+
+    /** Résultat affiché quelques secondes dans l'en-tête après un scan (DAB+ : compté en direct, la liste se remplit encore). */
+    private static String scanResult = "";
+    private static int scanResultBand = -1;
+    private static long scanResultUntil;
+    private static final long SCAN_RESULT_MS = 10000;
+
+    private static void showScanResult(final Activity a, int band, int count) {
+        scanResultBand = band;
+        scanResult = String.format(Locale.getDefault(), tr(16), count);
+        scanResultUntil = android.os.SystemClock.uptimeMillis() + SCAN_RESULT_MS;
+        scanUi(a);
+        main.postDelayed(new Runnable() {
+            @Override public void run() { scanUi(a); }
+        }, SCAN_RESULT_MS + 100);
+    }
+
+    private static String scanResultText(Activity a) {
+        if (android.os.SystemClock.uptimeMillis() >= scanResultUntil || shownBand(a) != scanResultBand) return "";
+        if (scanResultBand != 4) return scanResult;
+        try {
+            return String.format(Locale.getDefault(), tr(16), Stations.all(a, storage(a), 4).size());
+        } catch (Throwable t) { return scanResult; }
+    }
 
     /**
      * En-tête de la case de droite : titre (Favoris ou Toutes les stations), progression du scan et temps d'écoute
@@ -944,7 +1051,7 @@ public final class RadioDash {
         }
         View st = decor.findViewWithTag("rd_scan_status");
         if (st instanceof TextView) {
-            String s = scan != null ? scan.status : dabBusy ? tr(11) : "";
+            String s = scan != null ? scan.status : dabBusy ? tr(11) : scanResultText(a);
             if (!s.contentEquals(((TextView) st).getText())) ((TextView) st).setText(s);
             int vis = s.isEmpty() ? View.GONE : View.VISIBLE;
             if (st.getVisibility() != vis) st.setVisibility(vis);
@@ -1102,7 +1209,11 @@ public final class RadioDash {
             if (complete && !seen.isEmpty()) Stations.scanComplete(a, storage(a), band, seen);
             if (restore && origin > 0) tuneAmFm(origin, band == 0);
             Log.i(TAG, "scan " + (band == 0 ? "AM" : "FM") + (complete ? " terminé : " : " arrêté : ") + seen.size() + " stations");
-            scanUi(a);
+            if (complete) {
+                int n = seen.size();
+                try { n = Stations.all(a, storage(a), band).size(); } catch (Throwable ignored) {}
+                showScanResult(a, band, n);
+            } else scanUi(a);
             refreshGrid(a);
         }
     }
@@ -1359,7 +1470,7 @@ public final class RadioDash {
                 LinearLayout card = new LinearLayout(a);
                 card.setOrientation(LinearLayout.VERTICAL);
                 card.setGravity(Gravity.CENTER);
-                card.setPadding(dp(a, 10), dp(a, 10), dp(a, 10), dp(a, 12));
+                card.setPadding(dp(a, 10), dp(a, 44), dp(a, 10), dp(a, 12));   // haut : place de l'étoile
                 TextView big = text(a, label.isEmpty() ? f : label, 28, TEXT);
                 big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 big.setGravity(Gravity.CENTER);
@@ -1397,12 +1508,12 @@ public final class RadioDash {
                     tune(st, dab);
                 }
             });
-            // Étoile : DAB+ dans le coin de l'image, sur un rond sombre ; FM / AM en bas à droite, à côté de la fréquence
+            // Étoile dans le coin haut droit, sur un rond sombre : la même en DAB+ (sur l'image), en FM et en AM
             final boolean on = favKeys.contains(String.valueOf(callQuiet(st, dab ? "getServiceId" : "getChannelNumber")));
-            TextView star = text(a, "★", dab ? 24 : 26, on ? Palette.starColor() : dab ? 0xCCF2F2F2 : 0xFF3A4254);
+            TextView star = text(a, "★", 24, on ? Palette.starColor() : 0xCCF2F2F2);
             star.setGravity(Gravity.CENTER);
             star.setIncludeFontPadding(false);
-            if (dab) star.setBackground(panel(a, 0x8C000000, 22, Color.TRANSPARENT));
+            star.setBackground(panel(a, 0x8C000000, 22, Color.TRANSPARENT));
             star.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     Stations.setFavorite(storage, st, band, !on);
@@ -1412,8 +1523,8 @@ public final class RadioDash {
             });
             FrameLayout cell = new FrameLayout(a);
             cell.addView(tile, new FrameLayout.LayoutParams(-1, -2));
-            FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(dp(a, 44), dp(a, 44), dab ? Gravity.TOP | Gravity.END : Gravity.BOTTOM | Gravity.END);
-            slp.setMargins(0, dab ? dp(a, 12) : 0, dp(a, dab ? 12 : 4), dab ? 0 : dp(a, 4));
+            FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(dp(a, 44), dp(a, 44), Gravity.TOP | Gravity.END);
+            slp.setMargins(0, dp(a, 12), dp(a, 12), 0);
             cell.addView(star, slp);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(tileW, -2);
             lp.setMargins(gap, gap, gap, gap);

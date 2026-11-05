@@ -26,6 +26,14 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
+**Next beta (in development)**
+- **Same star everywhere**: FM and AM stations get the DAB+ star, on a dark round badge in the top right corner of the card.
+- **Bigger DAB / FM / AM tabs** (180 × 64 dp, larger text), easier to reach while driving.
+- **Scan result**: at the end of a scan, the header shows the number of stations for 10 s, on DAB+ too.
+- **No more DAB+ text on the FM page**: the last DAB+ text no longer shows on FM / AM until the first RDS text, nor on the MG4Dash music card.
+- **DAB+ channel and ID**: the multiplex line of the player adds the channel (11C…) and the service ID.
+- **Direct band change for MG4Dash**: a new media session command takes the radio straight to DAB+, FM or AM, instead of stepping band by band (for the source menu of the MG4Dash music card).
+
 **[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5) (in testing)**
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
@@ -84,7 +92,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 The redesign is applied on top of `apk/Radio_patched_signed.apk`:
 - `dash/` — modified layouts (all original view IDs kept), drawables, colours and two smali files (`RadioService$6` for favourites skipping, `RadioMainActivity` for three lifecycle hooks);
-- `helper/src/` — a small Java module (`RadioDash`, `Stations`, `Favorites`, `FmDial`) compiled to smali and added to the app;
+- `helper/src/` — a small Java module (`RadioDash`, `Stations`, `Favorites`, `Bands`, `FmDial`) compiled to smali and added to the app;
 - `build.ps1` — compiles the module, decodes the base APK, applies `dash/`, rebuilds and signs with the AOSP platform test key (not included: see MG4Dash's README to download it).
 
 Install exactly like the original patch below (`adb push` + `pm install -r -f`, or USB stick), then **reboot the head unit**. To go back, reinstall the original `Radio_patched_signed.apk`, or `adb shell pm uninstall com.saicmotor.radio` for the factory radio.
