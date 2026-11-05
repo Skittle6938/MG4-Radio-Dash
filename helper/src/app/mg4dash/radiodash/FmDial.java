@@ -8,6 +8,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +16,9 @@ import java.util.Locale;
 
 /**
  * Cadran FM moderne (remplace la règle d'origine) : piste fine, partie active en dégradé
- * cyan → bleu, curseur lumineux, repères des favoris, graduations discrètes.
- * Glisser le curseur pour choisir une fréquence ; l'accord se fait au relâchement.
+ * cyan → bleu, curseur lumineux, repères des favoris, graduations et fréquences en gros chiffres.
+ * Glisser le curseur pour choisir une fréquence ; l'accord se fait au relâchement. Pendant le glissement,
+ * la fréquence s'affiche dans une bulle au-dessus du doigt (calque de l'écran : elle déborde sur le lecteur).
  */
 public final class FmDial extends View {
     public interface OnTune { void tune(int channelKHz); }
@@ -46,15 +48,15 @@ public final class FmDial extends View {
         d = c.getResources().getDisplayMetrics().density;
         track.setColor(Palette.map(0xFF262D3D));
         tick.setColor(Palette.map(0xFF3A4356));
-        label.setColor(0xFF8A94A6);
-        label.setTextSize(14 * d);
+        label.setColor(Palette.map(0xFFA0AEC0));
+        label.setTextSize(24 * d);
         label.setTextAlign(Paint.Align.CENTER);
         fav.setColor(0xFFFF9100);
         glow.setColor(Palette.map(0x4000D2FF));
         thumb.setColor(0xFFFFFFFF);
         bubble.setColor(Palette.map(0xFF2979FF));
         bubbleText.setColor(0xFFFFFFFF);
-        bubbleText.setTextSize(16 * d);
+        bubbleText.setTextSize(30 * d);
         bubbleText.setTextAlign(Paint.Align.CENTER);
         bubbleText.setFakeBoldText(true);
         int res = c.getResources().getIdentifier("icon_radio_item_collection", "mipmap", c.getPackageName());
@@ -101,10 +103,8 @@ public final class FmDial extends View {
         float cy = 30 * d;
         float th = 6 * d;
         // Graduations : FM, petite marque tous les 1 MHz, libellé tous les 4 MHz ; AM, marque tous les
-        // 100 kHz, libellé tous les 200 kHz. Pendant le glissement, seuls les libellés sous la bulle se cachent.
+        // 100 kHz, libellé tous les 200 kHz. La bulle du glissement est au-dessus : les libellés restent visibles.
         int v0 = dragValue >= 0 ? dragValue : value;
-        float bx = dragValue >= 0 ? xOf(dragValue) : 0;
-        float bhalf = dragValue >= 0 ? (bubbleText.measureText(format(dragValue)) + 20 * d) / 2 : 0;
         int first = am ? 600 : 88000, last = am ? 1600 : 108000, step = am ? 100 : 1000, major = am ? 200 : 4000;
         for (int f = first; f <= last; f += step) {
             float x = xOf(f);
@@ -112,9 +112,7 @@ public final class FmDial extends View {
             float h = big ? 10 * d : 5 * d;
             c.drawRect(x - 0.75f * d, cy + th + 6 * d, x + 0.75f * d, cy + th + 6 * d + h, tick);
             if (!big) continue;
-            String s = String.valueOf(am ? f : f / 1000);
-            float half = label.measureText(s) / 2 + 6 * d;
-            if (dragValue < 0 || Math.abs(x - bx) > bhalf + half) c.drawText(s, x, cy + th + 28 * d, label);
+            c.drawText(String.valueOf(am ? f : f / 1000), x, cy + th + 44 * d, label);
         }
         // Piste
         rect.set(pad(), cy - th / 2, getWidth() - pad(), cy + th / 2);
@@ -139,14 +137,72 @@ public final class FmDial extends View {
             float x = xOf(v);
             c.drawCircle(x, cy, 15 * d, glow);
             c.drawCircle(x, cy, 9 * d, thumb);
-            if (dragValue >= 0) {
-                String s = format(dragValue);
-                float bw = bubbleText.measureText(s) + 20 * d;
-                rect.set(x - bw / 2, cy + 16 * d, x + bw / 2, cy + 44 * d);
-                c.drawRoundRect(rect, 12 * d, 12 * d, bubble);
-                c.drawText(s, x, cy + 36 * d, bubbleText);
-            }
         }
+    }
+
+    // ── Bulle au-dessus du doigt ──
+
+    private final Bubble bubbleD = new Bubble();
+    private ViewGroup bubbleHost;
+
+    /** Bulle posée sur le calque du contenu de l'écran, au-dessus du curseur et du doigt. */
+    private void showBubble() {
+        if (dragValue < 0) return;
+        if (bubbleHost == null) {
+            View root = getRootView().findViewById(android.R.id.content);
+            if (!(root instanceof ViewGroup)) return;
+            bubbleHost = (ViewGroup) root;
+            bubbleHost.getOverlay().add(bubbleD);
+        }
+        bubbleD.text = format(dragValue);
+        int[] me = new int[2], host = new int[2];
+        getLocationInWindow(me);
+        bubbleHost.getLocationInWindow(host);
+        float w = bubbleText.measureText(bubbleD.text) + 48 * d, h = 62 * d + Bubble.TIP * d;
+        float cx = me[0] - host[0] + xOf(dragValue);
+        float left = Math.max(8 * d, Math.min(bubbleHost.getWidth() - 8 * d - w, cx - w / 2));
+        float bottom = me[1] - host[1] + 30 * d - 52 * d;   // pointe 52 dp au-dessus de la piste : hors du doigt
+        bubbleD.tipX = cx - left;
+        bubbleD.setBounds((int) left, (int) (bottom - h), (int) (left + w), (int) bottom);
+        bubbleD.invalidateSelf();
+    }
+
+    private void hideBubble() {
+        if (bubbleHost != null) bubbleHost.getOverlay().remove(bubbleD);
+        bubbleHost = null;
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        hideBubble();
+        super.onDetachedFromWindow();
+    }
+
+    private final class Bubble extends android.graphics.drawable.Drawable {
+        static final int TIP = 12;
+        String text = "";
+        float tipX;
+        private final RectF box = new RectF();
+        private final android.graphics.Path tip = new android.graphics.Path();
+
+        @Override public void draw(Canvas c) {
+            android.graphics.Rect b = getBounds();
+            float t = TIP * d;
+            box.set(b.left, b.top, b.right, b.bottom - t);
+            c.drawRoundRect(box, 18 * d, 18 * d, bubble);
+            float x = b.left + Math.max(20 * d, Math.min(b.width() - 20 * d, tipX));
+            tip.reset();
+            tip.moveTo(x - t, b.bottom - t - 1);
+            tip.lineTo(x, b.bottom);
+            tip.lineTo(x + t, b.bottom - t - 1);
+            tip.close();
+            c.drawPath(tip, bubble);
+            Paint.FontMetrics fm = bubbleText.getFontMetrics();
+            c.drawText(text, b.exactCenterX(), (box.top + box.bottom) / 2 - (fm.ascent + fm.descent) / 2, bubbleText);
+        }
+
+        @Override public void setAlpha(int alpha) {}
+        @Override public void setColorFilter(android.graphics.ColorFilter cf) {}
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
@@ -155,20 +211,24 @@ public final class FmDial extends View {
                 getParent().requestDisallowInterceptTouchEvent(true);
                 dragValue = valueAt(e.getX());
                 invalidate();
+                showBubble();
                 return true;
             case MotionEvent.ACTION_MOVE:
                 dragValue = valueAt(e.getX());
                 invalidate();
+                showBubble();
                 return true;
             case MotionEvent.ACTION_UP:
                 int v = valueAt(e.getX());
                 dragValue = -1;
                 value = v;
+                hideBubble();
                 invalidate();
                 if (onTune != null) onTune.tune(v);
                 return true;
             case MotionEvent.ACTION_CANCEL:
                 dragValue = -1;
+                hideBubble();
                 invalidate();
                 return true;
         }

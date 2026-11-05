@@ -29,6 +29,8 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 **Next version (1.7, in development)**
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
+- **FM / AM dial easier to read**: much bigger frequency numbers under the track, and while dragging, the frequency bubble shows above the finger instead of under it.
+- **◀ ▶ of the FM / AM player in the theme's text colour**: they were white, invisible in light mode.
 - **Scan button** in the player when ★ Favourites is off, with the frequency and the number of stations found in large print above the stations. A complete scan removes the stations no longer received, except favourites. The default listening time per station is now 5 s.
 
 **1.6.1 beta 4 (in testing)**
