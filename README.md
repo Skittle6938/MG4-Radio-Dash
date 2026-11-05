@@ -20,7 +20,7 @@ The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of th
 
 ### What's new in this fork
 
-**Next version (in testing: 1.6.1 beta 3)**
+**Next version (in testing: 1.6.1 beta 4)**
 - **AM page with the same layout as FM**: frequency, favourite star, playback buttons and the full-width dial at the bottom, from 522 to 1620 kHz in 9 kHz steps, with the AM favourites. The stock AM ruler is hidden. AM favourites are shown in kHz (1098 kHz instead of 1,1 MHz).
 - **Band tabs aligned on the player** when the AM tab is shown (SWI68), so the third tab no longer covers the favourites.
 - **★ Favourites button renamed ★ Stations**: it lists every station received, the favourites are already on the right.
@@ -28,6 +28,7 @@ The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of th
 - **First start**: while the radio knows no station yet, the favourites bar says to open ★ Stations to search for them.
 - **RDS name of FM favourites kept up to date**: a new RDS name received after tuning (after 6 s on the frequency) replaces the stored name, so a favourite no longer keeps the name of the previous station.
 - **FM favourite names kept**: the stock radio rewrote every FM favourite name from the latest station list, so a favourite missing from it lost its name. Radio Dash now puts the last known name back.
+- **AM scan in the Stations window** steps through the band with seek, from 522 kHz, and lists every station it stops on (the radio's own AM scan didn't fill the list on SWI68).
 - **Band switch without delay**: the player, its buttons and the favourites grid take the new band's layout as soon as the tab is touched.
 
 **1.6.0**
