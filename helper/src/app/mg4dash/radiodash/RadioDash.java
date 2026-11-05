@@ -387,6 +387,8 @@ public final class RadioDash {
                 }
                 boolean moved = squarePlayer(a, band);
                 moved |= fmStrip(a, band);
+                moved |= alignTabs(a);
+                moved |= alignWait(a);
                 if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
                 // Carte à sa nouvelle taille : les favoris de la nouvelle bande sont posés avant cette image,
                 // sans attendre le rafraîchissement de fond (sinon l'ancienne grille s'affichait étirée)
@@ -526,23 +528,49 @@ public final class RadioDash {
     }
 
     /**
-     * Onglets de bande : avec l'onglet AM en plus (SWI68), le troisième débordait sur le panneau des favoris.
-     * Dans ce cas la rangée se cale à gauche, sur le bord du lecteur ; sinon elle garde sa marge de 92 dp.
+     * Onglets de bande (DAB / FM, et AM sur SWI68) centrés dans l'espace libre au-dessus du lecteur : au milieu de la
+     * largeur du panneau, et à mi-hauteur entre le haut de l'écran et le haut du panneau. La rangée d'onglets grandit
+     * pour cela (64 dp à l'origine) ; sa largeur suit le nombre d'onglets.
+     * @return true si la mise en page a changé
      */
-    private static void alignTabs(Activity a) {
+    private static boolean tabsLogged;
+
+    private static boolean alignTabs(Activity a) {
         View bar = byName(a, "rl_menu_bar");
-        View am = byName(a, "layout_tab_am");
         View cont = byName(a, "fragment_container");
-        if (bar == null || cont == null || !(bar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return;
+        if (bar == null || cont == null || !(bar.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)
+                || !(bar.getParent() instanceof View) || cont.getWidth() <= 0 || bar.getWidth() <= 0) return false;
+        View row = (View) bar.getParent();
+        int[] c = new int[2], p = new int[2];
+        cont.getLocationInWindow(c);
+        row.getLocationInWindow(p);
+        // Panneau du lecteur : bord gauche du conteneur, marge de droite de 12 dp, marge du haut de 12 dp
+        int panelLeft = c[0], panelRight = c[0] + cont.getWidth() - dp(a, 12), panelTop = c[1] + dp(a, 12);
+        boolean moved = false;
+        int space = panelTop - p[1];
+        // La rangée grandit seulement si ses voisines ne sont pas empilées dessous (sinon elle les pousserait) :
+        // on décale alors les onglets sans la grandir
+        boolean stacked = row.getParent() instanceof LinearLayout && ((LinearLayout) row.getParent()).getOrientation() == LinearLayout.VERTICAL;
+        if (!tabsLogged) { tabsLogged = true; Log.i(TAG, "onglets dans " + row.getParent().getClass().getSimpleName() + (stacked ? " (empilés)" : "")); }
+        int rowH = row.getHeight();
+        ViewGroup.LayoutParams rlp = row.getLayoutParams();
+        if (!stacked && rlp != null && space > bar.getHeight() && rlp.height != space) { rlp.height = space; row.setLayoutParams(rlp); rowH = space; moved = true; }
         ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) bar.getLayoutParams();
-        int want = dp(a, 92);
-        if (am != null && am.getVisibility() == View.VISIBLE && bar.getParent() instanceof View && cont.getWidth() > 0) {
-            int[] c = new int[2], p = new int[2];
-            cont.getLocationInWindow(c);
-            ((View) bar.getParent()).getLocationInWindow(p);
-            want = Math.max(0, c[0] + dp(a, 16) - p[0]);
+        int start = Math.max(0, (panelLeft + panelRight) / 2 - bar.getWidth() / 2 - p[0]);
+        int top = Math.max(0, (Math.min(space, rowH) - bar.getHeight()) / 2);
+        if (lp.getMarginStart() != start || lp.topMargin != top) {
+            lp.setMarginStart(start);
+            lp.topMargin = top;
+            bar.setLayoutParams(lp);
+            moved = true;
         }
-        if (lp.getMarginStart() != want) { lp.setMarginStart(want); bar.setLayoutParams(lp); }
+        float shift = stacked ? Math.max(0, (space - bar.getHeight()) / 2f - top) : 0;
+        if (bar.getTranslationY() != shift) {
+            if (row instanceof ViewGroup) ((ViewGroup) row).setClipChildren(false);
+            if (row.getParent() instanceof ViewGroup) ((ViewGroup) row.getParent()).setClipChildren(false);
+            bar.setTranslationY(shift);
+        }
+        return moved;
     }
 
     private static void fixLayout(Activity a) {
@@ -786,7 +814,7 @@ public final class RadioDash {
             // Bord droit = celui de la dernière colonne de cases (marge de la liste 12 dp + écart des cases 5 dp)
             row.setPadding(dp(a, 22), 0, dp(a, 12 + 5), 0);
             row.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-            TextView status = text(a, "", 24, TEXT);
+            TextView status = text(a, "", 20, TEXT);
             status.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             status.setTag("rd_scan_status");
             status.setSingleLine(true);
@@ -801,16 +829,9 @@ public final class RadioDash {
         }
         CharSequence want = favOnly ? favsTitle : tr(8);
         if (want != null && !want.toString().contentEquals(title.getText())) title.setText(want);
-        // Favoris : hauteur du titre seul d'origine (marge de 18 dp, une ligne, marge de 10 dp). Toutes les stations :
-        // en-tête plus haut, texte plus gros, pour lire la fréquence du scan ; même hauteur avant, pendant et après le
-        // scan, les cases ne changent pas de taille quand il démarre
-        View box = decor.findViewWithTag("rd_favs_head");
-        if (box != null && box.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-            LinearLayout.LayoutParams hlp = (LinearLayout.LayoutParams) box.getLayoutParams();
-            int h = dp(a, favOnly ? 44 : 68);
-            if (hlp.height != h) { hlp.height = h; box.setLayoutParams(hlp); }
-        }
-        float titleSp = favOnly ? 17 : 21;
+        // Même hauteur dans les deux modes (celle du titre seul d'origine) : les cases ne changent pas de taille.
+        // Texte un peu plus gros que l'original (17 sp)
+        float titleSp = 19;
         if (Math.abs(title.getTextSize() - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, titleSp, a.getResources().getDisplayMetrics())) > 0.5f)
             title.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp);
         View wait = decor.findViewWithTag("rd_scan_wait");
@@ -818,6 +839,33 @@ public final class RadioDash {
         if (wait != null && wait.getVisibility() != vis) wait.setVisibility(vis);
     }
     private static CharSequence favsTitle;
+
+    /**
+     * Réglage « Écoute » calé sur la dernière colonne de cases en dessous, d'après leur position réelle (la largeur
+     * des cases est arrondie et la rangée garde quelques pixels à droite).
+     * @return true si la mise en page a changé
+     */
+    private static boolean alignWait(Activity a) {
+        View decor = a.getWindow().getDecorView();
+        View wait = decor.findViewWithTag("rd_scan_wait");
+        View grid = decor.findViewWithTag("rd_favs_grid");
+        if (wait == null || wait.getVisibility() != View.VISIBLE || !(wait.getParent() instanceof View)
+                || !(grid instanceof ViewGroup) || ((ViewGroup) grid).getChildCount() == 0) return false;
+        View first = ((ViewGroup) grid).getChildAt(0);
+        if (!(first instanceof ViewGroup) || ((ViewGroup) first).getChildCount() < COLUMNS) return false;
+        View last = ((ViewGroup) first).getChildAt(COLUMNS - 1);
+        View row = (View) wait.getParent();
+        if (last.getWidth() <= 0 || row.getWidth() <= 0) return false;
+        int[] l = new int[2], r = new int[2];
+        last.getLocationInWindow(l);
+        row.getLocationInWindow(r);
+        int end = r[0] + row.getWidth() - (l[0] + last.getWidth());
+        boolean moved = false;
+        if (end >= 0 && row.getPaddingEnd() != end) { row.setPaddingRelative(row.getPaddingStart(), 0, end, 0); moved = true; }
+        ViewGroup.LayoutParams lp = wait.getLayoutParams();
+        if (lp.width != last.getWidth()) { lp.width = last.getWidth(); wait.setLayoutParams(lp); moved = true; }
+        return moved;
+    }
 
     /** Libellé du bouton Scan, fréquence et nombre de stations trouvées (le cadran du bas suit la fréquence). */
     private static void scanUi(Activity a) {
@@ -851,7 +899,7 @@ public final class RadioDash {
         box.setGravity(Gravity.CENTER_VERTICAL);
         box.setBackground(panel(a, BUTTON, 12, BORDER));
         box.setPadding(dp(a, 12), 0, 0, 0);
-        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 44));
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 40));
         boxLp.setMarginStart(dp(a, 12));
         box.setLayoutParams(boxLp);
         TextView label = text(a, tr(13), 15, SUB);
@@ -1308,6 +1356,7 @@ public final class RadioDash {
             row.addView(new View(a), lp);
         }
         finishFavorites(a, grid);
+        alignWait(a);
         // Station changée (◀ ▶, volant, glissé) : la case de la station écoutée vient à l'écran
         String now = band + ":" + curDab + ":" + curFm + ":" + favOnly;
         if (selectedRow != null && scroll instanceof android.widget.ScrollView && !now.equals(scrolledFor)) {

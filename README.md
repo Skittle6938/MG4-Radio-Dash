@@ -20,7 +20,7 @@ The **★ Favourites** button at the top of the player switches the box on the r
 
 In both lists, a tap on a station tunes it and a tap on its star adds or removes it from the favourites (the same favourites as the star of the player). Favourites stay in the list even when they are out of range. When the station changes, the box scrolls to show it.
 
-**Scan**, next to ★ Favourites, only appears when ★ Favourites is off. On FM and AM it steps through the band with seek from the bottom: it moves on as soon as the RDS name is known, or after the listening time set in the box header (*Listen ◀ 5 s ▶*, 1 to 15 s). The frequency and the number of stations found are shown in large print above the stations, which appear as they are found, and the dial at the bottom follows the scan. The scan starts moving at once from the bottom of the band. After a complete scan, a station that was not found again is removed from the list, unless it is a favourite. **Stop** ends the scan without removing anything, and the radio goes back to the station playing before. On DAB+, Scan asks the tuner for its latest station list.
+**Scan**, next to ★ Favourites, only appears when ★ Favourites is off. On FM and AM it steps through the band with seek from the bottom: it moves on as soon as the RDS name is known, or after the listening time set in the box header (*Listen ◀ 5 s ▶*, 1 to 15 s). The frequency and the number of stations found are shown in the header above the stations, which appear as they are found, and the dial at the bottom follows the scan. The scan starts moving at once from the bottom of the band. After a complete scan, a station that was not found again is removed from the list, unless it is a favourite. **Stop** ends the scan without removing anything, and the radio goes back to the station playing before. On DAB+, Scan asks the tuner for its latest station list.
 
 On the player, **◀ ▶** go to the previous / next station of the list; a **long press** searches for the next station received, like the stock buttons. With an empty list, ◀ ▶ search as well.
 
@@ -30,8 +30,9 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
 - **FM / AM dial easier to read**: much bigger frequency numbers under the track, and while dragging, the frequency bubble shows above the finger instead of under it.
-- **◀ ▶ of the FM / AM player in the theme's text colour**: they were white, invisible in light mode.
-- **Scan button** in the player when ★ Favourites is off, with the frequency and the number of stations found in large print above the stations. A complete scan removes the stations no longer received, except favourites. The default listening time per station is now 5 s.
+- **◀ ▶ and the settings wheel of the FM / AM player in the theme's text colour**: they were white or light grey, hard to see in light mode.
+- **Band tabs centred** in the free space above the player, horizontally and vertically, with two or three tabs (AM on SWI68).
+- **Scan button** in the player when ★ Favourites is off, with the frequency and the number of stations found in the header above the stations. A complete scan removes the stations no longer received, except favourites. The default listening time per station is now 5 s.
 
 **1.6.1 beta 4 (in testing)**
 - **AM page with the same layout as FM**: frequency, favourite star, playback buttons and the full-width dial at the bottom, from 522 to 1620 kHz in 9 kHz steps, with the AM favourites. The stock AM ruler is hidden. AM favourites are shown in kHz (1098 kHz instead of 1,1 MHz).

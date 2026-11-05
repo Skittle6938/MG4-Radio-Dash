@@ -242,7 +242,14 @@ final class Immersive {
     static void styleFmButtons(Activity a, View root) {
         accent = Palette.starColor();
         // Pas d'image derrière : ◀ ▶ à la couleur du texte du thème (foncés en mode clair, sinon blancs sur blanc)
-        styleButtons(a, root, Palette.map(0xFFFFFFFF));
+        int color = Palette.map(0xFFFFFFFF);
+        styleButtons(a, root, color);
+        // Roue dentée (réglages RDS) : grise sur fond clair, presque invisible en mode clair
+        View gear = find(root, "btn_dab_rds_setting");
+        if (gear instanceof ImageView && !Integer.valueOf(color).equals(gear.getTag(ICON_COLOR))) {
+            ((ImageView) gear).setImageTintList(ColorStateList.valueOf(color));
+            gear.setTag(ICON_COLOR, color);
+        }
     }
 
     private static void styleButtons(Activity a, View root) { styleButtons(a, root, Color.WHITE); }
