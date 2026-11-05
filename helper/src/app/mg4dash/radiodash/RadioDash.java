@@ -783,7 +783,8 @@ public final class RadioDash {
             row.setTag("rd_favs_row");
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dp(a, 22), 0, dp(a, 16), 0);
+            // Bord droit = celui de la dernière colonne de cases (marge de la liste 12 dp + écart des cases 5 dp)
+            row.setPadding(dp(a, 22), 0, dp(a, 12 + 5), 0);
             row.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
             TextView status = text(a, "", 24, TEXT);
             status.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
@@ -849,11 +850,13 @@ public final class RadioDash {
         box.setTag("rd_scan_wait");
         box.setGravity(Gravity.CENTER_VERTICAL);
         box.setBackground(panel(a, BUTTON, 12, BORDER));
-        box.setPadding(dp(a, 14), 0, 0, 0);
-        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 40));
+        box.setPadding(dp(a, 12), 0, 0, 0);
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 44));
         boxLp.setMarginStart(dp(a, 12));
         box.setLayoutParams(boxLp);
-        box.addView(text(a, tr(13), 16, SUB));
+        TextView label = text(a, tr(13), 15, SUB);
+        label.setSingleLine(true);
+        box.addView(label, new LinearLayout.LayoutParams(0, -2, 1f));
         final TextView value = text(a, seekWaitSeconds(a) + " s", 17, TEXT);
         value.setGravity(Gravity.CENTER);
         for (final int step : new int[]{-1, 1}) {
@@ -866,8 +869,8 @@ public final class RadioDash {
                     value.setText(w + " s");
                 }
             });
-            if (step > 0) box.addView(value, new LinearLayout.LayoutParams(dp(a, 48), -1));
-            box.addView(arrow, new LinearLayout.LayoutParams(dp(a, 52), -1));
+            if (step > 0) box.addView(value, new LinearLayout.LayoutParams(dp(a, 44), -1));
+            box.addView(arrow, new LinearLayout.LayoutParams(dp(a, 42), -1));
         }
         return box;
     }
@@ -1153,6 +1156,13 @@ public final class RadioDash {
         final boolean dab = band == 4;
         final boolean favOnly = Stations.favOnly(a);
         favsHeader(a, band, favOnly);
+        // Réglage « Écoute » de l'en-tête : largeur d'une case, au-dessus de la dernière colonne
+        View wait = a.getWindow().getDecorView().findViewWithTag("rd_scan_wait");
+        if (wait != null && wait.getLayoutParams() != null) {
+            int cols = Math.max(3, Math.round(grid.getWidth() / (float) dp(a, 215)));
+            int w = (grid.getWidth() - 2 * dp(a, 5) * cols) / cols;
+            if (wait.getLayoutParams().width != w) { wait.getLayoutParams().width = w; wait.requestLayout(); }
+        }
         List<?> favs = Stations.favorites(storage, band);
         List<Object> list = favOnly ? (favs == null ? new ArrayList<Object>() : new ArrayList<Object>(favs)) : Stations.all(a, storage, band);
         long curDab = dab ? currentDabServiceId(a) : -1;
