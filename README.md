@@ -4,13 +4,15 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 **Firmware:** built and tested for SWI69. SWI68 is being tested by users ([#2](https://github.com/Skittle6938/MG4-Radio-Dash/issues/2)) and is not officially supported.
 
-![MG4 Radio Dash, DAB+, favourites](screenshots/radio-dash-light.jpg)
+![MG4 Radio Dash, DAB+, dark](screenshots/radio-dash.jpg)
+
+![MG4 Radio Dash, DAB+, light](screenshots/radio-dash-light.jpg)
 
 ![MG4 Radio Dash, DAB+, all stations](screenshots/radio-dash-stations.jpg)
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Screenshots taken on the car with 1.6.1 beta 6, in light mode: DAB+ with the Immersive player and the favourites, DAB+ with every station (★ Favourites off, Scan shown), FM with the full-width dial.*
+*Screenshots taken on the car with 1.6.1 beta 6: DAB+ with the Immersive player and the favourites (dark and light mode, channel after the multiplex name), DAB+ with every station (★ Favourites off, Scan shown), FM with the full-width dial.*
 
 ### ★ Favourites and all stations, in the box on the right
 
@@ -26,7 +28,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**Next beta (in development)**
+**[1.6.1 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.6) (in testing)**
 - **Same star everywhere**: FM and AM stations get the DAB+ star, on a dark round badge in the top right corner of the card.
 - **Bigger DAB / FM / AM tabs** (180 × 64 dp, larger text), easier to reach while driving.
 - **Scan result**: at the end of a scan, the header shows the number of stations for 10 s, on DAB+ too.
@@ -34,7 +36,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **DAB+ channel**: the multiplex line of the player adds the channel (11C…), unless the multiplex name already contains it.
 - **Direct band change for MG4Dash**: a new media session command takes the radio straight to DAB+, FM or AM, instead of stepping band by band (for the source menu of the MG4Dash music card).
 
-**[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5) (in testing)**
+**[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5)**
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
 - **FM / AM dial easier to read**: much bigger frequency numbers under the track, and while dragging, the frequency bubble shows above the finger instead of under it.
