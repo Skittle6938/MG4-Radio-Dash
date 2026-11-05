@@ -988,10 +988,9 @@ public final class RadioDash {
             gear.setTag(GEAR_TAG);
             gear.setBackground(panel(a, BUTTON, 16, BORDER));
             ImageView icon = new ImageView(a);
-            int res = a.getResources().getIdentifier("radio_btn_dab_setting", "drawable", a.getPackageName());
-            if (res != 0) icon.setImageResource(res);
-            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            icon.setPadding(dp(a, 16), dp(a, 16), dp(a, 16), dp(a, 16));
+            icon.setImageDrawable(new Gear(Palette.map(0xFFFFFFFF)));
+            icon.setScaleType(ImageView.ScaleType.FIT_XY);
+            icon.setPadding(dp(a, 14), dp(a, 14), dp(a, 14), dp(a, 14));
             gear.addView(icon, new FrameLayout.LayoutParams(-1, -1));
             gear.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
@@ -1005,7 +1004,9 @@ public final class RadioDash {
         View icon = gear.getChildAt(0);
         int color = Palette.map(0xFFFFFFFF);
         if (icon instanceof ImageView && !Integer.valueOf(color).equals(icon.getTag(ICON_TAG))) {
-            ((ImageView) icon).setImageTintList(android.content.res.ColorStateList.valueOf(color));
+            android.graphics.drawable.Drawable d = ((ImageView) icon).getDrawable();
+            if (d instanceof Gear) ((Gear) d).setColor(color);
+            ((ImageView) icon).setImageTintList(null);
             icon.setTag(ICON_TAG, color);
         }
         View rds = byName(a, "btn_dab_rds_setting");

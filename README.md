@@ -28,7 +28,12 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.1 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.7) (in testing)**
+**[1.6.1 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.8) (in testing)**
+- **Bigger settings gear**, redrawn as a filled icon in the MG4Dash style.
+- **DAB+ channel back** after the multiplex name: a station named after its multiplex no longer hides it.
+- **Real Radio Dash version for MG4Dash**: the app now carries its own version (`radiodash.version`), so MG4Dash shows the installed one, even after an install by ADB.
+
+**[1.6.1 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.7)**
 - **★ Favourites | All stations switch** in the header of the box on the right, replacing the ★ Favourites button of the player. **Scan** sits next to it, with All stations only.
 - **Tidier player** on DAB+, FM and AM: the star moves to the top right corner, and the RDS / DAB+ settings gear moves to the tab row, on the right edge of the player.
 
