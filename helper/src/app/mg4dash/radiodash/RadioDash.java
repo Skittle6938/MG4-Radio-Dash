@@ -497,7 +497,7 @@ public final class RadioDash {
         List<Object> list;
         try { list = Stations.all(a, storage(a), 4); } catch (Throwable t) { return; }
         if (list == null || list.isEmpty()) return;
-        boolean std = true, withN = true;
+        int std = 0, withN = 0;
         int named = 0;
         StringBuilder log = new StringBuilder();
         for (Object st : list) {
@@ -505,15 +505,19 @@ public final class RadioDash {
             Object i = callQuiet(st, "getFrequencyIndex");
             if (log.length() < 3000) log.append(" | ").append(Stations.dabLabel(st)).append(" / ").append(ens).append(" ").append(i);
             if (!(i instanceof Number)) continue;
+            // Entrée qui porte le nom du multiplex (« PARIS 6D / PARIS 6D 1 ») : la radio lui donne un index
+            // sans rapport avec le bloc, elle faisait rejeter la table
+            if (ens.equalsIgnoreCase(Stations.dabLabel(st).trim())) continue;
             java.util.regex.Matcher m = BLOCK_IN_NAME.matcher(ens.toUpperCase(Locale.ROOT));
             if (!m.find()) continue;
             int idx = ((Number) i).intValue();
             String token = m.group();
             named++;
-            std &= idx >= 0 && idx < BLOCKS_STD.length && BLOCKS_STD[idx].equals(token);
-            withN &= idx >= 0 && idx < BLOCKS.length && BLOCKS[idx].equals(token);
+            if (idx >= 0 && idx < BLOCKS_STD.length && BLOCKS_STD[idx].equals(token)) std++;
+            if (idx >= 0 && idx < BLOCKS.length && BLOCKS[idx].equals(token)) withN++;
         }
-        blockTable = named == 0 ? 0 : std ? 0 : withN ? 1 : -2;
+        // Majorité des multiplex nommés (au moins les deux tiers) : une entrée isolée ne fait plus tout rejeter
+        blockTable = named == 0 ? 0 : std * 3 >= named * 2 && std >= withN ? 0 : withN * 3 >= named * 2 ? 1 : -2;
         Log.i(TAG, "DAB : table des blocs " + blockTable + " (" + named + " multiplex nommés)" + log);
     }
 
