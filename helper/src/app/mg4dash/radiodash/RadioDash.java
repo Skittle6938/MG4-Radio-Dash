@@ -59,12 +59,12 @@ public final class RadioDash {
             {"Energy", "Énergie", "Energie", "Energía", "Energia", "Energie"},
             {"Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto", "Android Auto"},
             {"Settings", "Paramètres", "Einstellungen", "Ajustes", "Impostazioni", "Instellingen"},
-            {"No favourites yet: turn off ★ Favourites to see every station, then tap a star",
-                    "Pas encore de favori : éteignez ★ Favoris pour voir toutes les stations, puis touchez une étoile",
-                    "Noch keine Favoriten: ★ Favoriten ausschalten, um alle Sender zu sehen, dann einen Stern antippen",
-                    "Aún no hay favoritos: desactive ★ Favoritos para ver todas las emisoras y toque una estrella",
-                    "Nessun preferito: disattiva ★ Preferiti per vedere tutte le stazioni, poi tocca una stella",
-                    "Nog geen favorieten: zet ★ Favorieten uit om alle zenders te zien en tik op een ster"},
+            {"No favourites yet: choose All stations above, then tap a star",
+                    "Pas encore de favori : choisissez Toutes les stations ci-dessus, puis touchez une étoile",
+                    "Noch keine Favoriten: oben Alle Sender wählen, dann einen Stern antippen",
+                    "Aún no hay favoritos: elija Todas las emisoras arriba y toque una estrella",
+                    "Nessun preferito: scegli Tutte le stazioni qui sopra, poi tocca una stella",
+                    "Nog geen favorieten: kies hierboven Alle zenders en tik op een ster"},
             {"Favourites", "Favoris", "Favoriten", "Favoritos", "Preferiti", "Favorieten"},
             {"All stations", "Toutes les stations", "Alle Sender", "Todas las emisoras", "Tutte le stazioni", "Alle zenders"},
             {"Scan", "Scan", "Suchlauf", "Buscar", "Scansione", "Scannen"},
@@ -78,12 +78,12 @@ public final class RadioDash {
                     "Aún no hay emisoras conocidas: toque Buscar para encontrarlas",
                     "Nessuna stazione ancora nota: tocca Scansione per cercarle",
                     "Nog geen zenders bekend: tik op Scannen om ze te zoeken"},
-            {"No stations known yet: turn off ★ Favourites, then press Scan",
-                    "Aucune station connue pour l'instant : éteignez ★ Favoris, puis touchez Scan",
-                    "Noch keine Sender bekannt: ★ Favoriten ausschalten, dann Suchlauf antippen",
-                    "Aún no hay emisoras conocidas: desactive ★ Favoritos y toque Buscar",
-                    "Nessuna stazione ancora nota: disattiva ★ Preferiti, poi tocca Scansione",
-                    "Nog geen zenders bekend: zet ★ Favorieten uit en tik op Scannen"},
+            {"No stations known yet: choose All stations above, then press Scan",
+                    "Aucune station connue pour l'instant : choisissez Toutes les stations ci-dessus, puis touchez Scan",
+                    "Noch keine Sender bekannt: oben Alle Sender wählen, dann Suchlauf antippen",
+                    "Aún no hay emisoras conocidas: elija Todas las emisoras arriba y toque Buscar",
+                    "Nessuna stazione ancora nota: scegli Tutte le stazioni qui sopra, poi tocca Scansione",
+                    "Nog geen zenders bekend: kies hierboven Alle zenders en tik op Scannen"},
             {"Scan done: %d stations", "Scan terminé : %d stations", "Suchlauf beendet: %d Sender",
                     "Búsqueda terminada: %d emisoras", "Scansione finita: %d stazioni", "Scan klaar: %d zenders"},
     };
@@ -422,6 +422,7 @@ public final class RadioDash {
                 boolean moved = squarePlayer(a, band);
                 moved |= fmStrip(a, band);
                 moved |= alignTabs(a);
+                moved |= gearButton(a);
                 moved |= alignWait(a);
                 if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
                 // Carte à sa nouvelle taille : les favoris de la nouvelle bande sont posés avant cette image,
@@ -757,6 +758,9 @@ public final class RadioDash {
         }
         int mid = minL < maxR ? (minL + maxR) / 2 : bar.getWidth() / 2;
         int start = Math.max(0, (panelLeft + panelRight) / 2 - mid - p[0]);
+        // La roue dentée occupe le bout droit de la rangée : les onglets s'arrêtent 12 dp avant elle
+        int clear = panelRight - dp(a, GEAR_DP) - dp(a, 12) - p[0];
+        if (minL < maxR && start + maxR > clear) start = Math.max(0, clear - maxR);
         int top = Math.max(0, (Math.min(space, rowH) - bar.getHeight()) / 2);
         if (lp.getMarginStart() != start || lp.topMargin != top) {
             lp.setMarginStart(start);
@@ -793,6 +797,7 @@ public final class RadioDash {
         squarePlayer(a, band);
         fmStrip(a, band);
         alignTabs(a);
+        gearButton(a);
         // AM : la radio écrit « KHz », les cartes et le cadran disent « kHz »
         View hz = byName(a, "tx_radio_hz_type");
         if (hz instanceof TextView && "KHz".contentEquals(((TextView) hz).getText())) ((TextView) hz).setText("kHz");
@@ -885,70 +890,141 @@ public final class RadioDash {
     // ── Mode Favoris / toutes les stations, scan ─────────────────────────────
 
     /**
-     * Boutons du haut du lecteur : « ★ Favoris », une bascule (allumé : les favoris seuls dans la case de droite
-     * et pour toutes les commandes ; éteint : toutes les stations connues), et « Scan », visible seulement quand
-     * toutes les stations sont affichées.
+     * Haut du lecteur : l'étoile seule dans le coin (déplacée là par la mise en page). La roue dentée d'origine reste
+     * dans la page (la radio la cherche) mais sans place ni taille : un bouton jumeau dans la rangée des onglets
+     * la déclenche (gearButton). Son état visible / caché reste celui que la radio lui donne.
      */
     private static void modeButtons(final Activity a) {
-        View rds = byName(a, "btn_dab_rds_setting");
-        if (rds == null || !(rds.getParent() instanceof LinearLayout)) return;
-        LinearLayout head = (LinearLayout) rds.getParent();
         // Bouton EPG caché par la radio sans programme : il gardait sa place et poussait la ligne
         View epg = byName(a, "btn_dab_program");
         if (epg != null && epg.getVisibility() == View.INVISIBLE) epg.setVisibility(View.GONE);
-        if (head.findViewWithTag("rd_favmgr") == null) {
-            TextView fav = text(a, "", 17, TEXT);
-            fav.setTag("rd_favmgr");
-            fav.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { toggleMode(a); }
-            });
-            TextView scanB = text(a, tr(9), 17, TEXT);
-            scanB.setTag("rd_scan");
-            scanB.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) { scanPressed(a); }
-            });
-            for (TextView t : new TextView[]{scanB, fav}) {
-                t.setGravity(Gravity.CENTER);
-                t.setPadding(dp(a, 18), 0, dp(a, 18), 0);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(a, 56));
-                lp.setMarginStart(dp(a, 10));
-                head.addView(t, head.indexOfChild(rds), lp);
+        View rds = byName(a, "btn_dab_rds_setting");
+        if (rds != null && rds.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) rds.getLayoutParams();
+            if (lp.width != 0 || lp.height != 0 || lp.getMarginStart() != 0) {
+                lp.width = 0; lp.height = 0; lp.setMarginStart(0); lp.setMarginEnd(0);
+                rds.setLayoutParams(lp);
             }
         }
         paintModeButtons(a);
     }
 
-    /** État des deux boutons : étoile et fond de « ★ Favoris » selon le mode, « Scan » caché en mode Favoris. */
+    /** Bascule « ★ Favoris | Toutes les stations » du bandeau de droite, et Scan caché en mode Favoris. */
     private static void paintModeButtons(Activity a) {
         View root = a.getWindow().getDecorView();
         boolean on = Stations.favOnly(a);
-        boolean glass = shownBand(a) == 4 && Palette.immersiveDab();
-        View f = root.findViewWithTag("rd_favmgr");
-        if (f instanceof TextView) {
-            String state = on + "|" + glass;
-            if (!state.equals(f.getTag(MODE_TAG))) {
-                f.setTag(MODE_TAG, state);
+        View seg = root.findViewWithTag("rd_mode_seg");
+        View f = root.findViewWithTag("rd_seg_fav"), all = root.findViewWithTag("rd_seg_all");
+        if (seg != null && f instanceof TextView && all instanceof TextView) {
+            String state = on + "|" + Palette.isLight() + "|" + Palette.starColor();
+            if (!state.equals(seg.getTag(MODE_TAG))) {
+                seg.setTag(MODE_TAG, state);
                 android.text.SpannableString sp = new android.text.SpannableString("★  " + tr(7));
-                sp.setSpan(new android.text.style.ForegroundColorSpan(on ? Palette.starColor() : glass ? 0x99FFFFFF : Palette.map(TITLE)), 0, 1, 0);
+                sp.setSpan(new android.text.style.ForegroundColorSpan(on ? Palette.starColor() : Palette.map(SUB)), 0, 1, 0);
                 ((TextView) f).setText(sp);
-                if (glass) Immersive.glass(a, f, on);
-                else {
-                    f.setBackground(panel(a, on ? 0x262979FF : BUTTON, 14, on ? ACTION : BORDER));
-                    Palette.recolor(f);
-                }
+                ((TextView) all).setText(tr(8));
+                ((TextView) f).setTextColor(on ? TEXT : SUB);
+                ((TextView) all).setTextColor(on ? SUB : TEXT);
+                f.setBackground(on ? panel(a, 0x262979FF, 10, ACTION) : null);
+                all.setBackground(on ? null : panel(a, 0x262979FF, 10, ACTION));
+                seg.setBackground(panel(a, BUTTON, 12, BORDER));
+                Palette.recolor(seg);
             }
         }
         View s = root.findViewWithTag("rd_scan");
         if (s != null) {
             int vis = on ? View.GONE : View.VISIBLE;
             if (s.getVisibility() != vis) s.setVisibility(vis);
-            if (!glass && s.getTag(MODE_TAG) == null) {
+            if (s.getTag(MODE_TAG) == null) {
                 s.setTag(MODE_TAG, Boolean.TRUE);
-                s.setBackground(panel(a, BUTTON, 14, BORDER));
+                s.setBackground(panel(a, BUTTON, 12, BORDER));
                 Palette.recolor(s);
             }
         }
     }
+
+    /** Bascule des deux modes : chaque moitié choisit le sien. */
+    private static View modeSwitch(final Activity a) {
+        LinearLayout seg = new LinearLayout(a);
+        seg.setTag("rd_mode_seg");
+        seg.setOrientation(LinearLayout.HORIZONTAL);
+        seg.setPadding(dp(a, 3), dp(a, 3), dp(a, 3), dp(a, 3));
+        for (int i = 0; i < 2; i++) {
+            final boolean fav = i == 0;
+            TextView t = text(a, "", 18, TEXT);
+            t.setTag(fav ? "rd_seg_fav" : "rd_seg_all");
+            t.setGravity(Gravity.CENTER);
+            t.setSingleLine(true);
+            t.setPadding(dp(a, 18), 0, dp(a, 18), 0);
+            t.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { if (Stations.favOnly(a) != fav) toggleMode(a); }
+            });
+            seg.addView(t, new LinearLayout.LayoutParams(-2, -1));
+        }
+        return seg;
+    }
+
+    // ── Roue dentée dans la rangée des onglets, alignée sur le bord droit du lecteur ──
+
+    private static final String GEAR_TAG = "rd_gear";
+    private static final int GEAR_DP = 64;
+
+    /** Bouton jumeau de la roue dentée de la page (réglages RDS / DAB+) : même effet, posé à côté des onglets. */
+    private static boolean gearButton(final Activity a) {
+        View content = a.findViewById(android.R.id.content);
+        View cont = byName(a, "fragment_container");
+        View bar = byName(a, "rl_menu_bar");
+        if (!(content instanceof FrameLayout) || cont == null || bar == null) return false;
+        FrameLayout root = (FrameLayout) content;
+        View old = root.findViewWithTag(GEAR_TAG);
+        FrameLayout gear;
+        if (old instanceof FrameLayout) gear = (FrameLayout) old;
+        else {
+            gear = new FrameLayout(a);
+            gear.setTag(GEAR_TAG);
+            gear.setBackground(panel(a, BUTTON, 16, BORDER));
+            ImageView icon = new ImageView(a);
+            int res = a.getResources().getIdentifier("radio_btn_dab_setting", "drawable", a.getPackageName());
+            if (res != 0) icon.setImageResource(res);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            icon.setPadding(dp(a, 16), dp(a, 16), dp(a, 16), dp(a, 16));
+            gear.addView(icon, new FrameLayout.LayoutParams(-1, -1));
+            gear.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    View rds = byName(a, "btn_dab_rds_setting");
+                    if (rds != null) rds.performClick();
+                }
+            });
+            root.addView(gear, new FrameLayout.LayoutParams(dp(a, GEAR_DP), dp(a, GEAR_DP)));
+            Palette.recolor(gear);
+        }
+        View icon = gear.getChildAt(0);
+        int color = Palette.map(0xFFFFFFFF);
+        if (icon instanceof ImageView && !Integer.valueOf(color).equals(icon.getTag(ICON_TAG))) {
+            ((ImageView) icon).setImageTintList(android.content.res.ColorStateList.valueOf(color));
+            icon.setTag(ICON_TAG, color);
+        }
+        View rds = byName(a, "btn_dab_rds_setting");
+        View fmList = byName(a, "fl_fm_am_list"), dabList = byName(a, "fl_dab_list");
+        boolean show = rds != null && rds.getVisibility() == View.VISIBLE && cont.isShown()
+                && (fmList == null || fmList.getVisibility() != View.VISIBLE) && (dabList == null || dabList.getVisibility() != View.VISIBLE);
+        boolean moved = false;
+        int vis = show ? View.VISIBLE : View.GONE;
+        if (gear.getVisibility() != vis) { gear.setVisibility(vis); moved = true; }
+        if (!show || cont.getWidth() <= 0 || bar.getHeight() <= 0) return moved;
+        int[] c = new int[2], b = new int[2], r = new int[2];
+        cont.getLocationInWindow(c);
+        bar.getLocationInWindow(b);
+        root.getLocationInWindow(r);
+        int size = dp(a, GEAR_DP);
+        int left = c[0] + cont.getWidth() - dp(a, 12) - size - r[0];
+        int top = b[1] + Math.round(bar.getTranslationY()) + (bar.getHeight() - size) / 2 - r[1];
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) gear.getLayoutParams();
+        if (lp.leftMargin != left || lp.topMargin != top) { lp.leftMargin = left; lp.topMargin = top; gear.setLayoutParams(lp); moved = true; }
+        return moved;
+    }
+    private static final int ICON_TAG = 0x7f7a0009;
+
     private static final int MODE_TAG = 0x7f7a0005;
 
     private static void toggleMode(Activity a) {
@@ -1037,13 +1113,30 @@ public final class RadioDash {
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
             // Bord droit = celui de la dernière colonne de cases (marge de la liste 12 dp + écart des cases 5 dp)
-            row.setPadding(dp(a, 22), 0, dp(a, 12 + 5), 0);
-            row.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+            row.setPadding(dp(a, 17), 0, dp(a, 12 + 5), 0);
+            // Le titre d'origine reste dans la page (caché) : la bascule des deux modes prend sa place
+            title.setVisibility(View.GONE);
+            row.addView(title, new LinearLayout.LayoutParams(0, -2));
+            row.addView(modeSwitch(a), new LinearLayout.LayoutParams(-2, -1));
+            TextView scanB = text(a, tr(9), 18, TEXT);
+            scanB.setTag("rd_scan");
+            scanB.setGravity(Gravity.CENTER);
+            scanB.setSingleLine(true);
+            scanB.setPadding(dp(a, 18), 0, dp(a, 18), 0);
+            scanB.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { scanPressed(a); }
+            });
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-2, -1);
+            slp.setMarginStart(dp(a, 10));
+            row.addView(scanB, slp);
             TextView status = text(a, "", 20, TEXT);
             status.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
             status.setTag("rd_scan_status");
             status.setSingleLine(true);
+            status.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            status.setPadding(dp(a, 12), 0, 0, 0);
             row.addView(status, new LinearLayout.LayoutParams(-2, -2));
+            row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
             row.addView(seekWaitControl(a));
             box.addView(row, new FrameLayout.LayoutParams(-1, -1));
             LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(a, 44));
@@ -1052,13 +1145,9 @@ public final class RadioDash {
             parent.addView(box, index, hlp);
             Palette.recolor(box);
         }
-        CharSequence want = favOnly ? favsTitle : tr(8);
-        if (want != null && !want.toString().contentEquals(title.getText())) title.setText(want);
-        // Même hauteur dans les deux modes (celle du titre seul d'origine) : les cases ne changent pas de taille.
-        // Texte un peu plus gros que l'original (17 sp)
-        float titleSp = 19;
-        if (Math.abs(title.getTextSize() - TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, titleSp, a.getResources().getDisplayMetrics())) > 0.5f)
-            title.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp);
+        if (title.getVisibility() != View.GONE) title.setVisibility(View.GONE);
+        paintModeButtons(a);
+        scanUi(a);
         View wait = decor.findViewWithTag("rd_scan_wait");
         int vis = !favOnly && band != 4 ? View.VISIBLE : View.GONE;
         if (wait != null && wait.getVisibility() != vis) wait.setVisibility(vis);

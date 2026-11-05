@@ -113,7 +113,7 @@ final class Immersive {
     }
 
     /**
-     * Boutons posés sur l'image (reprise auto, réglage, liste, ★ Favoris, étoile) : verre sombre et
+     * Boutons posés sur l'image (reprise auto, réglage, liste, étoile) : verre sombre et
      * contenu blanc, en mode clair comme en sombre. Le thème clair les passait en gris clair, illisibles.
      */
     private static void glassButtons(Activity a, View root) {
@@ -121,10 +121,6 @@ final class Immersive {
             View v = find(root, n);
             if (v != null) glass(a, v, n.equals("btn_dab_search_list") ? "radio_btn_search_list" : null);
         }
-        View fav = root.getRootView().findViewWithTag("rd_favmgr");
-        if (fav != null) glass(a, fav, Stations.favOnly(a));
-        View scan = root.getRootView().findViewWithTag("rd_scan");
-        if (scan != null) glass(a, scan, null);
     }
 
     /** « ★ Favoris » sur l'image : verre sombre, teinté de la couleur du thème quand le mode Favoris est allumé. */
