@@ -87,6 +87,9 @@ public final class FmDial extends View {
 
     private float pad() { return 28 * d; }
 
+    /** Hauteur de la piste : repères des favoris (26 dp au-dessus) et chiffres (56 dp en dessous) centrés dans le bandeau. */
+    private float cy() { return Math.max(26 * d, (getHeight() - 30 * d) / 2f); }
+
     private float xOf(int khz) {
         float w = getWidth() - 2 * pad();
         return pad() + w * (khz - MIN) / (float) (MAX - MIN);
@@ -100,7 +103,7 @@ public final class FmDial extends View {
     }
 
     @Override protected void onDraw(Canvas c) {
-        float cy = 30 * d;
+        float cy = cy();
         float th = 6 * d;
         // Graduations : FM, petite marque tous les 1 MHz, libellé tous les 4 MHz ; AM, marque tous les
         // 100 kHz, libellé tous les 200 kHz. La bulle du glissement est au-dessus : les libellés restent visibles.
@@ -161,7 +164,7 @@ public final class FmDial extends View {
         float w = bubbleText.measureText(bubbleD.text) + 48 * d, h = 62 * d + Bubble.TIP * d;
         float cx = me[0] - host[0] + xOf(dragValue);
         float left = Math.max(8 * d, Math.min(bubbleHost.getWidth() - 8 * d - w, cx - w / 2));
-        float bottom = me[1] - host[1] + 30 * d - 52 * d;   // pointe 52 dp au-dessus de la piste : hors du doigt
+        float bottom = me[1] - host[1] + cy() - 52 * d;   // pointe 52 dp au-dessus de la piste : hors du doigt
         bubbleD.tipX = cx - left;
         bubbleD.setBounds((int) left, (int) (bottom - h), (int) (left + w), (int) bottom);
         bubbleD.invalidateSelf();

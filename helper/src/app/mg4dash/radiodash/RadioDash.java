@@ -474,8 +474,9 @@ public final class RadioDash {
     private static final int TAB_TAG = 0x7f7a0003;
     private static final int STYLED_TAG = 0x7f7a0004;
 
-    /** Hauteur prise sous le lecteur et les favoris en FM / AM, marge comprise (dp). */
-    private static final int STRIP_DP = 112;
+    /** Hauteur prise sous le lecteur et les favoris en FM / AM : 12 dp au-dessus, le bandeau, 12 dp au bord de l'écran. */
+    private static final int STRIP_DP = 116;
+    private static final int STRIP_GAP_DP = 12;
     private static final String STRIP_TAG = "rd_fm_dial";
 
     /**
@@ -492,7 +493,8 @@ public final class RadioDash {
         int reserve = fm ? dp(a, STRIP_DP) : 0;
         if (cont.getPaddingBottom() != reserve) { cont.setPadding(cont.getPaddingLeft(), cont.getPaddingTop(), cont.getPaddingRight(), reserve); moved = true; }
         ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) card.getLayoutParams();
-        if (lp.bottomMargin != reserve) { lp.bottomMargin = reserve; card.setLayoutParams(lp); moved = true; }
+        int margin = fm ? reserve : dabCardMargin(a, cont, card, lp.bottomMargin);
+        if (lp.bottomMargin != margin) { lp.bottomMargin = margin; card.setLayoutParams(lp); moved = true; }
         android.widget.FrameLayout root = (android.widget.FrameLayout) content;
         View old = root.findViewWithTag(STRIP_TAG);
         android.widget.FrameLayout strip;
@@ -518,15 +520,36 @@ public final class RadioDash {
         int left = c[0] - r[0];
         int right = k[0] + card.getWidth() - r[0];
         if (c[0] > k[0]) { left = k[0] - r[0]; right = c[0] + cont.getWidth() - dp(a, 12) - r[0]; }
-        int top = k[1] + card.getHeight() + dp(a, 12) - r[1];
+        int top = k[1] + card.getHeight() + dp(a, STRIP_GAP_DP) - r[1];
         android.widget.FrameLayout.LayoutParams s = (android.widget.FrameLayout.LayoutParams) strip.getLayoutParams();
-        int w = right - left, hh = dp(a, STRIP_DP - 12);
+        int w = right - left, hh = dp(a, STRIP_DP - 2 * STRIP_GAP_DP);
         if (s.leftMargin != left || s.topMargin != top || s.width != w || s.height != hh) {
             s.leftMargin = left; s.topMargin = top; s.width = w; s.height = hh;
             strip.setLayoutParams(s);
             moved = true;
         }
         return moved;
+    }
+
+    /**
+     * DAB : marge du bas des favoris pour que leur fond s'arrête au même niveau que le lecteur de gauche
+     * (le panneau de l'image, sinon le bas du conteneur moins 12 dp). Mesuré à l'écran : la carte et le lecteur
+     * n'ont pas le même parent.
+     */
+    private static int dabCardMargin(Activity a, View cont, View card, int current) {
+        if (cont.getHeight() <= 0 || card.getHeight() <= 0) return dp(a, 12);
+        int[] p = new int[2], k = new int[2];
+        View player = cont instanceof ViewGroup ? ((ViewGroup) cont).findViewWithTag("rd_imm") : null;
+        int want;
+        if (player != null && player.isShown() && player.getHeight() > 0) {
+            player.getLocationInWindow(p);
+            want = p[1] + player.getHeight();
+        } else {
+            cont.getLocationInWindow(p);
+            want = p[1] + cont.getHeight() - cont.getPaddingBottom() - dp(a, 12);
+        }
+        card.getLocationInWindow(k);
+        return Math.max(0, current + k[1] + card.getHeight() - want);
     }
 
     /** Texte RDS de la station FM : envoyé à MG4Dash, la session média de la radio ne le contient pas. */
