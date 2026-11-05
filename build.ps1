@@ -35,6 +35,17 @@ $app = Join-Path $work "radio_src"
 
 # 3. Superposition
 Copy-Item -Recurse -Force "$root\dash\*" $app
+# Version de Radio Dash (fichier VERSION) dans <application> : meta-data « radiodash.version », lue par MG4Dash.
+# Le versionName reste celui de la radio d'origine (MG4Dash s'en sert pour la compatibilité).
+$version = (Get-Content -Raw "$root\VERSION").Trim()
+$manifestPath = Join-Path $app "AndroidManifest.xml"
+$manifest = [IO.File]::ReadAllText($manifestPath)
+$manifest = ([regex]'<meta-data android:name="radiodash\.version"[^>]*/>\s*').Replace($manifest, '')
+$meta = '<meta-data android:name="radiodash.version" android:value="' + $version + '"/>'
+$manifest = ([regex]'(<application\b[^>]*[^/]>)').Replace($manifest, { param($m) $m.Value + "`n        " + $meta }, 1)
+if ($manifest -notmatch 'radiodash\.version') { throw "meta-data radiodash.version non ajoutée au manifeste" }
+[IO.File]::WriteAllText($manifestPath, $manifest)
+Write-Host "Version Radio Dash : $version"
 New-Item -ItemType Directory -Force "$app\smali\app\mg4dash\radiodash" | Out-Null
 Copy-Item -Force "$h\decoded\smali\app\mg4dash\radiodash\*.smali" "$app\smali\app\mg4dash\radiodash\"
 
