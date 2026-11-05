@@ -4,13 +4,13 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 **Firmware:** built and tested for SWI69. SWI68 is being tested by users ([#2](https://github.com/Skittle6938/MG4-Radio-Dash/issues/2)) and is not officially supported.
 
-![MG4 Radio Dash, DAB+, dark](screenshots/radio-dash.jpg)
+![MG4 Radio Dash, DAB+, favourites](screenshots/radio-dash-light.jpg)
 
-![MG4 Radio Dash, DAB+, light](screenshots/radio-dash-light.jpg)
+![MG4 Radio Dash, DAB+, all stations](screenshots/radio-dash-stations.jpg)
 
 ![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
 
-*Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (dark: next version; light: 1.5.2, with the former button layout), FM with the full-width dial and the favourite stations (next version).*
+*Screenshots taken on the car with 1.6.1 beta 6, in light mode: DAB+ with the Immersive player and the favourites, DAB+ with every station (★ Favourites off, Scan shown), FM with the full-width dial.*
 
 ### ★ Favourites and all stations, in the box on the right
 

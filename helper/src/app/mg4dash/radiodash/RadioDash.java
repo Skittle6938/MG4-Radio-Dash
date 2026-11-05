@@ -470,17 +470,68 @@ public final class RadioDash {
             215072, 216928, 217088, 218640, 220352, 222064, 223936, 224096, 225648, 227360, 229072, 230784, 232496, 234208,
             235776, 237488, 239200};
 
-    /** Bloc DAB (11C…) d'après la fréquence de la station, en kHz (ou en Hz / MHz selon la radio) ; null si inconnue. */
+    /** Les mêmes blocs sans 10N, 11N et 12N (table habituelle des tuners, 5A = 0 … 13F = 37). */
+    private static final String[] BLOCKS_STD;
+    static {
+        java.util.List<String> std = new java.util.ArrayList<>();
+        for (String b : BLOCKS) if (!b.endsWith("N")) std.add(b);
+        BLOCKS_STD = std.toArray(new String[0]);
+    }
+    private static final java.util.regex.Pattern BLOCK_IN_NAME = java.util.regex.Pattern.compile("\\b(5|6|7|8|9|10|11|12|13)([A-F]|N)\\b");
+
+    /**
+     * Table de getFrequencyIndex : -1 pas encore vérifiée, 0 sans les blocs N, 1 avec, -2 aucune ne colle.
+     * Vérifiée sur les multiplex dont le nom contient le bloc (PARIS 6D…) ; la radio renvoie une fréquence nulle.
+     */
+    private static int blockTable = -1;
+
+    private static String ensembleOf(Object st) {
+        Object e = callQuiet(st, "getEnsembleName");
+        if (e == null) e = callQuiet(st, "getEnsembleLabel");
+        return e == null ? "" : e.toString().trim();
+    }
+
+    private static void checkBlockTable(Activity a) {
+        if (blockTable != -1) return;
+        List<Object> list;
+        try { list = Stations.all(a, storage(a), 4); } catch (Throwable t) { return; }
+        if (list == null || list.isEmpty()) return;
+        boolean std = true, withN = true;
+        int named = 0;
+        StringBuilder log = new StringBuilder();
+        for (Object st : list) {
+            String ens = ensembleOf(st);
+            Object i = callQuiet(st, "getFrequencyIndex");
+            if (log.length() < 3000) log.append(" | ").append(Stations.dabLabel(st)).append(" / ").append(ens).append(" ").append(i);
+            if (!(i instanceof Number)) continue;
+            java.util.regex.Matcher m = BLOCK_IN_NAME.matcher(ens.toUpperCase(Locale.ROOT));
+            if (!m.find()) continue;
+            int idx = ((Number) i).intValue();
+            String token = m.group();
+            named++;
+            std &= idx >= 0 && idx < BLOCKS_STD.length && BLOCKS_STD[idx].equals(token);
+            withN &= idx >= 0 && idx < BLOCKS.length && BLOCKS[idx].equals(token);
+        }
+        blockTable = named == 0 ? 0 : std ? 0 : withN ? 1 : -2;
+        Log.i(TAG, "DAB : table des blocs " + blockTable + " (" + named + " multiplex nommés)" + log);
+    }
+
+    /** Bloc DAB (11C…) d'après la fréquence (kHz, Hz ou MHz selon la radio), sinon d'après l'index ; null si inconnu. */
     static String dabBlock(Object st) {
         Object f = callQuiet(st, "getFrequencyChannel");
         if (!(f instanceof Number)) f = callQuiet(st, "getFrequency");
-        if (!(f instanceof Number)) return null;
-        double v = ((Number) f).doubleValue();
-        double[] tries = {v, v / 1000, v * 1000};
-        for (double khz : tries)
-            for (int i = 0; i < BLOCK_KHZ.length; i++)
-                if (Math.abs(khz - BLOCK_KHZ[i]) < 20) return BLOCKS[i];
-        return null;
+        if (f instanceof Number && ((Number) f).doubleValue() > 0) {
+            double v = ((Number) f).doubleValue();
+            double[] tries = {v, v / 1000, v * 1000};
+            for (double khz : tries)
+                for (int i = 0; i < BLOCK_KHZ.length; i++)
+                    if (Math.abs(khz - BLOCK_KHZ[i]) < 20) return BLOCKS[i];
+        }
+        Object i = callQuiet(st, "getFrequencyIndex");
+        if (!(i instanceof Number) || blockTable < 0) return null;
+        int idx = ((Number) i).intValue();
+        String[] table = blockTable == 1 ? BLOCKS : BLOCKS_STD;
+        return idx >= 0 && idx < table.length ? table[idx] : null;
     }
 
     private static String dabInfoSet;
@@ -499,6 +550,8 @@ public final class RadioDash {
         int k = base.indexOf("  ·  ");   // ajout précédent encore affiché (écran recréé)
         if (k >= 0) base = base.substring(0, k);
         base = base.trim();
+        if (base.isEmpty() || base.equals("_")) return;   // nom du multiplex pas encore reçu
+        checkBlockTable(a);
         String block = dabBlock(st);
         Object sid = callQuiet(st, "getServiceId");
         long id = sid instanceof Number ? ((Number) sid).longValue() : 0;
