@@ -12,15 +12,26 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 *Screenshots taken on the car: DAB+ with the Immersive player and 5 columns of favourites (dark: next version; light: 1.5.2, with the former button layout), FM with the full-width dial and the favourite stations (next version).*
 
-### ★ Stations window
+### ★ Favourites and all stations, in the box on the right
 
-![Stations window](screenshots/radio-dash-favourites.jpg)
+The **★ Favourites** button at the top of the player switches the box on the right, and every station control, between two lists:
+- **★ Favourites on** (default): the box shows your favourites of the current band only, and the steering wheel, the home screen, the MG4Dash media card, the ◀ ▶ buttons of the player and a swipe on the player all go from one favourite to the next.
+- **★ Favourites off**: the box shows every station the radio knows for the band (DAB+ in alphabetical order, FM and AM by frequency), and all those controls go through every station.
 
-The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of the player opens a full-screen list of every DAB+ station received, in alphabetical order, with its logo and multiplex, in 5 columns. One tap on a station adds or removes it from the favourites, saved at once by the radio (the same favourites as the star of the player and the bar on the right). Favourites already chosen stay ticked, even when the station is out of range. **Refresh** asks the tuner for its latest station list and reloads it a few seconds later. It does not run a band scan, which would retune the radio. On FM and AM, the same window lists the stations of that band and offers the scan described under 1.6.0.
+In both lists, a tap on a station tunes it and a tap on its star adds or removes it from the favourites (the same favourites as the star of the player). Favourites stay in the list even when they are out of range. When the station changes, the box scrolls to show it.
+
+**Scan**, next to ★ Favourites, only appears when ★ Favourites is off. On FM and AM it steps through the band with seek from the bottom: it moves on as soon as the RDS name is known, or after the listening time set in the box header (*Listen ◀ 5 s ▶*, 1 to 15 s). The frequency, the number of stations found and a progress bar are shown above the stations, which appear as they are found. After a complete scan, a station that was not found again is removed from the list, unless it is a favourite. **Stop** ends the scan without removing anything, and the radio goes back to the station playing before. On DAB+, Scan asks the tuner for its latest station list.
+
+On the player, **◀ ▶** go to the previous / next station of the list; a **long press** searches for the next station received, like the stock buttons. With an empty list, ◀ ▶ search as well.
 
 ### What's new in this fork
 
-**Next version (in testing: 1.6.1 beta 4)**
+**Next version (1.7, in development)**
+- **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
+- **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
+- **Scan button** in the player when ★ Favourites is off, with its progress above the stations. A complete scan removes the stations no longer received, except favourites. The default listening time per station is now 5 s.
+
+**1.6.1 beta 4 (in testing)**
 - **AM page with the same layout as FM**: frequency, favourite star, playback buttons and the full-width dial at the bottom, from 522 to 1620 kHz in 9 kHz steps, with the AM favourites. The stock AM ruler is hidden. AM favourites are shown in kHz (1098 kHz instead of 1,1 MHz).
 - **Band tabs aligned on the player** when the AM tab is shown (SWI68), so the third tab no longer covers the favourites.
 - **★ Favourites button renamed ★ Stations**: it lists every station received, the favourites are already on the right.
@@ -57,7 +68,7 @@ The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of th
 - **MG4Dash dock** at the bottom (clock, Home, Vehicle, Climate, Energy, Android Auto, Settings) to jump straight to the MG4Dash pages.
 - **Large square station artwork**, the same image as on the home screen (DAB+ slideshow, with the per-station cache as fallback).
 - **One favourites bar on the right**, 3 columns: the favourite stations of the current band with their image (DAB) or their RDS name in the theme colour above the frequency (FM/AM). One tap tunes the station. The old bottom row is gone and the central controls are bigger.
-- **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged.
+- **Favourites-only skipping**: the steering-wheel buttons and the ◀ ▶ buttons of the home screen now cycle through your favourites only (DAB and FM). Without favourites, the original behaviour is kept. The arrows inside the radio app are unchanged (until 1.7).
 - **Modern FM dial** replacing the stock frequency ruler: gradient track, glowing cursor, small stars for favourites. Drag the cursor to tune.
 - **Stars instead of hearts** for favourites, in the colour of the MG4Dash theme you chose.
 - Restyled favourite cards, playback buttons (identical on FM and DAB) and frequency colours.
@@ -68,7 +79,7 @@ The **★ Stations** button (called ★ Favourites up to 1.6.0) at the top of th
 
 The redesign is applied on top of `apk/Radio_patched_signed.apk`:
 - `dash/` — modified layouts (all original view IDs kept), drawables, colours and two smali files (`RadioService$6` for favourites skipping, `RadioMainActivity` for three lifecycle hooks);
-- `helper/src/` — a small Java module (`RadioDash`, `Favorites`, `FmDial`) compiled to smali and added to the app;
+- `helper/src/` — a small Java module (`RadioDash`, `Stations`, `Favorites`, `FmDial`) compiled to smali and added to the app;
 - `build.ps1` — compiles the module, decodes the base APK, applies `dash/`, rebuilds and signs with the AOSP platform test key (not included: see MG4Dash's README to download it).
 
 Install exactly like the original patch below (`adb push` + `pm install -r -f`, or USB stick), then **reboot the head unit**. To go back, reinstall the original `Radio_patched_signed.apk`, or `adb shell pm uninstall com.saicmotor.radio` for the factory radio.

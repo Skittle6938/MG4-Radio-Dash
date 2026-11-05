@@ -122,8 +122,28 @@ final class Immersive {
             if (v != null) glass(a, v, n.equals("btn_dab_search_list") ? "radio_btn_search_list" : null);
         }
         View fav = root.getRootView().findViewWithTag("rd_favmgr");
-        if (fav != null) glass(a, fav, null);
+        if (fav != null) glass(a, fav, Stations.favOnly(a));
+        View scan = root.getRootView().findViewWithTag("rd_scan");
+        if (scan != null) glass(a, scan, null);
     }
+
+    /** « ★ Favoris » sur l'image : verre sombre, teinté de la couleur du thème quand le mode Favoris est allumé. */
+    static void glass(Activity a, View v, boolean on) {
+        if (v.getTag(GLASS) != null && v.getBackground() == v.getTag(GLASS) && Boolean.valueOf(on).equals(v.getTag(GLASS_ON))) {
+            if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != Color.WHITE) ((TextView) v).setTextColor(Color.WHITE);
+            return;
+        }
+        if (v instanceof TextView) ((TextView) v).setTextColor(Color.WHITE);
+        GradientDrawable g = new GradientDrawable();
+        g.setCornerRadius(dp(a, 14));
+        int star = Palette.starColor();
+        g.setColor(on ? (star & 0x00FFFFFF) | 0x59000000 : 0x73000000);
+        g.setStroke(on ? dp(a, 2) : 1, on ? star : 0x33FFFFFF);
+        v.setBackground(g);
+        v.setTag(GLASS, g);
+        v.setTag(GLASS_ON, on);
+    }
+    private static final int GLASS_ON = 0x7f7a0007;
 
     private static void glass(Activity a, View v, String iconRes) {
         // Contenu blanc à chaque passage : le thème clair le remet en sombre
