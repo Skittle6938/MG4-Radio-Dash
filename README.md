@@ -91,7 +91,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 ### How it is built
 
 The redesign is applied on top of `apk/Radio_patched_signed.apk`:
-- `dash/` — modified layouts (all original view IDs kept), drawables, colours and two smali files (`RadioService$6` for favourites skipping, `RadioMainActivity` for three lifecycle hooks);
+- `dash/` — modified layouts (all original view IDs kept), drawables, colours and a few smali files (`RadioService$6` for favourites skipping, `RadioMainActivity` for the lifecycle hooks, `RadioMBService` for the direct band command, and others for the RDS text);
 - `helper/src/` — a small Java module (`RadioDash`, `Stations`, `Favorites`, `Bands`, `FmDial`) compiled to smali and added to the app;
 - `build.ps1` — compiles the module, decodes the base APK, applies `dash/`, rebuilds and signs with the AOSP platform test key (not included: see MG4Dash's README to download it).
 
