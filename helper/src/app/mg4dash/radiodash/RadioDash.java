@@ -818,13 +818,21 @@ public final class RadioDash {
                 bar.setProgress(Math.max(0, Math.min(1000, (ch - min) * 1000 / (max - min))));
                 status.setText(ch < 0 ? tr(11) : band == 0 ? ch + " kHz" : String.format(Locale.getDefault(), "%.1f MHz", ch / 1000f));
                 // Revenu en bas de bande après être monté : tout est parcouru
-                boolean wrapped = band != 0 && highest > FM_MIN + 1000 && ch >= 0 && ch < highest - 1000;
+                boolean wrapped = band == 0 ? highest > AM_MIN + 100 && ch >= 0 && ch < highest - 100
+                        : highest > FM_MIN + 1000 && ch >= 0 && ch < highest - 1000;
                 if (ch > highest) highest = ch;
                 int waitMs = seekWaitSeconds(a) * 1000;
                 if (wrapped || now - lastMove > STILL_MS + waitMs || now - started > MAX_MS) { finish(); return; }
                 // FM : le temps réglé est un maximum pour capter le nom RDS : une fois le nom connu, station suivante
                 boolean named = now - lastMove > MIN_LISTEN_MS && now - lastSeek > MIN_LISTEN_MS && hasRdsName(ch);
                 if (band != 0 && (named || now - lastMove > waitMs && now - lastSeek > waitMs)) { seek(); lastSeek = now; }
+                // AM : pas de RDS ; la station où « suivant » s'est arrêté est notée, puis on passe à la suivante
+                if (band == 0 && now - lastMove > waitMs && now - lastSeek > waitMs) {
+                    if (lastMove > lastSeek && ch >= AM_MIN && ch <= AM_MAX && lastSeek > started && amFound(a).add(ch)) {
+                        saveAmFound(a); found = scannedCount(); fill.run();
+                    }
+                    seek(); lastSeek = now;
+                }
                 main.postDelayed(this, POLL_MS);
             }
         };
@@ -848,7 +856,7 @@ public final class RadioDash {
             try {
                 Object st = storage(a);
                 List<?> l = (List<?>) st.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(st, band == 0 ? 0 : 1);
-                return l == null ? 0 : l.size();
+                return (l == null ? 0 : l.size()) + (band == 0 ? amFound(a).size() : 0);
             } catch (Throwable t) { return found; }
         }
 
@@ -865,8 +873,10 @@ public final class RadioDash {
 
         private void start() {
             origin = currentFmChannel(storage(a));
-            if (band == 0) { if (!command("scan")) return; }
-            else { tuneAmFm(FM_MIN, false); }
+            // AM aussi pas à pas avec « suivant » : la recherche automatique de la radio (scan) ne remplissait
+            // pas la liste sur SWI68, alors que « suivant » trouve bien les stations
+            if (band == 0) { amFound(a).clear(); saveAmFound(a); }
+            tuneAmFm(band == 0 ? AM_MIN : FM_MIN, band == 0);
             running = true;
             started = lastMove = android.os.SystemClock.uptimeMillis();
             lastSeek = started;
@@ -888,7 +898,7 @@ public final class RadioDash {
         private void finish() {
             running = false;
             main.removeCallbacks(poll);
-            if (band != 0 && origin > 0) tuneAmFm(origin, false);
+            if (origin > 0) tuneAmFm(origin, band == 0);
             button.setText(tr(13));
             status.setText("");
             bar.setVisibility(View.GONE);
@@ -906,6 +916,12 @@ public final class RadioDash {
         try {
             List<?> scanned = (List<?>) storage.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(storage, key);
             if (scanned != null) for (Object st : scanned) all.put(((Number) call(st, "getChannelNumber")).intValue(), st);
+            if (key == 0) {
+                Class<?> rs = Class.forName("com.android.car.radio.service.RadioStation");
+                Class<?> rdsCls = Class.forName("com.android.car.radio.service.RadioRds");
+                for (int ch : amFound(a)) if (!all.containsKey(ch))
+                    all.put(ch, rs.getConstructor(int.class, int.class, int.class, rdsCls).newInstance(ch, 0, 0, null));
+            }
             List<?> favs = (List<?>) storage.getClass().getMethod("getFavoriteForBand", int.class).invoke(storage, key);
             // Favoris d'avant, même hors de portée : on les garde dans la liste, cochés
             if (favs != null) for (Object f : favs) {
@@ -1073,11 +1089,30 @@ public final class RadioDash {
      * les stations en favori de la bande en cours, avec leur image (DAB) ou leur fréquence (FM/AM).
      */
     /** Nombre de stations connues de la radio pour cette bande (liste DAB+ ou dernier balayage FM / AM), -1 si inconnu. */
+    /** Stations AM trouvées par le balayage de Radio Dash (la radio ne les garde pas toujours, SWI68). */
+    private static java.util.TreeSet<Integer> amFound;
+    private static java.util.TreeSet<Integer> amFound(Context c) {
+        if (amFound == null) {
+            amFound = new java.util.TreeSet<>();
+            for (String v : c.getSharedPreferences("radio_dash", Context.MODE_PRIVATE).getString(AM_FOUND_KEY, "").split(",")) {
+                try { if (!v.isEmpty()) amFound.add(Integer.parseInt(v.trim())); } catch (NumberFormatException ignored) {}
+            }
+        }
+        return amFound;
+    }
+    private static void saveAmFound(Context c) {
+        StringBuilder b = new StringBuilder();
+        for (int ch : amFound(c)) { if (b.length() > 0) b.append(','); b.append(ch); }
+        c.getSharedPreferences("radio_dash", Context.MODE_PRIVATE).edit().putString(AM_FOUND_KEY, b.toString()).apply();
+    }
+    private static final String AM_FOUND_KEY = "rd_am_found";
+
     private static int knownStations(Object storage, int band) {
         try {
             List<?> l = band == 4 ? (List<?>) call(storage, "getDabStationList")
                     : (List<?>) storage.getClass().getMethod("getPreScannedStationsForBand", int.class).invoke(storage, band == 0 ? 0 : 1);
-            return l == null ? 0 : l.size();
+            int own = band == 0 && current != null ? amFound(current).size() : 0;
+            return (l == null ? 0 : l.size()) + own;
         } catch (Throwable t) {
             return -1;
         }
