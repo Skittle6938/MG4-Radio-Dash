@@ -31,7 +31,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **Bigger DAB / FM / AM tabs** (180 × 64 dp, larger text), easier to reach while driving.
 - **Scan result**: at the end of a scan, the header shows the number of stations for 10 s, on DAB+ too.
 - **No more DAB+ text on the FM page**: the last DAB+ text no longer shows on FM / AM until the first RDS text, nor on the MG4Dash music card.
-- **DAB+ channel and ID**: the multiplex line of the player adds the channel (11C…) and the service ID.
+- **DAB+ channel**: the multiplex line of the player adds the channel (11C…), unless the multiplex name already contains it.
 - **Direct band change for MG4Dash**: a new media session command takes the radio straight to DAB+, FM or AM, instead of stepping band by band (for the source menu of the MG4Dash music card).
 
 **[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5) (in testing)**

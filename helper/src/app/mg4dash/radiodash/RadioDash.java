@@ -460,7 +460,7 @@ public final class RadioDash {
     }
     private static String lastDls;
 
-    // ── DAB+ : canal (bloc de la bande III) et identifiant de la station, après le nom du multiplex ──
+    // ── DAB+ : canal (bloc de la bande III) après le nom du multiplex, s'il n'y figure pas déjà ──
 
     private static final String[] BLOCKS = {"5A", "5B", "5C", "5D", "6A", "6B", "6C", "6D", "7A", "7B", "7C", "7D",
             "8A", "8B", "8C", "8D", "9A", "9B", "9C", "9D", "10A", "10N", "10B", "10C", "10D", "11A", "11N", "11B", "11C", "11D",
@@ -509,7 +509,6 @@ public final class RadioDash {
         }
         StringBuilder b = new StringBuilder(base);
         if (block != null && !base.toUpperCase(Locale.ROOT).matches(".*\\b" + block + "\\b.*")) b.append(b.length() > 0 ? "  ·  " : "").append(block);
-        if (id > 0) b.append(b.length() > 0 ? "  ·  " : "").append("ID ").append(Long.toHexString(id).toUpperCase(Locale.ROOT));
         dabInfoSet = b.toString();
         if (!dabInfoSet.equals(shown)) tv.setText(dabInfoSet);
     }
