@@ -662,6 +662,13 @@ public final class RadioDash {
         int top = k[1] + card.getHeight() + dp(a, STRIP_GAP_DP) - r[1];
         android.widget.FrameLayout.LayoutParams s = (android.widget.FrameLayout.LayoutParams) strip.getLayoutParams();
         int w = right - left, hh = dp(a, STRIP_DP - 2 * STRIP_GAP_DP);
+        // Barre MG4Dash en bas : le bandeau descend jusqu'à 12 dp de la barre, comme les autres écarts entre cadres
+        View dock = root.findViewWithTag("rd_dock");
+        if (!Palette.verticalDock && dock != null && dock.isShown() && dock.getHeight() > 0) {
+            int[] d = new int[2];
+            dock.getLocationInWindow(d);
+            hh = Math.max(hh, d[1] - r[1] - dp(a, STRIP_GAP_DP) - top);
+        }
         if (s.leftMargin != left || s.topMargin != top || s.width != w || s.height != hh) {
             s.leftMargin = left; s.topMargin = top; s.width = w; s.height = hh;
             strip.setLayoutParams(s);
@@ -725,6 +732,8 @@ public final class RadioDash {
      */
     private static boolean tabsLogged;
 
+    private static final int TAB_DP = 180;   // largeur des onglets dans radio_tab_layout.xml
+
     private static boolean alignTabs(Activity a) {
         View bar = byName(a, "rl_menu_bar");
         View cont = byName(a, "fragment_container");
@@ -759,6 +768,30 @@ public final class RadioDash {
                 minL = Math.min(minL, t.getLeft());
                 maxR = Math.max(maxR, t.getRight());
             }
+        }
+        // Trois onglets (AM sur SWI68) : ils rétrécissent pour tenir entre le bord gauche du lecteur et la roue dentée
+        int room = panelRight - dp(a, GEAR_DP) - dp(a, 12) - panelLeft;
+        if (minL < maxR && bar instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) bar;
+            List<View> tabs = new ArrayList<>();
+            int tabsW = 0;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                View t = g.getChildAt(i);
+                if (t.getVisibility() != View.VISIBLE || t.getId() == View.NO_ID || t.getWidth() <= 0) continue;
+                String n = "";
+                try { n = a.getResources().getResourceEntryName(t.getId()); } catch (Throwable ignored) {}
+                if (!n.startsWith("layout_tab_")) continue;
+                tabs.add(t);
+                tabsW += t.getWidth();
+            }
+            int gaps = (maxR - minL) - tabsW;
+            int want = tabs.isEmpty() ? 0 : Math.max(dp(a, 120), Math.min(dp(a, TAB_DP), (room - gaps) / tabs.size()));
+            boolean resized = false;
+            for (View t : tabs) {
+                ViewGroup.LayoutParams tl = t.getLayoutParams();
+                if (tl != null && tl.width > 0 && tl.width != want) { tl.width = want; t.setLayoutParams(tl); resized = true; }
+            }
+            if (resized) return true;   // nouvelles largeurs : centrage à l'image suivante
         }
         int mid = minL < maxR ? (minL + maxR) / 2 : bar.getWidth() / 2;
         int start = Math.max(0, (panelLeft + panelRight) / 2 - mid - p[0]);
@@ -814,8 +847,19 @@ public final class RadioDash {
         View v = id == 0 ? null : a.findViewById(id);
         if (v != null && v.getLayoutParams() instanceof LinearLayout.LayoutParams) {
             LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) v.getLayoutParams();
-            if (lp.leftMargin != 0 || lp.topMargin != 0 || lp.width != ViewGroup.LayoutParams.MATCH_PARENT) {
-                lp.setMargins(0, 0, 0, 0);
+            // Lecteur Immersive (pochette cachée) : la colonne d'infos garde sa marge de 28 dp à gauche, et
+            // ◀ ▶ / lecture étaient centrés sur elle, 14 dp à droite du centre du lecteur. La rangée la reprend.
+            int start = 0;
+            View info = byName(a, "ll_dab_info");
+            if (info != null && info.getParent() instanceof ViewGroup && info.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup row = (ViewGroup) info.getParent();
+                View art = row.getChildCount() > 0 ? row.getChildAt(0) : null;
+                if (art != null && art != info && art.getVisibility() == View.GONE)
+                    start = -((ViewGroup.MarginLayoutParams) info.getLayoutParams()).getMarginStart();
+            }
+            if (lp.leftMargin != start || lp.topMargin != 0 || lp.width != ViewGroup.LayoutParams.MATCH_PARENT) {
+                lp.setMargins(start, 0, 0, 0);
+                lp.setMarginStart(start);
                 lp.gravity = Gravity.NO_GRAVITY;
                 lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 v.setLayoutParams(lp);
@@ -1616,7 +1660,16 @@ public final class RadioDash {
                 LinearLayout card = new LinearLayout(a);
                 card.setOrientation(LinearLayout.VERTICAL);
                 card.setGravity(Gravity.CENTER);
-                card.setPadding(dp(a, 10), dp(a, 44), dp(a, 10), dp(a, 12));   // haut : place de l'étoile
+                card.setPadding(dp(a, 10), dp(a, label.isEmpty() ? 44 : 12), dp(a, 10), dp(a, 12));   // haut : place de l'étoile
+                if (!label.isEmpty()) {
+                    // Fréquence en haut à gauche, à côté de l'étoile : le nom garde toute la hauteur, donc la même
+                    // taille que la fréquence seule d'une station sans nom (réduite seulement s'il ne tient pas)
+                    TextView small = text(a, f, 17, SUB);
+                    small.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+                    small.setSingleLine(true);
+                    small.setPadding(dp(a, 4), 0, dp(a, 40), 0);
+                    card.addView(small, new LinearLayout.LayoutParams(-1, dp(a, 32)));
+                }
                 TextView big = text(a, label.isEmpty() ? f : label, 28, TEXT);
                 big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
                 big.setGravity(Gravity.CENTER);
@@ -1624,12 +1677,6 @@ public final class RadioDash {
                 big.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 big.setAutoSizeTextTypeUniformWithConfiguration(15, 30, 1, TypedValue.COMPLEX_UNIT_SP);
                 card.addView(big, new LinearLayout.LayoutParams(-1, 0, 1f));
-                if (!label.isEmpty()) {
-                    TextView small = text(a, f, 17, SUB);
-                    small.setGravity(Gravity.CENTER);
-                    small.setPadding(0, dp(a, 6), 0, 0);
-                    card.addView(small, new LinearLayout.LayoutParams(-1, -2));
-                }
                 face = card;
                 label = null;   // tout est sur la carte : pas de légende dessous
             }
@@ -1641,6 +1688,7 @@ public final class RadioDash {
             tile.addView(face, new LinearLayout.LayoutParams(dab ? logoSide : tileW - dp(a, 16), logoSide));
             if (label != null) {
                 TextView t = text(a, label, 16, selected ? TEXT : SUB);
+                t.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));   // DAB+ : nom en gras, plus lisible
                 t.setSingleLine(true);
                 t.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 t.setGravity(Gravity.CENTER);
