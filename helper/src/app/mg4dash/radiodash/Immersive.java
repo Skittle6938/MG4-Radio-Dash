@@ -143,7 +143,7 @@ final class Immersive {
         v.setTag(GLASS, g);
         v.setTag(GLASS_ON, on);
     }
-    private static final int GLASS_ON = 0x7f7a0007;
+    private static final int GLASS_ON = 0x7f7a0007, ICON_COLOR = 0x7f7a0008;
 
     private static void glass(Activity a, View v, String iconRes) {
         // Contenu blanc à chaque passage : le thème clair le remet en sombre
@@ -241,12 +241,15 @@ final class Immersive {
     /** FM / AM : mêmes boutons de lecture que le DAB, dans la couleur du thème (pas d'image à laquelle l'accorder). */
     static void styleFmButtons(Activity a, View root) {
         accent = Palette.starColor();
-        styleButtons(a, root);
+        // Pas d'image derrière : ◀ ▶ à la couleur du texte du thème (foncés en mode clair, sinon blancs sur blanc)
+        styleButtons(a, root, Palette.map(0xFFFFFFFF));
     }
 
-    private static void styleButtons(Activity a, View root) {
-        for (String n : new String[]{"btn_dab_previous", "btn_previous"}) icon(a, root, n, "rd_ic_prev");
-        for (String n : new String[]{"btn_dab_next", "btn_next"}) icon(a, root, n, "rd_ic_next");
+    private static void styleButtons(Activity a, View root) { styleButtons(a, root, Color.WHITE); }
+
+    private static void styleButtons(Activity a, View root, int iconColor) {
+        for (String n : new String[]{"btn_dab_previous", "btn_previous"}) icon(a, root, n, "rd_ic_prev", iconColor);
+        for (String n : new String[]{"btn_dab_next", "btn_next"}) icon(a, root, n, "rd_ic_next", iconColor);
         for (String n : new String[]{"ib_dab_play_pause", "btn_play_pause"}) {
             View p = find(root, n);
             if (!(p instanceof ImageView)) continue;
@@ -261,14 +264,16 @@ final class Immersive {
     }
 
     /** Précédent / suivant : l'icône seule, en blanc, sans pavé. */
-    private static void icon(Activity a, View root, String name, String iconRes) {
+    private static void icon(Activity a, View root, String name, String iconRes, int color) {
         View b = find(root, name);
         // Le code SAIC remet parfois son fond : on repose l'icône dès qu'elle n'est plus la nôtre
-        if (b == null || (b.getTag() instanceof Drawable && b.getBackground() == b.getTag())) return;
+        if (b == null || (b.getTag() instanceof Drawable && b.getBackground() == b.getTag()
+                && Integer.valueOf(color).equals(b.getTag(ICON_COLOR)))) return;
         int res = a.getResources().getIdentifier(iconRes, "drawable", a.getPackageName());
         if (res == 0) return;
         Drawable ic = a.getDrawable(res).mutate();
-        ic.setTint(Color.WHITE);
+        ic.setTint(color);
+        b.setTag(ICON_COLOR, color);
         LayerDrawable ld = new LayerDrawable(new Drawable[]{ic});
         ld.setLayerGravity(0, Gravity.CENTER);
         ld.setLayerSize(0, dp(a, 56), dp(a, 56));
