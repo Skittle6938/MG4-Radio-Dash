@@ -112,7 +112,9 @@ public final class RadioDash {
     public static void onCreate(Activity a) {
         try {
             current = a;
+            createdAt = android.os.SystemClock.uptimeMillis();
             Palette.load(a);
+            watchTheme(a);
             fullscreen(a);
             installDock(a);
             watchSquare(a);
@@ -123,6 +125,27 @@ public final class RadioDash {
             Log.w(TAG, "onCreate : " + t);
         }
     }
+
+    /**
+     * Thème publié par MG4Dash (Settings.Global « mg4dash_theme ») : l'écran est recréé dès le changement, et non au
+     * rafraîchissement suivant (jusqu'à 2 s plus tard, pendant lesquelles le fond avait déjà changé).
+     */
+    private static void watchTheme(Context c) {
+        if (themeWatched) return;
+        themeWatched = true;
+        try {
+            c.getApplicationContext().getContentResolver().registerContentObserver(
+                    android.provider.Settings.Global.getUriFor("mg4dash_theme"), false, new android.database.ContentObserver(main) {
+                        @Override public void onChange(boolean selfChange) {
+                            Activity a = current;
+                            if (a != null && !a.isFinishing() && Palette.load(a)) a.recreate();
+                        }
+                    });
+        } catch (Throwable t) {
+            Log.w(TAG, "suivi du thème : " + t);
+        }
+    }
+    private static boolean themeWatched;
 
     public static void onResume(Activity a) {
         current = a;
@@ -368,6 +391,10 @@ public final class RadioDash {
         if (root.getTag(SQUARE_TAG) != null) return;
         android.view.ViewTreeObserver.OnPreDrawListener l = new android.view.ViewTreeObserver.OnPreDrawListener() {
             @Override public boolean onPreDraw() {
+                // Ouverture (et changement de thème, qui recrée l'écran) : chaque vue prend les couleurs du thème
+                // avant d'être dessinée. Sinon le fond, les panneaux et les cases changeaient l'un après l'autre,
+                // au gré de leur arrivée et du rafraîchissement de fond. Les vues déjà traitées sont ignorées.
+                if (android.os.SystemClock.uptimeMillis() - createdAt < 4000) Palette.recolor(root);
                 int band = -1;
                 band = shownBand(a);
                 // Changement de bande : le rafraîchissement de fond n'a lieu que toutes les 2 s, d'où un écran
@@ -404,6 +431,7 @@ public final class RadioDash {
         root.setTag(SQUARE_TAG, l);
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
+    private static long createdAt;
     private static int drawnBand = -2;
     private static boolean favsDirty;
 

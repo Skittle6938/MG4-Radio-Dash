@@ -130,10 +130,10 @@ final class Immersive {
     /** « ★ Favoris » sur l'image : verre sombre, teinté de la couleur du thème quand le mode Favoris est allumé. */
     static void glass(Activity a, View v, boolean on) {
         if (v.getTag(GLASS) != null && v.getBackground() == v.getTag(GLASS) && Boolean.valueOf(on).equals(v.getTag(GLASS_ON))) {
-            if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != Color.WHITE) ((TextView) v).setTextColor(Color.WHITE);
+            if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != IMG_WHITE) ((TextView) v).setTextColor(IMG_WHITE);
             return;
         }
-        if (v instanceof TextView) ((TextView) v).setTextColor(Color.WHITE);
+        if (v instanceof TextView) ((TextView) v).setTextColor(IMG_WHITE);
         GradientDrawable g = new GradientDrawable();
         g.setCornerRadius(dp(a, 14));
         int star = Palette.starColor();
@@ -144,11 +144,16 @@ final class Immersive {
         v.setTag(GLASS_ON, on);
     }
     private static final int GLASS_ON = 0x7f7a0007, ICON_COLOR = 0x7f7a0008;
+    /**
+     * Blanc des textes et icônes posés sur l'image : presque blanc, pour que la recoloration du thème clair (qui
+     * passe le blanc pur en foncé) le laisse tel quel, même quand elle passe juste après.
+     */
+    static final int IMG_WHITE = 0xFFFEFEFE;
 
     private static void glass(Activity a, View v, String iconRes) {
         // Contenu blanc à chaque passage : le thème clair le remet en sombre
-        if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != Color.WHITE) ((TextView) v).setTextColor(Color.WHITE);
-        if (v instanceof ImageView && !"ib_dab_favorite".equals(name(v))) ((ImageView) v).setImageTintList(ColorStateList.valueOf(Color.WHITE));
+        if (v instanceof TextView && ((TextView) v).getCurrentTextColor() != IMG_WHITE) ((TextView) v).setTextColor(IMG_WHITE);
+        if (v instanceof ImageView && !"ib_dab_favorite".equals(name(v))) ((ImageView) v).setImageTintList(ColorStateList.valueOf(IMG_WHITE));
         if (v.getTag(GLASS) != null && v.getBackground() == v.getTag(GLASS)) return;
         GradientDrawable g = new GradientDrawable();
         g.setCornerRadius(dp(a, 14));
@@ -222,7 +227,7 @@ final class Immersive {
     private static void whiteTexts(View v) {
         if (v instanceof TextView && !(v instanceof android.widget.Button)) {
             TextView t = (TextView) v;
-            if (t.getCurrentTextColor() != Color.WHITE && !isAccentText(t)) t.setTextColor(0xFFF2F2F2);
+            if (t.getCurrentTextColor() != IMG_WHITE && !isAccentText(t)) t.setTextColor(0xFFF2F2F2);
             t.setShadowLayer(6f, 0f, 2f, 0x99000000);
         }
         if (v instanceof ViewGroup) {
@@ -234,7 +239,7 @@ final class Immersive {
     /** Texte « en cours de diffusion » : en blanc, la couleur de l'image le rendait illisible sur elle-même. */
     private static boolean isAccentText(TextView t) {
         String n = name(t);
-        if (n.equals("tv_dab_frequency_name") || n.equals("tv_radio_channel_nowplaying_text")) { t.setTextColor(Color.WHITE); return true; }
+        if (n.equals("tv_dab_frequency_name") || n.equals("tv_radio_channel_nowplaying_text")) { t.setTextColor(IMG_WHITE); return true; }
         return false;
     }
 
