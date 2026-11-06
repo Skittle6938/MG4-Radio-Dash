@@ -28,7 +28,12 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.1) (in testing)**
+**[1.6.2 beta 2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.2) (in testing)**
+- **Three band tabs really narrower** next to the settings gear (beta 1 resized the wrong view, so nothing changed).
+- **DAB+ player right away**: the centred controls and the channel are set before the page is drawn, instead of about 1 s later.
+- **DAB+ with the MG4Dash bar at the bottom**: the player and the favourites go down to the same 12 dp gap above the bar as the other boxes.
+
+**[1.6.2 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.1)**
 - **Three band tabs fit next to the settings gear** (AM on SWI68): the tabs get narrower instead of going under the gear.
 - **◀ ▶ and play centred** on the DAB+ player.
 - **Bigger FM station names**: the name gets the size of the frequency of a station without a name (smaller only if it doesn't fit), with the frequency in the top left corner of the card.

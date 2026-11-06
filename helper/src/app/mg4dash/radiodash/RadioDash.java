@@ -423,7 +423,9 @@ public final class RadioDash {
                 moved |= fmStrip(a, band);
                 moved |= alignTabs(a);
                 moved |= gearButton(a);
+                moved |= centerControls(a);
                 moved |= alignWait(a);
+                if (band == 4) dabInfo(a);   // canal posé dès que la radio écrit le multiplex, pas au rafraîchissement suivant
                 if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
                 // Carte à sa nouvelle taille : les favoris de la nouvelle bande sont posés avant cette image,
                 // sans attendre le rafraîchissement de fond (sinon l'ancienne grille s'affichait étirée)
@@ -788,8 +790,10 @@ public final class RadioDash {
             int want = tabs.isEmpty() ? 0 : Math.max(dp(a, 120), Math.min(dp(a, TAB_DP), (room - gaps) / tabs.size()));
             boolean resized = false;
             for (View t : tabs) {
-                ViewGroup.LayoutParams tl = t.getLayoutParams();
-                if (tl != null && tl.width > 0 && tl.width != want) { tl.width = want; t.setLayoutParams(tl); resized = true; }
+                // L'onglet suit sa largeur de contenu : c'est le libellé (180 dp dans la mise en page) qui change
+                View label = t instanceof ViewGroup && ((ViewGroup) t).getChildCount() > 0 ? ((ViewGroup) t).getChildAt(0) : t;
+                ViewGroup.LayoutParams tl = label.getLayoutParams();
+                if (tl != null && tl.width > 0 && tl.width != want) { tl.width = want; label.setLayoutParams(tl); resized = true; }
             }
             if (resized) return true;   // nouvelles largeurs : centrage à l'image suivante
         }
@@ -843,12 +847,19 @@ public final class RadioDash {
         if (band != 4 && player != null) Immersive.styleFmButtons(a, player);
         modeButtons(a);
         hookSkipButtons(a);
+        centerControls(a);
+    }
+
+    /**
+     * Lecteur Immersive (pochette cachée) : la colonne d'infos garde sa marge de 28 dp à gauche, et ◀ ▶ / lecture
+     * étaient centrés sur elle, 14 dp à droite du centre du lecteur. La rangée la reprend. Appelé avant chaque image.
+     * @return true si la mise en page a changé
+     */
+    private static boolean centerControls(Activity a) {
         int id = a.getResources().getIdentifier("ll_dab_base_function", "id", a.getPackageName());
         View v = id == 0 ? null : a.findViewById(id);
         if (v != null && v.getLayoutParams() instanceof LinearLayout.LayoutParams) {
             LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) v.getLayoutParams();
-            // Lecteur Immersive (pochette cachée) : la colonne d'infos garde sa marge de 28 dp à gauche, et
-            // ◀ ▶ / lecture étaient centrés sur elle, 14 dp à droite du centre du lecteur. La rangée la reprend.
             int start = 0;
             View info = byName(a, "ll_dab_info");
             if (info != null && info.getParent() instanceof ViewGroup && info.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
@@ -863,8 +874,10 @@ public final class RadioDash {
                 lp.gravity = Gravity.NO_GRAVITY;
                 lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 v.setLayoutParams(lp);
+                return true;
             }
         }
+        return false;
     }
 
     // ── Pochette : session média de la radio ────────────────────────────────

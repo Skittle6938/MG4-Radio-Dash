@@ -51,7 +51,9 @@ final class Immersive {
         // Panneau (boutons compris) remonté comme l'image : même bas que la barre de gauche
         if (panel.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
             RelativeLayout.LayoutParams pl = (RelativeLayout.LayoutParams) panel.getLayoutParams();
-            if (pl.bottomMargin != dp(a, 12)) { pl.bottomMargin = dp(a, 12); panel.setLayoutParams(pl); }
+            // Barre MG4Dash en bas : le contenu s'arrête déjà 12 dp au-dessus d'elle, pas de marge en plus
+            int bottom = Palette.verticalDock ? dp(a, 12) : 0;
+            if (pl.bottomMargin != bottom) { pl.bottomMargin = bottom; panel.setLayoutParams(pl); }
         }
         FrameLayout holder = (FrameLayout) container.findViewWithTag(TAG_HOLDER);
         if (holder == null) {
@@ -74,7 +76,7 @@ final class Immersive {
             final FrameLayout h = holder;
             holder.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> placeFade(h));
             RelativeLayout.LayoutParams hl = new RelativeLayout.LayoutParams(-1, -1);
-            hl.bottomMargin = dp(a, 12);   // bas aligné sur la barre de gauche et la 3e rangée des favoris
+            hl.bottomMargin = Palette.verticalDock ? dp(a, 12) : 0;   // bas aligné sur la barre de gauche (ou 12 dp au-dessus de celle du bas)
             container.addView(holder, 0, hl);
             lastArt = null; painted = false;
         }
