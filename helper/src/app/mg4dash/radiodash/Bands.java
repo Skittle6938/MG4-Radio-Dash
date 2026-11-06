@@ -75,13 +75,34 @@ public final class Bands {
         Log.i(TAG, "session média : " + ACTION_SET_BAND + " disponible");
     }
 
+    /**
+     * Bandes de la radio, dans l'ordre où « bande suivante » les parcourt. La radio les lit dans la configuration de
+     * la voiture (FeatureUtil.getRadioBands), vide sur SWI68 : la liste valait null, et changeSource ne faisait rien,
+     * ni pour {@code __ACTION_SET_BAND__} ni pour {@code __ACTION_NEXT_SOURCE__} d'origine (MG4Dash #80). Dans ce
+     * cas : DAB, FM, AM, l'ordre des onglets. Remplace l'appel d'origine dans RadioMBService.changeSource.
+     */
+    public static List<Integer> radioBands() {
+        try {
+            Object l = Class.forName("com.saicmotor.radio.utils.FeatureUtil").getMethod("getRadioBands").invoke(null);
+            if (l instanceof List && !((List<?>) l).isEmpty()) {
+                @SuppressWarnings("unchecked") List<Integer> bands = (List<Integer>) l;
+                return bands;
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "bandes de la radio : " + t);
+        }
+        if (!fallbackLogged) { fallbackLogged = true; Log.i(TAG, "bandes absentes de la configuration : DAB, FM, AM"); }
+        return java.util.Arrays.asList(4, 1, 0);
+    }
+    private static boolean fallbackLogged;
+
     /** Bande demandée (DAB = 4, FM = 1, AM = 0) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
     static void setBand(Context service, String name) {
         int target = "DAB".equalsIgnoreCase(name) ? 4 : "FM".equalsIgnoreCase(name) ? 1 : "AM".equalsIgnoreCase(name) ? 0 : -1;
         if (target < 0) { Log.w(TAG, "bande demandée inconnue : " + name); return; }
         try {
-            List<?> bands = (List<?>) Class.forName("com.saicmotor.radio.utils.FeatureUtil").getMethod("getRadioBands").invoke(null);
-            if (bands == null || !bands.contains(target)) { Log.i(TAG, "bande " + name + " absente de cette radio " + bands); return; }
+            List<?> bands = radioBands();
+            if (!bands.contains(target)) { Log.i(TAG, "bande " + name + " absente de cette radio " + bands); return; }
             Object storage = Class.forName("com.saicmotor.radio.model.RadioStorage")
                     .getMethod("getInstance", Context.class).invoke(null, service.getApplicationContext());
             int current = ((Number) storage.getClass().getMethod("getStoredRadioBand").invoke(storage)).intValue();

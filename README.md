@@ -32,6 +32,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **Three band tabs really narrower** next to the settings gear (beta 1 resized the wrong view, so nothing changed).
 - **DAB+ player right away**: the centred controls and the channel are set before the page is drawn, instead of about 1 s later.
 - **DAB+ with the MG4Dash bar at the bottom**: the player and the favourites go down to the same 12 dp gap above the bar as the other boxes.
+- **Band change from MG4Dash on SWI68** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the radio reads its bands from the car configuration, empty on SWI68, so the band commands of its media session did nothing. Radio Dash then uses DAB, FM, AM.
 
 **[1.6.2 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.1)**
 - **Three band tabs fit next to the settings gear** (AM on SWI68): the tabs get narrower instead of going under the gear.

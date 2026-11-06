@@ -300,7 +300,7 @@
     invoke-virtual {v0, v1}, Lcom/saicmotor/radio/utils/log/Logger;->i(Ljava/lang/String;)V
 
     .line 403
-    invoke-static {}, Lcom/saicmotor/radio/utils/FeatureUtil;->getRadioBands()Ljava/util/List;
+    invoke-static {}, Lapp/mg4dash/radiodash/Bands;->radioBands()Ljava/util/List;
 
     move-result-object v0
 
