@@ -28,7 +28,10 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5) (in testing)**
+**[1.6.2 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.6) (in testing)**
+- **Favourites easier to tell apart** in All stations: a station that is not a favourite now shows only the dark round badge, without a grey star, on DAB+ and FM. Tapping the badge still adds it. The big star of the player is unchanged.
+
+**[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5)**
 - **DAB+ picture in MG4Dash right away**: on a station change, the media session now carries the picture cached by Radio Dash, so MG4Dash shows it at once instead of waiting for the station to send its slideshow again.
 - **No more AM**: there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
 - **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.

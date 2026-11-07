@@ -1846,9 +1846,11 @@ public final class RadioDash {
                     tune(st, dab);
                 }
             });
-            // Étoile dans le coin haut droit, sur un rond sombre : la même en DAB+ (sur l'image), en FM et en AM
+            // Étoile dans le coin haut droit, sur un rond sombre : la même en DAB+ (sur l'image) et en FM. Station qui
+            // n'est pas en favori : le rond seul (une étoile grise se distinguait mal de l'étoile colorée avec
+            // certaines couleurs d'accent) ; le toucher l'ajoute toujours aux favoris
             final boolean on = favKeys.contains(String.valueOf(callQuiet(st, dab ? "getServiceId" : "getChannelNumber")));
-            TextView star = text(a, "★", 24, on ? Palette.starColor() : 0xCCF2F2F2);
+            TextView star = text(a, on ? "★" : "", 24, Palette.starColor());
             star.setGravity(Gravity.CENTER);
             star.setIncludeFontPadding(false);
             star.setBackground(panel(a, 0x8C000000, 22, Color.TRANSPARENT));
