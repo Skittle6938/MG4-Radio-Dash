@@ -719,12 +719,38 @@ public final class RadioDash {
         return Math.max(0, current + k[1] + card.getHeight() - want);
     }
 
-    /** Texte RDS de la station FM : envoyé à MG4Dash, la session média de la radio ne le contient pas. */
+    /**
+     * Texte RDS de la station FM : envoyé à MG4Dash, la session média de la radio ne le contient pas.
+     * Le tuner renvoie parfois le dernier texte reçu après un aller-retour avec le DAB ou un changement de station :
+     * MG4Dash affichait alors le texte de la station précédente sur une station sans RDS (MG4Dash #80). Un texte
+     * identique au dernier envoyé pour une autre fréquence est donc ignoré, comme tout texte reçu en DAB.
+     */
     public static void rdsText(Context c, String text) {
+        String t = text == null ? "" : text.trim();
         try {
-            c.sendBroadcast(new android.content.Intent("app.mg4dash.RDS_TEXT").setPackage("app.mg4dash").putExtra("text", text == null ? "" : text.trim()));
-        } catch (Throwable t) { Log.w(TAG, "texte RDS : " + t); }
+            if (t.length() > 0) {
+                Object storage = Class.forName("com.saicmotor.radio.model.RadioStorage")
+                        .getMethod("getInstance", Context.class).invoke(null, c.getApplicationContext());
+                Object band = callQuiet(storage, "getStoredRadioBand");
+                int ch = currentFmChannel(storage, band instanceof Number && ((Number) band).intValue() == 0 ? 0 : 1);
+                if (band instanceof Number && ((Number) band).intValue() == 4) {
+                    Log.i(TAG, "texte RDS reçu en DAB : ignoré");
+                    return;
+                }
+                if (ch > 0 && t.equals(lastRds) && ch != lastRdsCh) {
+                    Log.i(TAG, "texte RDS de " + lastRdsCh + " renvoyé sur " + ch + " : ignoré");
+                    return;
+                }
+                lastRds = t;
+                lastRdsCh = ch;
+            }
+        } catch (Throwable e) { Log.w(TAG, "texte RDS, station : " + e); }
+        try {
+            c.sendBroadcast(new android.content.Intent("app.mg4dash.RDS_TEXT").setPackage("app.mg4dash").putExtra("text", t));
+        } catch (Throwable e) { Log.w(TAG, "texte RDS : " + e); }
     }
+    private static String lastRds;
+    private static int lastRdsCh = -1;
 
     private static boolean squarePlayer(Activity a, int band) {
         View cont = byName(a, "fragment_container");

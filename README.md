@@ -28,7 +28,10 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.6) (in testing)**
+**1.6.2 beta 7 (in preparation)**
+- **No more RDS text from the previous station in MG4Dash** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the tuner sometimes sends the last RDS text again after switching to DAB+ and back, or to another station. A text identical to the last one sent for another frequency, or received on DAB+, is now ignored.
+
+**[1.6.2 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.6)**
 - **Favourites easier to tell apart** in All stations: a station that is not a favourite now shows only the dark round badge, without a grey star, on DAB+ and FM. Tapping the badge still adds it. The big star of the player is unchanged.
 
 **[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5)**
