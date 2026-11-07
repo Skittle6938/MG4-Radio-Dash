@@ -33,16 +33,16 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **No more AM**: there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
 - **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.
 
-**[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4)**
+**1.6.2 beta 4** (included in beta 5)
 - **No more panel behind the stations box**: the station cards sit directly on the screen background, in light and dark mode. When scrolling, they still stop at the edges of the box, without going over the switch, Scan or the FM / AM dial.
 - **Bigger ★ Favourites | All stations switch and Scan button** (as tall as the band tabs), and the stations of the box on the right are aligned with the top and bottom of the player, on DAB+, FM and AM. The cards get a little shorter to keep 3 rows before scrolling.
 - **The station list opens at the top**: on opening, coming back to the app or changing band, the first row is whole, or the station playing is shown if it is further down. ◀ ▶ still scroll the list to the new station.
 - **Playback buttons right from the opening**: the play pill and the bare ◀ ▶ icons are now in the page itself, instead of a round play button and boxed arrows for a second or two.
 
-**[1.6.2 beta 3](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.3)**
+**1.6.2 beta 3** (included in beta 5)
 - **Older firmwares (SWI68, SWI165…): the radio no longer restarts by itself over CarPlay** ([MG4Dash #99](https://github.com/Skittle6938/MG4Dash/issues/99)). The stock radio resumes whenever the sound comes back to it, even after losing it for good; there, it now waits for a source or play command. After a short interruption (call, navigation prompt, Siri) it resumes as before. Nothing changes on SWI69.
 
-**[1.6.2 beta 2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.2)**
+**1.6.2 beta 2** (included in beta 5)
 - **Three band tabs really narrower** next to the settings gear (beta 1 resized the wrong view, so nothing changed).
 - **DAB+ player right away**: the centred controls and the channel are set before the page is drawn, instead of about 1 s later.
 - **DAB+ with the MG4Dash bar at the bottom**: the player and the favourites go down to the same 12 dp gap above the bar as the other boxes.
