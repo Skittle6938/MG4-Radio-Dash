@@ -28,7 +28,10 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.2) (in testing)**
+**[1.6.2 beta 3](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.3) (in testing)**
+- **Older firmwares (SWI68, SWI165…): the radio no longer restarts by itself over CarPlay** ([MG4Dash #99](https://github.com/Skittle6938/MG4Dash/issues/99)). The stock radio resumes whenever the sound comes back to it, even after losing it for good; there, it now waits for a source or play command. After a short interruption (call, navigation prompt, Siri) it resumes as before. Nothing changes on SWI69.
+
+**[1.6.2 beta 2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.2)**
 - **Three band tabs really narrower** next to the settings gear (beta 1 resized the wrong view, so nothing changed).
 - **DAB+ player right away**: the centred controls and the channel are set before the page is drawn, instead of about 1 s later.
 - **DAB+ with the MG4Dash bar at the bottom**: the player and the favourites go down to the same 12 dp gap above the bar as the other boxes.
