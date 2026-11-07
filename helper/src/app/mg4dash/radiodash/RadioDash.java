@@ -1234,22 +1234,43 @@ public final class RadioDash {
         if (head == null || !(grid != null && grid.getParent() instanceof View) || cont == null || !head.isShown()
                 || cont.getHeight() <= 0 || !(head.getLayoutParams() instanceof LinearLayout.LayoutParams)) return false;
         View scroll = (View) grid.getParent();
-        if (scroll.getHeight() <= 0) return false;
+        if (scroll.getHeight() <= 0 || !(scroll.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return false;
         int[] s = new int[2], p = new int[2];
         scroll.getLocationInWindow(s);
+        // Lecteur : pochette DAB+ (Immersive), sinon panneau du conteneur (12 dp de marge, bandeau du cadran en dessous)
+        int playerTop, playerBottom;
         View imm = cont instanceof ViewGroup ? ((ViewGroup) cont).findViewWithTag("rd_imm") : null;
-        if (imm != null && imm.isShown() && imm.getHeight() > 0) imm.getLocationInWindow(p);
-        else { cont.getLocationInWindow(p); p[1] += dp(a, 12); }
-        int diff = p[1] - s[1];
-        if (Math.abs(diff) <= 1) return false;
+        if (imm != null && imm.isShown() && imm.getHeight() > 0) {
+            imm.getLocationInWindow(p);
+            playerTop = p[1]; playerBottom = p[1] + imm.getHeight();
+        } else {
+            cont.getLocationInWindow(p);
+            playerTop = p[1] + dp(a, 12);
+            playerBottom = p[1] + cont.getHeight() - cont.getPaddingBottom() - dp(a, 12);
+        }
+        // Les cases ont 5 dp de marge tout autour : la défilante déborde d'autant pour que leur bord tombe sur le lecteur
+        int gap = dp(a, 5);
+        boolean moved = false;
+        int diff = (playerTop - gap) - s[1];
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) head.getLayoutParams();
-        int top = lp.topMargin + diff, bottom = lp.bottomMargin;
-        if (top < 0) { bottom = Math.max(0, bottom + top); top = 0; }
-        if (top == lp.topMargin && bottom == lp.bottomMargin) return false;
-        lp.topMargin = top;
-        lp.bottomMargin = bottom;
-        head.setLayoutParams(lp);
-        return true;
+        if (Math.abs(diff) > 1) {
+            int top = lp.topMargin + diff, bottom = lp.bottomMargin;
+            if (top < 0) { bottom = Math.max(0, bottom + top); top = 0; }
+            if (top != lp.topMargin || bottom != lp.bottomMargin) {
+                lp.topMargin = top; lp.bottomMargin = bottom;
+                head.setLayoutParams(lp);
+                moved = true;
+            }
+        }
+        ViewGroup.MarginLayoutParams sl = (ViewGroup.MarginLayoutParams) scroll.getLayoutParams();
+        int extra = (s[1] + scroll.getHeight()) - (playerBottom + gap);
+        if (Math.abs(extra) > 1) {
+            sl.bottomMargin += extra;
+            scroll.setLayoutParams(sl);
+            if (scroll.getParent() instanceof ViewGroup) ((ViewGroup) scroll.getParent()).setClipChildren(false);
+            moved = true;
+        }
+        return moved;
     }
 
     /**
@@ -1668,7 +1689,8 @@ public final class RadioDash {
                 Paint.FontMetricsInt fm = tp.getFontMetricsInt();
                 label = fm.bottom - fm.top + dp(a, 6);
             }
-            int fit = visible / 3 - 2 * gap - dp(a, 14) - label - 2;
+            // 3 rangées qui remplissent la hauteur (1 px de marge pour les arrondis, sinon la case défilerait)
+            int fit = (visible - 2) / 3 - 2 * gap - dp(a, 14) - label;
             logoSide = Math.min(logoSide, fit);
         }
         LinearLayout row = null;
