@@ -427,7 +427,11 @@ public final class RadioDash {
                 moved |= alignFavsTop(a);
                 moved |= alignWait(a);
                 if (band == 4) dabInfo(a);   // canal posé dès que la radio écrit le multiplex, pas au rafraîchissement suivant
-                if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
+                // Dimensions changées : on saute cette image, la suivante est juste. Jamais plus de 8 de suite : une
+                // mise en page qui ne se stabilise pas laissait l'écran noir
+                if (moved && ++skipped <= 8) return false;
+                if (moved) { if (!skipLogged) { skipLogged = true; Log.w(TAG, "mise en page instable : image dessinée quand même"); } }
+                else skipped = 0;
                 // Carte à sa nouvelle taille : les favoris de la nouvelle bande sont posés avant cette image,
                 // sans attendre le rafraîchissement de fond (sinon l'ancienne grille s'affichait étirée)
                 if (favsDirty) {
@@ -442,6 +446,8 @@ public final class RadioDash {
         root.setTag(SQUARE_TAG, l);
     }
     private static final int SQUARE_TAG = 0x7f7a0002;
+    private static int skipped;
+    private static boolean skipLogged;
 
     /**
      * Texte DAB+ (DLS) resté sur la page FM / AM : la radio y remet le dernier texte reçu, quelle que soit la bande,
@@ -1262,13 +1268,19 @@ public final class RadioDash {
                 moved = true;
             }
         }
-        ViewGroup.MarginLayoutParams sl = (ViewGroup.MarginLayoutParams) scroll.getLayoutParams();
-        int extra = (s[1] + scroll.getHeight()) - (playerBottom + gap);
-        if (Math.abs(extra) > 1) {
-            sl.bottomMargin += extra;
-            scroll.setLayoutParams(sl);
-            if (scroll.getParent() instanceof ViewGroup) ((ViewGroup) scroll.getParent()).setClipChildren(false);
-            moved = true;
+        // Hauteur fixe (et non plus le poids) : une marge négative ne l'agrandissait pas, LinearLayout l'ignore, et la
+        // correction se répétait à chaque image sans fin (écran noir). Recalculée seulement quand le haut est calé.
+        if (!moved && scroll.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            LinearLayout.LayoutParams sl = (LinearLayout.LayoutParams) scroll.getLayoutParams();
+            int want = playerBottom + gap - s[1];
+            if (want > dp(a, 100) && (sl.weight != 0 || Math.abs(sl.height - want) > 1)) {
+                sl.weight = 0;
+                sl.height = want;
+                sl.bottomMargin = 0;
+                scroll.setLayoutParams(sl);
+                if (scroll.getParent() instanceof ViewGroup) ((ViewGroup) scroll.getParent()).setClipChildren(false);
+                moved = true;
+            }
         }
         return moved;
     }
