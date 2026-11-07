@@ -864,17 +864,22 @@ public final class RadioDash {
     }
 
     private static boolean leftAm;
+    private static final int AM_HIDDEN_TAG = 0x7f7a000a;
 
     private static void fixLayout(Activity a) {
         // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
         // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
         int band = shownBand(a);
-        String[][] tabs = {{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}};
-        // Plus d'AM : son onglet est caché (la configuration de certaines voitures le montre encore), et une radio
-        // restée sur l'AM repasse en FM
+        boolean amOn = Bands.amAllowed(a);
+        String[][] tabs = amOn ? new String[][]{{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}, {"layout_tab_am", "0"}}
+                : new String[][]{{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}};
+        // AM seulement avec l'option « bande AM » de MG4Dash : sinon son onglet est caché (la configuration de certaines
+        // voitures le montre), et une radio restée sur l'AM repasse en FM. Avec l'option, la radio montre l'onglet
+        // elle-même si la voiture a l'AM
         View am = byName(a, "layout_tab_am");
-        if (am != null && am.getVisibility() != View.GONE) am.setVisibility(View.GONE);
-        if (band != 0) leftAm = false;
+        if (!amOn && am != null && am.getVisibility() != View.GONE) { am.setTag(AM_HIDDEN_TAG, Boolean.TRUE); am.setVisibility(View.GONE); }
+        if (amOn && am != null && am.getTag(AM_HIDDEN_TAG) != null && am.getVisibility() == View.GONE) { am.setTag(AM_HIDDEN_TAG, null); am.setVisibility(View.VISIBLE); }
+        if (band != 0 || amOn) leftAm = false;
         else if (!leftAm) {
             View fm = byName(a, "layout_tab_fm");
             if (fm != null) { leftAm = true; Log.i(TAG, "AM retirée : passage en FM"); fm.performClick(); }

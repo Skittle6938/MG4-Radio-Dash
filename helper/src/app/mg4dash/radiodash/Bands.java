@@ -76,30 +76,53 @@ public final class Bands {
     }
 
     /**
-     * Bandes de la radio, dans l'ordre où « bande suivante » les parcourt : DAB et FM seulement. L'AM est retirée
-     * (plus d'émetteurs, même si la configuration de la voiture la propose). La radio lit ses bandes dans la
+     * Bandes de la radio, dans l'ordre où « bande suivante » les parcourt. L'AM n'y est que si l'option « bande AM »
+     * de MG4Dash est allumée (éteinte par défaut : peu d'émetteurs, et peu testée). La radio lit ses bandes dans la
      * configuration de la voiture (FeatureUtil.getRadioBands), vide sur SWI68 : la liste valait null, et changeSource
-     * ne faisait rien (MG4Dash #80) ; on prend alors DAB, FM. Remplace l'appel d'origine dans RadioMBService.changeSource.
+     * ne faisait rien (MG4Dash #80) ; on prend alors DAB, FM (et AM avec l'option). Remplace l'appel d'origine dans
+     * RadioMBService.changeSource.
      */
     public static List<Integer> radioBands() {
+        boolean am = amAllowed(Stations.app());
         List<Integer> out = new java.util.ArrayList<>();
+        boolean configured = false;
         try {
             Object l = Class.forName("com.saicmotor.radio.utils.FeatureUtil").getMethod("getRadioBands").invoke(null);
             if (l instanceof List) for (Object o : (List<?>) l) {
-                if (o instanceof Number && ((Number) o).intValue() != 0 && !out.contains(((Number) o).intValue())) out.add(((Number) o).intValue());
+                if (!(o instanceof Number)) continue;
+                int b = ((Number) o).intValue();
+                configured = true;
+                if ((b != 0 || am) && !out.contains(b)) out.add(b);
             }
         } catch (Throwable t) {
             Log.w(TAG, "bandes de la radio : " + t);
         }
-        if (out.isEmpty()) {
-            if (!fallbackLogged) { fallbackLogged = true; Log.i(TAG, "bandes absentes de la configuration : DAB, FM"); }
+        if (!configured) {
+            if (!fallbackLogged) { fallbackLogged = true; Log.i(TAG, "bandes absentes de la configuration : DAB, FM" + (am ? ", AM" : "")); }
+            out.clear();
+            out.add(4); out.add(1);
+            if (am) out.add(0);
+        } else if (out.isEmpty()) {
             out.add(4); out.add(1);
         }
         return out;
     }
+
+    /** Option « bande AM » de MG4Dash (8e champ de Settings.Global mg4dash_theme) : éteinte si absente. */
+    static boolean amAllowed(Context c) {
+        if (c == null) return false;
+        try {
+            String v = android.provider.Settings.Global.getString(c.getContentResolver(), "mg4dash_theme");
+            if (v == null) return false;
+            String[] p = v.split(",");
+            return p.length > 7 && "1".equals(p[7].trim());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
     private static boolean fallbackLogged;
 
-    /** Bande demandée (DAB = 4, FM = 1 ; l'AM est retirée) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
+    /** Bande demandée (DAB = 4, FM = 1, AM = 0 avec l'option) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
     static void setBand(Context service, String name) {
         int target = "DAB".equalsIgnoreCase(name) ? 4 : "FM".equalsIgnoreCase(name) ? 1 : "AM".equalsIgnoreCase(name) ? 0 : -1;
         if (target < 0) { Log.w(TAG, "bande demandée inconnue : " + name); return; }

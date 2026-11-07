@@ -28,7 +28,8 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**1.6.2 beta 7 (in preparation)**
+**[1.6.2 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.7) (in testing)**
+- **AM back as an option**: MG4Dash's settings (Home, Audio source) get a *Radio Dash: AM band* switch, **off by default**, shown on firmwares whose radio can have AM (SWI68, SWI165…). When on, the AM tab, dial, scan and favourites come back as in 1.6.2 beta 1, and the band change goes through AM again. Needs an MG4Dash version with this switch.
 - **No more RDS text from the previous station in MG4Dash** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the tuner sometimes sends the last RDS text again after switching to DAB+ and back, or to another station. A text identical to the last one sent for another frequency, or received on DAB+, is now ignored.
 
 **[1.6.2 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.6)**
@@ -36,7 +37,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 **[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5)**
 - **DAB+ picture in MG4Dash right away**: on a station change, the media session now carries the picture cached by Radio Dash, so MG4Dash shows it at once instead of waiting for the station to send its slideshow again.
-- **No more AM**: there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
+- **No more AM** (back as an option in beta 7): there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
 - **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.
 
 **1.6.2 beta 4** (included in beta 5)
