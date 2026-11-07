@@ -1278,7 +1278,8 @@ public final class RadioDash {
                 sl.height = want;
                 sl.bottomMargin = 0;
                 scroll.setLayoutParams(sl);
-                if (scroll.getParent() instanceof ViewGroup) ((ViewGroup) scroll.getParent()).setClipChildren(false);
+                // Pas de clipChildren(false) ici : la case doit couper les cartes qu'on glisse, sinon elles passent
+                // par-dessus la bascule, Scan et le cadran FM/AM
                 moved = true;
             }
         }
