@@ -28,7 +28,11 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4) (in testing)**
+**[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5) (in testing)**
+- **DAB+ picture in MG4Dash right away**: on a station change, the media session now carries the picture cached by Radio Dash, so MG4Dash shows it at once instead of waiting for the station to send its slideshow again.
+- **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.
+
+**[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4)**
 - **No more panel behind the stations box**: the station cards sit directly on the screen background, in light and dark mode. When scrolling, they still stop at the edges of the box, without going over the switch, Scan or the FM / AM dial.
 - **Bigger ★ Favourites | All stations switch and Scan button** (as tall as the band tabs), and the stations of the box on the right are aligned with the top and bottom of the player, on DAB+, FM and AM. The cards get a little shorter to keep 3 rows before scrolling.
 - **The station list opens at the top**: on opening, coming back to the app or changing band, the first row is whole, or the station playing is shown if it is further down. ◀ ▶ still scroll the list to the new station.

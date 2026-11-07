@@ -1310,6 +1310,17 @@
     :goto_3
     iget-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mBitmap:Landroid/graphics/Bitmap;
 
+    if-nez p1, :rd_art_ok
+
+    iget-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mRadioDabStation:Lcom/android/car/radio/service/RadioDabStation;
+
+    invoke-static {p0, p1}, Lapp/mg4dash/radiodash/Art;->cached(Landroid/content/Context;Ljava/lang/Object;)Landroid/graphics/Bitmap;
+
+    move-result-object p1
+
+    iput-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mBitmap:Landroid/graphics/Bitmap;
+
+    :rd_art_ok
     invoke-virtual {v6, v0, p1}, Landroid/media/MediaMetadata$Builder;->putBitmap(Ljava/lang/String;Landroid/graphics/Bitmap;)Landroid/media/MediaMetadata$Builder;
 
     .line 688

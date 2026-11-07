@@ -64,6 +64,10 @@ public final class Palette {
     public static boolean verticalDock = false;
     /** Lecteur choisi dans MG4Dash (5e champ) : 0 = Immersif (défaut), 1 = Classique. */
     public static int mediaStyle = 0;
+    /** Barre verticale large (réglage « barre large » de MG4Dash, 6e champ) : deux fois plus large. */
+    public static boolean wideBar = false;
+    /** Barre verticale à droite (conduite à droite ou côté forcé dans MG4Dash, 7e champ). */
+    public static boolean rightBar = false;
     private static String loaded = null;
     private static boolean identity = true;
     private static final Map<TextView, ColorStateList> textDone = new WeakHashMap<>();
@@ -87,6 +91,8 @@ public final class Palette {
             if (p.length > 2) lm = "1".equals(p[2].trim());
             verticalDock = p.length > 3 && "1".equals(p[3].trim());
             mediaStyle = p.length > 4 && "1".equals(p[4].trim()) ? 1 : 0;
+            wideBar = p.length > 5 && "1".equals(p[5].trim());
+            rightBar = p.length > 6 && "1".equals(p[6].trim());
         } catch (Throwable ignored) {}
         lightMode = lm;
         identity = b == 0 && a == 0 && !lm;

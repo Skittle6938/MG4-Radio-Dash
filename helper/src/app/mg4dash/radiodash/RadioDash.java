@@ -227,10 +227,12 @@ public final class RadioDash {
         if (content == null || content.findViewWithTag("rd_dock") != null) return;
         View app = content.getChildAt(0);
         boolean vertical = Palette.verticalDock;
-        // Le contenu d'origine laisse la place au dock : 84 dp en bas, ou 64 dp à gauche (barre verticale).
+        // Le contenu d'origine laisse la place au dock : 84 dp en bas, ou la barre verticale à gauche (à droite
+        // en conduite à droite), large ou non comme dans MG4Dash.
         if (app != null) {
             FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) app.getLayoutParams();
-            if (vertical) lp.leftMargin = dp(a, 16 + 64 + 4);
+            if (vertical && Palette.rightBar) lp.rightMargin = dp(a, 16 + barDp() + 4);
+            else if (vertical) lp.leftMargin = dp(a, 16 + barDp() + 4);
             else lp.bottomMargin = dp(a, 108);
             app.setLayoutParams(lp);
             app.setBackgroundColor(Color.TRANSPARENT);
@@ -304,6 +306,9 @@ public final class RadioDash {
      * du bouton antibrouillards en haut. Réglages : toucher = réglages MG4Dash, appui long =
      * réglages de la voiture, double toucher = Wi-Fi.
      */
+    /** Largeur de la barre verticale : 64 dp, le double avec le réglage « barre large » de MG4Dash. */
+    private static int barDp() { return Palette.wideBar ? 128 : 64; }
+
     private static void installVerticalDock(final Activity a, ViewGroup content) {
         LinearLayout bar = new LinearLayout(a);
         bar.setTag("rd_dock");
@@ -311,7 +316,9 @@ public final class RadioDash {
         bar.setBackground(panel(a, PANEL, 20));
         bar.setPadding(dp(a, 4), dp(a, 4), dp(a, 4), dp(a, 6));
         bar.setElevation(dp(a, 6));
-        bar.addView(new View(a), new LinearLayout.LayoutParams(-1, dp(a, 62)));
+        // Place du bouton antibrouillards en haut à gauche ; à droite, la barre prend toute la hauteur (comme MG4Dash)
+        if (!Palette.rightBar) bar.addView(new View(a), new LinearLayout.LayoutParams(-1, dp(a, 62)));
+        int iconDp = Palette.wideBar ? 51 : 34;
         clock = null; date = null;
         String[][] items = {
                 {"rd_ic_settings", "com.saicmotor.settings/.ui.MainActivity"},
@@ -330,7 +337,7 @@ public final class RadioDash {
             int res = a.getResources().getIdentifier(it[0], "drawable", a.getPackageName());
             if (res != 0) icon.setImageResource(res);
             icon.setColorFilter(Palette.map(SUB));
-            cell.addView(icon, new FrameLayout.LayoutParams(dp(a, 34), dp(a, 34), Gravity.CENTER));
+            cell.addView(icon, new FrameLayout.LayoutParams(dp(a, iconDp), dp(a, iconDp), Gravity.CENTER));
             if (it[0].equals("rd_ic_settings")) {
                 final android.view.GestureDetector gd = new android.view.GestureDetector(a, new android.view.GestureDetector.SimpleOnGestureListener() {
                     @Override public boolean onSingleTapConfirmed(android.view.MotionEvent e) { open(a, DASH + "/.settings.SettingsActivity"); return true; }
@@ -350,8 +357,9 @@ public final class RadioDash {
             lp.topMargin = dp(a, 4);
             bar.addView(cell, lp);
         }
-        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(a, 64), -1, Gravity.START);
-        blp.setMargins(dp(a, 16), dp(a, 12), 0, dp(a, 12));
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(a, barDp()), -1, Palette.rightBar ? Gravity.END : Gravity.START);
+        if (Palette.rightBar) blp.setMargins(0, dp(a, 12), dp(a, 16), dp(a, 12));
+        else blp.setMargins(dp(a, 16), dp(a, 12), 0, dp(a, 12));
         content.addView(bar, blp);
     }
 
