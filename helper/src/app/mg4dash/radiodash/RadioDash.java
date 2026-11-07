@@ -155,6 +155,7 @@ public final class RadioDash {
             // Thème changé dans MG4Dash : on reconstruit l'écran avec les nouvelles couleurs
             if (Palette.load(a)) { a.recreate(); return; }
             fullscreen(a);
+            scrolledContext = "";   // retour dans l'appli : la liste repart du haut (station écoutée visible)
             main.removeCallbacks(tick);
             main.post(tick);
         } catch (Throwable t) {
@@ -1605,6 +1606,7 @@ public final class RadioDash {
     private static boolean swipe(Activity a, android.view.MotionEvent e, float[] down, long[] downAt, boolean[] tracking) {
         switch (e.getActionMasked()) {
             case android.view.MotionEvent.ACTION_DOWN:
+                lastTouch = android.os.SystemClock.uptimeMillis();
                 View decor = a.getWindow().getDecorView();
                 tracking[0] = inside(byName(a, "fragment_container"), e) && !inside(byName(a, "fragment_container_card"), e)
                         && !inside(decor.findViewWithTag(STRIP_TAG), e);
@@ -1643,18 +1645,36 @@ public final class RadioDash {
     private static String scrolledFor = "";
     private static boolean scrollPending;
     private static java.lang.ref.WeakReference<View> selectedRowRef = new java.lang.ref.WeakReference<>(null);
+    private static java.lang.ref.WeakReference<android.widget.ScrollView> scrollRef = new java.lang.ref.WeakReference<>(null);
+    /** Bande et mode affichés au dernier placement « depuis le haut » ; vidé au retour dans l'appli. */
+    private static String scrolledContext = "";
+    /** Jusqu'à cette heure, la liste est replacée depuis le haut à chaque image stable (mise en page qui bouge encore). */
+    private static long followUntil;
+    private static long lastTouch;
 
+    /**
+     * Case de la station écoutée amenée à l'écran. À l'ouverture et au changement de bande ou de mode : position
+     * calculée depuis le haut et reprise à chaque image stable pendant 2,5 s (hauteurs, images DAB+ et défilement
+     * de la ScrollView elle-même pouvaient laisser la liste à moitié défilée), sauf si le doigt touche l'écran.
+     * Changement de station : défilement minimal, en douceur.
+     */
     private static void scrollToSelected() {
-        if (!scrollPending) return;
+        android.widget.ScrollView sv = scrollRef.get();
+        if (sv == null || !sv.isAttachedToWindow() || sv.getHeight() <= 0) return;
         View sel = selectedRowRef.get();
-        if (sel == null || !(sel.getParent() instanceof View) || !(((View) sel.getParent()).getParent() instanceof android.widget.ScrollView)) {
+        if (sel != null && (sel.getParent() == null || ((View) sel.getParent()).getParent() != sv)) sel = null;
+        int h = sv.getHeight() - sv.getPaddingTop() - sv.getPaddingBottom();
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now < followUntil && lastTouch < followUntil - 2500) {
             scrollPending = false;
+            int target = sel != null && sel.getHeight() > 0 && sel.getBottom() > h ? sel.getBottom() - h : 0;
+            if (Math.abs(sv.getScrollY() - target) > 1) sv.scrollTo(0, target);
+            sv.postInvalidateDelayed(300);   // une image stable de plus, jusqu'à la fin de la fenêtre
             return;
         }
-        android.widget.ScrollView sv = (android.widget.ScrollView) ((View) sel.getParent()).getParent();
-        if (sv.getHeight() <= 0 || sel.getHeight() <= 0) return;
+        if (!scrollPending || sel == null || sel.getHeight() <= 0) return;
         scrollPending = false;
-        int y = sv.getScrollY(), h = sv.getHeight() - sv.getPaddingTop() - sv.getPaddingBottom();
+        int y = sv.getScrollY();
         if (sel.getTop() < y) sv.smoothScrollTo(0, sel.getTop());
         else if (sel.getBottom() > y + h) sv.smoothScrollTo(0, sel.getBottom() - h);
     }
@@ -1842,10 +1862,19 @@ public final class RadioDash {
         String now = band + ":" + curDab + ":" + curFm + ":" + favOnly;
         // (fait par scrollToSelected à l'image suivante, une fois la hauteur de la case posée)
         selectedRowRef = new java.lang.ref.WeakReference<>(selectedRow);
-        if (selectedRow != null && scroll instanceof android.widget.ScrollView && !now.equals(scrolledFor)) {
-            scrolledFor = now;
-            scrollPending = true;
-            grid.invalidate();
+        if (scroll instanceof android.widget.ScrollView) {
+            scrollRef = new java.lang.ref.WeakReference<>((android.widget.ScrollView) scroll);
+            String context = band + ":" + favOnly;
+            if (!context.equals(scrolledContext)) {
+                scrolledContext = context;
+                scrolledFor = now;
+                followUntil = android.os.SystemClock.uptimeMillis() + 2500;
+                grid.invalidate();
+            } else if (selectedRow != null && !now.equals(scrolledFor)) {
+                scrolledFor = now;
+                scrollPending = true;
+                grid.invalidate();
+            }
         }
     }
 
