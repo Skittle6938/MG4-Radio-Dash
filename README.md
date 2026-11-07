@@ -28,7 +28,10 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 3](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.3) (in testing)**
+**[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4) (in testing)**
+- **Playback buttons right from the opening**: the play pill and the bare ◀ ▶ icons are now in the page itself, instead of a round play button and boxed arrows for a second or two.
+
+**[1.6.2 beta 3](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.3)**
 - **Older firmwares (SWI68, SWI165…): the radio no longer restarts by itself over CarPlay** ([MG4Dash #99](https://github.com/Skittle6938/MG4Dash/issues/99)). The stock radio resumes whenever the sound comes back to it, even after losing it for good; there, it now waits for a source or play command. After a short interruption (call, navigation prompt, Siri) it resumes as before. Nothing changes on SWI69.
 
 **[1.6.2 beta 2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.2)**
