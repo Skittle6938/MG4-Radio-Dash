@@ -76,27 +76,30 @@ public final class Bands {
     }
 
     /**
-     * Bandes de la radio, dans l'ordre où « bande suivante » les parcourt. La radio les lit dans la configuration de
-     * la voiture (FeatureUtil.getRadioBands), vide sur SWI68 : la liste valait null, et changeSource ne faisait rien,
-     * ni pour {@code __ACTION_SET_BAND__} ni pour {@code __ACTION_NEXT_SOURCE__} d'origine (MG4Dash #80). Dans ce
-     * cas : DAB, FM, AM, l'ordre des onglets. Remplace l'appel d'origine dans RadioMBService.changeSource.
+     * Bandes de la radio, dans l'ordre où « bande suivante » les parcourt : DAB et FM seulement. L'AM est retirée
+     * (plus d'émetteurs, même si la configuration de la voiture la propose). La radio lit ses bandes dans la
+     * configuration de la voiture (FeatureUtil.getRadioBands), vide sur SWI68 : la liste valait null, et changeSource
+     * ne faisait rien (MG4Dash #80) ; on prend alors DAB, FM. Remplace l'appel d'origine dans RadioMBService.changeSource.
      */
     public static List<Integer> radioBands() {
+        List<Integer> out = new java.util.ArrayList<>();
         try {
             Object l = Class.forName("com.saicmotor.radio.utils.FeatureUtil").getMethod("getRadioBands").invoke(null);
-            if (l instanceof List && !((List<?>) l).isEmpty()) {
-                @SuppressWarnings("unchecked") List<Integer> bands = (List<Integer>) l;
-                return bands;
+            if (l instanceof List) for (Object o : (List<?>) l) {
+                if (o instanceof Number && ((Number) o).intValue() != 0 && !out.contains(((Number) o).intValue())) out.add(((Number) o).intValue());
             }
         } catch (Throwable t) {
             Log.w(TAG, "bandes de la radio : " + t);
         }
-        if (!fallbackLogged) { fallbackLogged = true; Log.i(TAG, "bandes absentes de la configuration : DAB, FM, AM"); }
-        return java.util.Arrays.asList(4, 1, 0);
+        if (out.isEmpty()) {
+            if (!fallbackLogged) { fallbackLogged = true; Log.i(TAG, "bandes absentes de la configuration : DAB, FM"); }
+            out.add(4); out.add(1);
+        }
+        return out;
     }
     private static boolean fallbackLogged;
 
-    /** Bande demandée (DAB = 4, FM = 1, AM = 0) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
+    /** Bande demandée (DAB = 4, FM = 1 ; l'AM est retirée) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
     static void setBand(Context service, String name) {
         int target = "DAB".equalsIgnoreCase(name) ? 4 : "FM".equalsIgnoreCase(name) ? 1 : "AM".equalsIgnoreCase(name) ? 0 : -1;
         if (target < 0) { Log.w(TAG, "bande demandée inconnue : " + name); return; }

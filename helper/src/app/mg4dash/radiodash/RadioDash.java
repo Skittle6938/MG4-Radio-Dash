@@ -837,11 +837,22 @@ public final class RadioDash {
         return moved;
     }
 
+    private static boolean leftAm;
+
     private static void fixLayout(Activity a) {
         // Onglets : puces MG4Dash (rd_bg_chip, selon l'état « sélectionné »). Le chargeur de thèmes
         // d'origine remet le fond de la mise en page au démarrage : un fond posé ici était perdu.
         int band = shownBand(a);
-        String[][] tabs = {{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}, {"layout_tab_am", "0"}};
+        String[][] tabs = {{"layout_tab_dab", "4"}, {"layout_tab_fm", "1"}};
+        // Plus d'AM : son onglet est caché (la configuration de certaines voitures le montre encore), et une radio
+        // restée sur l'AM repasse en FM
+        View am = byName(a, "layout_tab_am");
+        if (am != null && am.getVisibility() != View.GONE) am.setVisibility(View.GONE);
+        if (band != 0) leftAm = false;
+        else if (!leftAm) {
+            View fm = byName(a, "layout_tab_fm");
+            if (fm != null) { leftAm = true; Log.i(TAG, "AM retirée : passage en FM"); fm.performClick(); }
+        }
         watchTabs(a, tabs);
         for (String[] t : tabs) {
             View tab = byName(a, t[0]);

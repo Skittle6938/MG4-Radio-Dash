@@ -18,11 +18,11 @@ This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.
 
 The **★ Favourites | All stations** switch in the header of the box on the right toggles the box, and every station control, between two lists (tap the side you want):
 - **★ Favourites** (default): the box shows your favourites of the current band only, and the steering wheel, the home screen, the MG4Dash media card, the ◀ ▶ buttons of the player and a swipe on the player all go from one favourite to the next.
-- **All stations**: the box shows every station the radio knows for the band (DAB+ in alphabetical order, FM and AM by frequency), and all those controls go through every station.
+- **All stations**: the box shows every station the radio knows for the band (DAB+ in alphabetical order, FM by frequency), and all those controls go through every station.
 
 In both lists, a tap on a station tunes it and a tap on its star adds or removes it from the favourites (the same favourites as the star of the player). Favourites stay in the list even when they are out of range. When the station changes, the box scrolls to show it.
 
-**Scan**, next to the switch, only appears with All stations. On FM and AM it steps through the band with seek from the bottom: it moves on as soon as the RDS name is known, or after the listening time set in the box header (*Listen ◀ 5 s ▶*, 1 to 15 s). The frequency and the number of stations found are shown in the header above the stations, which appear as they are found, and the dial at the bottom follows the scan. The scan starts moving at once from the bottom of the band. After a complete scan, a station that was not found again is removed from the list, unless it is a favourite. **Stop** ends the scan without removing anything, and the radio goes back to the station playing before. On DAB+, Scan asks the tuner for its latest station list.
+**Scan**, next to the switch, only appears with All stations. On FM it steps through the band with seek from the bottom: it moves on as soon as the RDS name is known, or after the listening time set in the box header (*Listen ◀ 5 s ▶*, 1 to 15 s). The frequency and the number of stations found are shown in the header above the stations, which appear as they are found, and the dial at the bottom follows the scan. The scan starts moving at once from the bottom of the band. After a complete scan, a station that was not found again is removed from the list, unless it is a favourite. **Stop** ends the scan without removing anything, and the radio goes back to the station playing before. On DAB+, Scan asks the tuner for its latest station list.
 
 On the player, **◀ ▶** go to the previous / next station of the list; a **long press** searches for the next station received, like the stock buttons. With an empty list, ◀ ▶ search as well.
 
@@ -30,6 +30,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 **[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5) (in testing)**
 - **DAB+ picture in MG4Dash right away**: on a station change, the media session now carries the picture cached by Radio Dash, so MG4Dash shows it at once instead of waiting for the station to send its slideshow again.
+- **No more AM**: there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
 - **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.
 
 **[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4)**
