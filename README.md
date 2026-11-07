@@ -29,6 +29,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 ### What's new in this fork
 
 **[1.6.2 beta 4](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.4) (in testing)**
+- **No more panel behind the stations box**: the station cards sit directly on the screen background, in light and dark mode.
 - **Bigger ★ Favourites | All stations switch and Scan button** (as tall as the band tabs), and the stations of the box on the right start level with the top of the player, on DAB+, FM and AM. The cards get a little shorter to keep 3 rows before scrolling.
 - **Playback buttons right from the opening**: the play pill and the bare ◀ ▶ icons are now in the page itself, instead of a round play button and boxed arrows for a second or two.
 
