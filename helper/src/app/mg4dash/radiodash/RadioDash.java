@@ -439,6 +439,9 @@ public final class RadioDash {
                     try { renderFavorites(a); } catch (Throwable t) { Log.w(TAG, "favoris : " + t); }
                     return false;
                 }
+                // Case de la station écoutée amenée à l'écran une fois la mise en page stable (avant, le défilement
+                // était calculé sur l'ancienne hauteur et la liste s'ouvrait décalée, première rangée coupée)
+                scrollToSelected();
                 return true;
             }
         };
@@ -1278,6 +1281,7 @@ public final class RadioDash {
                 sl.height = want;
                 sl.bottomMargin = 0;
                 scroll.setLayoutParams(sl);
+                favsDirty = true;   // cases recalculées pour la nouvelle hauteur (3 rangées pile)
                 // Pas de clipChildren(false) ici : la case doit couper les cartes qu'on glisse, sinon elles passent
                 // par-dessus la bascule, Scan et le cadran FM/AM
                 moved = true;
@@ -1637,6 +1641,23 @@ public final class RadioDash {
     /** Colonnes de cases : 3 sur la carte de 640 dp, davantage quand elle s'élargit (DAB+ immersif). */
     private static int COLUMNS = 3;
     private static String scrolledFor = "";
+    private static boolean scrollPending;
+    private static java.lang.ref.WeakReference<View> selectedRowRef = new java.lang.ref.WeakReference<>(null);
+
+    private static void scrollToSelected() {
+        if (!scrollPending) return;
+        View sel = selectedRowRef.get();
+        if (sel == null || !(sel.getParent() instanceof View) || !(((View) sel.getParent()).getParent() instanceof android.widget.ScrollView)) {
+            scrollPending = false;
+            return;
+        }
+        android.widget.ScrollView sv = (android.widget.ScrollView) ((View) sel.getParent()).getParent();
+        if (sv.getHeight() <= 0 || sel.getHeight() <= 0) return;
+        scrollPending = false;
+        int y = sv.getScrollY(), h = sv.getHeight() - sv.getPaddingTop() - sv.getPaddingBottom();
+        if (sel.getTop() < y) sv.smoothScrollTo(0, sel.getTop());
+        else if (sel.getBottom() > y + h) sv.smoothScrollTo(0, sel.getBottom() - h);
+    }
 
     /**
      * Case de droite (conteneur android:tag="rd_favs_grid") : les favoris de la bande en cours, ou toutes ses stations
@@ -1819,17 +1840,12 @@ public final class RadioDash {
         alignWait(a);
         // Station changée (◀ ▶, volant, glissé) : la case de la station écoutée vient à l'écran
         String now = band + ":" + curDab + ":" + curFm + ":" + favOnly;
+        // (fait par scrollToSelected à l'image suivante, une fois la hauteur de la case posée)
+        selectedRowRef = new java.lang.ref.WeakReference<>(selectedRow);
         if (selectedRow != null && scroll instanceof android.widget.ScrollView && !now.equals(scrolledFor)) {
             scrolledFor = now;
-            final View sel = selectedRow;
-            final android.widget.ScrollView sv = (android.widget.ScrollView) scroll;
-            sv.post(new Runnable() {
-                @Override public void run() {
-                    int y = sv.getScrollY(), h = sv.getHeight() - sv.getPaddingTop() - sv.getPaddingBottom();
-                    if (sel.getTop() < y) sv.smoothScrollTo(0, sel.getTop());
-                    else if (sel.getBottom() > y + h) sv.smoothScrollTo(0, sel.getBottom() - h);
-                }
-            });
+            scrollPending = true;
+            grid.invalidate();
         }
     }
 
