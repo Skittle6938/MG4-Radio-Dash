@@ -424,6 +424,7 @@ public final class RadioDash {
                 moved |= alignTabs(a);
                 moved |= gearButton(a);
                 moved |= centerControls(a);
+                moved |= alignFavsTop(a);
                 moved |= alignWait(a);
                 if (band == 4) dabInfo(a);   // canal posé dès que la radio écrit le multiplex, pas au rafraîchissement suivant
                 if (moved) return false;   // dimensions changées : on saute cette image, la suivante est juste
@@ -1012,7 +1013,7 @@ public final class RadioDash {
         seg.setPadding(dp(a, 3), dp(a, 3), dp(a, 3), dp(a, 3));
         for (int i = 0; i < 2; i++) {
             final boolean fav = i == 0;
-            TextView t = text(a, "", 18, TEXT);
+            TextView t = text(a, "", 21, TEXT);
             t.setTag(fav ? "rd_seg_fav" : "rd_seg_all");
             t.setGravity(Gravity.CENTER);
             t.setSingleLine(true);
@@ -1180,7 +1181,7 @@ public final class RadioDash {
             title.setVisibility(View.GONE);
             row.addView(title, new LinearLayout.LayoutParams(0, -2));
             row.addView(modeSwitch(a), new LinearLayout.LayoutParams(-2, -1));
-            TextView scanB = text(a, tr(9), 18, TEXT);
+            TextView scanB = text(a, tr(9), 21, TEXT);
             scanB.setTag("rd_scan");
             scanB.setGravity(Gravity.CENTER);
             scanB.setSingleLine(true);
@@ -1201,9 +1202,11 @@ public final class RadioDash {
             row.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));
             row.addView(seekWaitControl(a));
             box.addView(row, new FrameLayout.LayoutParams(-1, -1));
-            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(a, 44));
+            // Même hauteur que les onglets DAB / FM / AM (64 dp), plus faciles à toucher ; alignFavsTop cale ensuite
+            // le haut des stations sur celui du lecteur
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(a, HEAD_DP));
             hlp.topMargin = dp(a, 8);
-            hlp.bottomMargin = dp(a, 2);
+            hlp.bottomMargin = dp(a, 12);
             parent.addView(box, index, hlp);
             Palette.recolor(box);
         }
@@ -1215,6 +1218,39 @@ public final class RadioDash {
         if (wait != null && wait.getVisibility() != vis) wait.setVisibility(vis);
     }
     private static CharSequence favsTitle;
+    private static final int HEAD_DP = 64;
+
+    /**
+     * Haut des stations de la case de droite au niveau du haut du lecteur (pochette DAB+, panneau FM / AM) : la marge
+     * au-dessus de l'en-tête bouge, puis celle d'en dessous si la place manque. Les cases rapetissent d'elles-mêmes
+     * pour garder 3 rangées (renderFavorites).
+     * @return true si la mise en page a changé
+     */
+    private static boolean alignFavsTop(Activity a) {
+        View decor = a.getWindow().getDecorView();
+        View head = decor.findViewWithTag("rd_favs_head");
+        View grid = decor.findViewWithTag("rd_favs_grid");
+        View cont = byName(a, "fragment_container");
+        if (head == null || !(grid != null && grid.getParent() instanceof View) || cont == null || !head.isShown()
+                || cont.getHeight() <= 0 || !(head.getLayoutParams() instanceof LinearLayout.LayoutParams)) return false;
+        View scroll = (View) grid.getParent();
+        if (scroll.getHeight() <= 0) return false;
+        int[] s = new int[2], p = new int[2];
+        scroll.getLocationInWindow(s);
+        View imm = cont instanceof ViewGroup ? ((ViewGroup) cont).findViewWithTag("rd_imm") : null;
+        if (imm != null && imm.isShown() && imm.getHeight() > 0) imm.getLocationInWindow(p);
+        else { cont.getLocationInWindow(p); p[1] += dp(a, 12); }
+        int diff = p[1] - s[1];
+        if (Math.abs(diff) <= 1) return false;
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) head.getLayoutParams();
+        int top = lp.topMargin + diff, bottom = lp.bottomMargin;
+        if (top < 0) { bottom = Math.max(0, bottom + top); top = 0; }
+        if (top == lp.topMargin && bottom == lp.bottomMargin) return false;
+        lp.topMargin = top;
+        lp.bottomMargin = bottom;
+        head.setLayoutParams(lp);
+        return true;
+    }
 
     /**
      * Réglage « Écoute » calé sur la dernière colonne de cases en dessous, d'après leur position réelle (la largeur
@@ -1275,7 +1311,7 @@ public final class RadioDash {
         box.setGravity(Gravity.CENTER_VERTICAL);
         box.setBackground(panel(a, BUTTON, 12, BORDER));
         box.setPadding(dp(a, 12), 0, 0, 0);
-        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 40));
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(-2, dp(a, 52));
         boxLp.setMarginStart(dp(a, 12));
         box.setLayoutParams(boxLp);
         TextView label = text(a, tr(13), 15, SUB);
