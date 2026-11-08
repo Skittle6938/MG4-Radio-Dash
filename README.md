@@ -28,11 +28,11 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**1.6.2 beta 8** (in preparation)
+**[1.6.2 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.8) (in testing)**
 - **DAB+ station logos kept, slideshow pictures only while they are current**: a DAB+ station sends two kinds of pictures. Its **logo** comes with the programme guide (SPI) and the radio keeps it per station; its **slideshow** (covers, hosts, ads…) changes all the time. A slideshow picture is now shown for **5 minutes at most**, or until the next one. After that, the player and MG4Dash show the station logo, or no picture when the station has never sent one.
 - **Station list**: each DAB+ station shows its logo. A station without a logo keeps its last slideshow picture, as before (many multiplexes broadcast no SPI logo), and a station never heard shows its name in large type, like an FM station.
 
-**[1.6.2 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.7) (in testing)**
+**[1.6.2 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.7)**
 - **AM back as an option**: MG4Dash's settings (Home, Audio source) get a *Radio Dash: AM band* switch, **off by default**, shown on firmwares whose radio can have AM (SWI68, SWI165…). When on, the AM tab, dial, scan and favourites come back as in 1.6.2 beta 1, and the band change goes through AM again. Needs an MG4Dash version with this switch.
 - **No more RDS text from the previous station in MG4Dash** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the tuner sometimes sends the last RDS text again after switching to DAB+ and back, or to another station. A text identical to the last one sent for another frequency, or received on DAB+, is now ignored.
 
