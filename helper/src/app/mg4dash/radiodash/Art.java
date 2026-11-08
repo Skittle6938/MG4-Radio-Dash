@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * Règle : une image du diaporama ne vaut que 5 minutes après son arrivée (ou jusqu'à la suivante). Ensuite, le logo
  * de la station, sinon rien. Lecteur et MG4Dash (session média) : diaporama récent, sinon logo. Liste des stations :
- * logo d'abord (il identifie la station), sinon diaporama récent, sinon le nom seul.
+ * logo d'abord (il identifie la station), sinon la dernière image du diaporama, sinon le nom seul.
  *
  * Branché dans le smali : DabTunerCallback.onDabSlideShowChanged → live() ; RadioMBService.toSetSessionMetadataDabBitmap
  * → session() ; RadioMBService.toSetSessionMetadataDabTitle → current().
@@ -118,22 +118,41 @@ public final class Art {
         return s != null ? s : logo(c, sid);
     }
 
-    /** Case de la liste : logo, sinon diaporama récent, sinon null (la case montre le nom). */
+    /**
+     * Case de la liste : logo, sinon la dernière image du diaporama quel que soit son âge (beaucoup de multiplexes
+     * ne diffusent aucun logo SPI : la liste n'aurait plus que des noms), sinon null (la case montre le nom).
+     */
     static Bitmap forTile(Context c, long sid) {
         if (sid <= 0) return null;
         Bitmap l = logo(c, sid);
-        return l != null ? l : slide(c, sid);
+        return l != null ? l : lastSlide(c, sid);
     }
 
-    /** Ce que montre la case : change quand un logo arrive, qu'une image arrive ou qu'elle a plus de 5 minutes. */
+    /** Ce que montre la case : change quand un logo ou une image arrive. */
     static String tileKey(Context c, long sid) {
         Object bean = logoBean(c, sid);
         if (bean != null) {
             byte[] buf = (byte[]) callQuiet(bean, "getmLogoBuffer");
             return "L" + (buf == null ? 0 : buf.length);
         }
-        long m = slideTime(c, sid);
+        long m = file(c, sid).lastModified();
         return m > 0 ? "S" + m : "-";
+    }
+
+    /** Dernière image du diaporama gardée pour la station, même ancienne. */
+    private static Bitmap lastSlide(Context c, long sid) {
+        synchronized (Art.class) {
+            if (sid == liveSid && liveBitmap != null && !liveBitmap.isRecycled()) return liveBitmap;
+        }
+        long m = file(c, sid).lastModified();
+        if (m == 0) return null;
+        synchronized (slides) {
+            Object[] e = slides.get(sid);
+            if (e != null && (Long) e[0] == m) return (Bitmap) e[1];
+            Bitmap b = BitmapFactory.decodeFile(file(c, sid).getPath());
+            if (b != null) slides.put(sid, new Object[]{m, b});
+            return b;
+        }
     }
 
     /** Heure du fichier de la dernière image du diaporama si elle a moins de 5 minutes, sinon 0. */

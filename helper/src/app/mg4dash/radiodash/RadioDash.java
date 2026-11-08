@@ -1811,7 +1811,7 @@ public final class RadioDash {
                 long id = ((Number) call(st, "getServiceId")).longValue();
                 selected = id == curDab;
                 label = Stations.dabLabel(st);
-                // Logo SPI de la station (gardé), sinon image du diaporama de moins de 5 minutes, sinon le nom seul
+                // Logo SPI de la station (gardé), sinon la dernière image du diaporama, sinon le nom seul
                 Bitmap b = Art.forTile(a, id);
                 if (b != null || label.isEmpty()) {
                     ImageView logo = new ImageView(a);
