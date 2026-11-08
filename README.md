@@ -28,7 +28,9 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.2 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.8) (in testing)**
+**[1.6.2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2) (latest)**: everything in 1.6.2 beta 1 to 8 below, with DAB+ slideshow pictures shown for 5 minutes at most then the station logo, AM as an option in MG4Dash, the vertical bar following MG4Dash's side and width, the reworked station box, and fixes for older firmwares (SWI68, SWI165…).
+
+**[1.6.2 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.8)**
 - **DAB+ station logos kept, slideshow pictures only while they are current**: a DAB+ station sends two kinds of pictures. Its **logo** comes with the programme guide (SPI) and the radio keeps it per station; its **slideshow** (covers, hosts, ads…) changes all the time. A slideshow picture is now shown for **5 minutes at most**, or until the next one. After that, the player and MG4Dash show the station logo, or no picture when the station has never sent one.
 - **Station list**: each DAB+ station shows its logo. A station without a logo keeps its last slideshow picture, as before (many multiplexes broadcast no SPI logo), and a station never heard shows its name in large type, like an FM station.
 
@@ -66,7 +68,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **DAB+ station names in bold** in the box on the right.
 - **FM / AM dial**: with the MG4Dash bar at the bottom, the dial goes down to the same 12 dp gap as between the other boxes.
 
-**[1.6.1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1) (latest)**: everything in 1.6.1 beta 1 to 8 below, with the ★ Favourites | All stations switch, the AM page, Scan on every band and the direct band change for MG4Dash.
+**[1.6.1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1)**: everything in 1.6.1 beta 1 to 8 below, with the ★ Favourites | All stations switch, the AM page, Scan on every band and the direct band change for MG4Dash.
 
 **[1.6.1 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.8)**
 - **Bigger settings gear**, redrawn as a filled icon in the MG4Dash style.
