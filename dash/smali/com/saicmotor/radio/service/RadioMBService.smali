@@ -929,6 +929,11 @@
     :cond_1
     iput-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mRadioDabStation:Lcom/android/car/radio/service/RadioDabStation;
 
+    # Radio Dash : diaporama de moins de 5 minutes, sinon logo SPI de la station, sinon rien
+    invoke-static {p0, p1, p2}, Lapp/mg4dash/radiodash/Art;->session(Landroid/content/Context;Ljava/lang/Object;Landroid/graphics/Bitmap;)Landroid/graphics/Bitmap;
+
+    move-result-object p2
+
     .line 596
     iput-object p2, p0, Lcom/saicmotor/radio/service/RadioMBService;->mBitmap:Landroid/graphics/Bitmap;
 
@@ -1308,19 +1313,15 @@
 
     .line 684
     :goto_3
-    iget-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mBitmap:Landroid/graphics/Bitmap;
-
-    if-nez p1, :rd_art_ok
-
+    # Radio Dash : image de la station selon la règle (diaporama de moins de 5 min, sinon logo SPI, sinon rien)
     iget-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mRadioDabStation:Lcom/android/car/radio/service/RadioDabStation;
 
-    invoke-static {p0, p1}, Lapp/mg4dash/radiodash/Art;->cached(Landroid/content/Context;Ljava/lang/Object;)Landroid/graphics/Bitmap;
+    invoke-static {p0, p1}, Lapp/mg4dash/radiodash/Art;->current(Landroid/content/Context;Ljava/lang/Object;)Landroid/graphics/Bitmap;
 
     move-result-object p1
 
     iput-object p1, p0, Lcom/saicmotor/radio/service/RadioMBService;->mBitmap:Landroid/graphics/Bitmap;
 
-    :rd_art_ok
     invoke-virtual {v6, v0, p1}, Landroid/media/MediaMetadata$Builder;->putBitmap(Ljava/lang/String;Landroid/graphics/Bitmap;)Landroid/media/MediaMetadata$Builder;
 
     .line 688

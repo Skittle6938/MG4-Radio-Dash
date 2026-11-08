@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Paint;
@@ -29,7 +28,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -975,7 +973,7 @@ public final class RadioDash {
         List<View> views = new ArrayList<>();
         findTagged(a.getWindow().getDecorView(), "rd_art", views);
         Bitmap b = art;
-        if (b == null) b = cachedDabArt(a, currentDabServiceId(a));
+        if (b == null) b = Art.forPlayer(a, currentDabServiceId(a));   // diaporama de moins de 5 min, sinon logo
         for (View v : views) {
             Immersive.apply(a, v, b);
         }
@@ -985,7 +983,7 @@ public final class RadioDash {
         List<View> views = new ArrayList<>();
         findTagged(a.getWindow().getDecorView(), "rd_art", views);
         Bitmap b = art;
-        if (b == null) b = cachedDabArt(a, currentDabServiceId(a));
+        if (b == null) b = Art.forPlayer(a, currentDabServiceId(a));   // diaporama de moins de 5 min, sinon logo
         for (View v : views) {
             if (!(v instanceof ImageView)) continue;
             ImageView iv = (ImageView) v;
@@ -1785,16 +1783,16 @@ public final class RadioDash {
         int logoSide = tileW - dp(a, 28);
         View scroll = (View) grid.getParent();
         int visible = scroll.getHeight() - scroll.getPaddingTop() - scroll.getPaddingBottom();
+        int labelH = 0;   // légende du nom sous l'image en DAB+
+        if (dab) {
+            android.text.TextPaint tp = new android.text.TextPaint();
+            tp.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, a.getResources().getDisplayMetrics()));
+            Paint.FontMetricsInt fm = tp.getFontMetricsInt();
+            labelH = fm.bottom - fm.top + dp(a, 6);
+        }
         if (visible > 0) {
-            int label = 0;
-            if (dab) {
-                android.text.TextPaint tp = new android.text.TextPaint();
-                tp.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, a.getResources().getDisplayMetrics()));
-                Paint.FontMetricsInt fm = tp.getFontMetricsInt();
-                label = fm.bottom - fm.top + dp(a, 6);
-            }
             // 3 rangées qui remplissent la hauteur (1 px de marge pour les arrondis, sinon la case défilerait)
-            int fit = (visible - 2) / 3 - 2 * gap - dp(a, 14) - label;
+            int fit = (visible - 2) / 3 - 2 * gap - dp(a, 14) - labelH;
             logoSide = Math.min(logoSide, fit);
         }
         LinearLayout row = null;
@@ -1812,19 +1810,37 @@ public final class RadioDash {
             if (dab) {
                 long id = ((Number) call(st, "getServiceId")).longValue();
                 selected = id == curDab;
-                ImageView logo = new ImageView(a);
-                logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                round(logo, dp(a, 12));
-                Bitmap b = thumbDabArt(a, id);
-                if (b != null) logo.setImageBitmap(b);
-                else {
-                    logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    logo.setPadding(dp(a, 24), dp(a, 24), dp(a, 24), dp(a, 24));
-                    logo.setBackground(panel(a, BORDER, 12, Color.TRANSPARENT));
-                    logo.setImageResource(a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName()));
-                }
                 label = Stations.dabLabel(st);
-                face = logo;
+                // Logo SPI de la station (gardé), sinon image du diaporama de moins de 5 minutes, sinon le nom seul
+                Bitmap b = Art.forTile(a, id);
+                if (b != null || label.isEmpty()) {
+                    ImageView logo = new ImageView(a);
+                    logo.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    round(logo, dp(a, 12));
+                    if (b != null) logo.setImageBitmap(b);
+                    else {
+                        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                        logo.setPadding(dp(a, 24), dp(a, 24), dp(a, 24), dp(a, 24));
+                        logo.setBackground(panel(a, BORDER, 12, Color.TRANSPARENT));
+                        logo.setImageResource(a.getResources().getIdentifier("rd_ic_radio", "drawable", a.getPackageName()));
+                    }
+                    face = logo;
+                } else {
+                    // Comme une carte FM : le nom en grand (sous la place de l'étoile), sur toute la hauteur de la case
+                    LinearLayout card = new LinearLayout(a);
+                    card.setOrientation(LinearLayout.VERTICAL);
+                    card.setGravity(Gravity.CENTER);
+                    card.setPadding(dp(a, 10), dp(a, 44), dp(a, 10), dp(a, 12));
+                    TextView big = text(a, label, 28, TEXT);
+                    big.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+                    big.setGravity(Gravity.CENTER);
+                    big.setMaxLines(2);
+                    big.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    big.setAutoSizeTextTypeUniformWithConfiguration(15, 30, 1, TypedValue.COMPLEX_UNIT_SP);
+                    card.addView(big, new LinearLayout.LayoutParams(-1, 0, 1f));
+                    face = card;
+                    label = null;   // le nom est sur la carte : pas de légende dessous
+                }
             } else {
                 int ch = ((Number) call(st, "getChannelNumber")).intValue();
                 selected = ch == curFm;
@@ -1860,7 +1876,10 @@ public final class RadioDash {
             tile.setGravity(Gravity.CENTER_HORIZONTAL);
             tile.setPadding(dp(a, 8), dp(a, 8), dp(a, 8), dp(a, 6));
             tile.setBackground(panel(a, selected ? 0x262979FF : BUTTON, 16, selected ? ACTION : BORDER));
-            tile.addView(face, new LinearLayout.LayoutParams(dab ? logoSide : tileW - dp(a, 16), logoSide));
+            // Carte du nom seul en DAB+ : la hauteur de l'image et de sa légende, pour garder les rangées alignées
+            boolean nameCard = dab && label == null;
+            tile.addView(face, new LinearLayout.LayoutParams(dab && !nameCard ? logoSide : tileW - dp(a, 16),
+                    nameCard ? logoSide + labelH : logoSide));
             if (label != null) {
                 TextView t = text(a, label, 16, selected ? TEXT : SUB);
                 t.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));   // DAB+ : nom en gras, plus lisible
@@ -1936,14 +1955,14 @@ public final class RadioDash {
         Palette.tintStars(a.getWindow().getDecorView());
     }
 
-    /** Empreinte des images DAB en cache : redessine les tuiles quand une image arrive. */
+    /** Empreinte des images DAB+ des cases : redessine quand un logo arrive, qu'une image arrive ou qu'elle a 5 minutes. */
     private static String artStamp(Context c, List<?> favs) {
-        long sum = 0;
+        StringBuilder sb = new StringBuilder();
         if (favs != null) for (Object o : favs) {
             Object id = callQuiet(o, "getServiceId");
-            if (id instanceof Number) sum += new File(c.getFilesDir(), "dab_" + ((Number) id).longValue() + ".jpg").lastModified();
+            if (id instanceof Number) sb.append(Art.tileKey(c, ((Number) id).longValue())).append(',');
         }
-        return String.valueOf(sum);
+        return sb.toString();
     }
 
     /** Empreinte des noms RDS : redessine les tuiles FM quand un nom est reçu. */
@@ -2174,36 +2193,6 @@ public final class RadioDash {
             return -1;
         }
     }
-
-    /** Image mise en cache par le patch DAB+ : fichiers/dab_<serviceId>.jpg. */
-    private static Bitmap cachedDabArt(Context c, long serviceId) {
-        if (serviceId < 0) return null;
-        File f = new File(c.getFilesDir(), "dab_" + serviceId + ".jpg");
-        return f.canRead() ? BitmapFactory.decodeFile(f.getPath()) : null;
-    }
-
-    /** Image DAB+ réduite pour les cases, gardée en mémoire tant que le fichier ne change pas (liste de toutes les stations). */
-    private static Bitmap thumbDabArt(Context c, long serviceId) {
-        if (serviceId < 0) return null;
-        File f = new File(c.getFilesDir(), "dab_" + serviceId + ".jpg");
-        long m = f.lastModified();
-        if (m == 0) return null;
-        Object[] e = thumbs.get(serviceId);
-        if (e != null && (Long) e[0] == m) return (Bitmap) e[1];
-        BitmapFactory.Options o = new BitmapFactory.Options();
-        o.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(f.getPath(), o);
-        int sample = 1;
-        while (o.outWidth / (sample * 2) >= 240 && o.outHeight / (sample * 2) >= 240) sample *= 2;
-        o = new BitmapFactory.Options();
-        o.inSampleSize = sample;
-        Bitmap b = BitmapFactory.decodeFile(f.getPath(), o);
-        if (b != null) thumbs.put(serviceId, new Object[]{m, b});
-        return b;
-    }
-    private static final android.util.LruCache<Long, Object[]> thumbs = new android.util.LruCache<Long, Object[]>(24 * 1024 * 1024) {
-        @Override protected int sizeOf(Long k, Object[] v) { return ((Bitmap) v[1]).getByteCount(); }
-    };
 
     // ── Outils ───────────────────────────────────────────────────────────────
 
