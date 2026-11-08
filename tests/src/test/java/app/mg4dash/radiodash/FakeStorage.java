@@ -12,6 +12,8 @@ public class FakeStorage {
     public final List<Dab> dabFavorites = new ArrayList<>(), dabStations = new ArrayList<>();
     public int fmChannel = -1, amChannel = -1;
     public Dab currentDab;
+    /** Station DAB+ valide suivante / précédente selon la radio (comportement d'origine). */
+    public Dab nextValid, previousValid;
 
     /** Station DAB+ : identifiant de service, nom du service et du multiplex. */
     public static class Dab {
@@ -27,6 +29,8 @@ public class FakeStorage {
     public List<Dab> getDabFavorite() { return dabFavorites; }
     public List<Dab> getDabStationList() { return dabStations; }
     public Dab getCurrentDabStation() { return currentDab; }
+    public Dab getDabNextValidStation() { return nextValid; }
+    public Dab getDabPreValidStation() { return previousValid; }
     public Dab getDabStationForServiceId(Dab d) { return d; }
     public List<RadioStation> getFavoriteForBand(int band) { return band == 0 ? amFavorites : fmFavorites; }
     public List<RadioStation> getPreScannedStationsForBand(int band) { return band == 0 ? amPreScanned : fmPreScanned; }

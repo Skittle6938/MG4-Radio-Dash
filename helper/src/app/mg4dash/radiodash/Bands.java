@@ -112,13 +112,17 @@ public final class Bands {
     static boolean amAllowed(Context c) {
         if (c == null) return false;
         try {
-            String v = android.provider.Settings.Global.getString(c.getContentResolver(), "mg4dash_theme");
-            if (v == null) return false;
-            String[] p = v.split(",");
-            return p.length > 7 && "1".equals(p[7].trim());
+            return amOption(android.provider.Settings.Global.getString(c.getContentResolver(), "mg4dash_theme"));
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    /** 8e champ de la valeur de mg4dash_theme : "1" = bande AM. */
+    static boolean amOption(String theme) {
+        if (theme == null) return false;
+        String[] p = theme.split(",");
+        return p.length > 7 && "1".equals(p[7].trim());
     }
     private static boolean fallbackLogged;
 

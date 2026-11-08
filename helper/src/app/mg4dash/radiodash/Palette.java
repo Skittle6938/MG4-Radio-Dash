@@ -79,6 +79,11 @@ public final class Palette {
     public static boolean load(Context c) {
         String v = null;
         try { v = Settings.Global.getString(c.getContentResolver(), "mg4dash_theme"); } catch (Throwable ignored) {}
+        return apply(v);
+    }
+
+    /** Applique la valeur de mg4dash_theme ("fond,boutons,clair,…", null = thème d'origine) ; true si elle a changé. */
+    static boolean apply(String v) {
         if (v == null) v = "0,0";
         if (v.equals(loaded)) return false;
         loaded = v;

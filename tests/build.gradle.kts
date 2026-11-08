@@ -28,6 +28,9 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.test {
+    // Les tests de contrat lisent le smali et les ressources : les relancer quand ils changent
+    inputs.dir("../dash").withPropertyName("dash")
+    inputs.file("../VERSION").withPropertyName("version")
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
