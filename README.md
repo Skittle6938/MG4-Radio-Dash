@@ -28,6 +28,11 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
+**[1.6.3 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.3-beta.1) (in testing)**
+- **MG4Dash no longer switches back to DAB+ while on FM** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the DAB+ tuner keeps receiving in the background during FM (station info, slideshow, and the return to the logo after 5 minutes), and each of these put DAB+ back in the media session. The music card then showed DAB while the sound stayed on FM. DAB+ info now only reaches the session when the radio is on DAB+.
+- **DAB+ picture kept on the player and in MG4Dash**: on a station that sends no logo, the player and MG4Dash showed no picture 5 minutes after the last slideshow, while the station list kept it. They now show that last picture too (recent slideshow, then logo, then last slideshow picture).
+- **RDS accents shown**: RDS has its own character set (é, è, à, ç… are not coded as in Latin-1), and the tuner passes the bytes as they are, so accented letters were invisible. Radio text and station names are now converted, in Radio Dash and in MG4Dash.
+
 **[1.6.2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2) (latest)**: everything in 1.6.2 beta 1 to 8 below, with DAB+ slideshow pictures shown for 5 minutes at most then the station logo, AM as an option in MG4Dash, the vertical bar following MG4Dash's side and width, the reworked station box, and fixes for older firmwares (SWI68, SWI165…).
 
 **[1.6.2 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.8)**
