@@ -1373,6 +1373,11 @@
 .method private toSetSessionMetadataTitle(Ljava/lang/String;Ljava/lang/String;)V
     .locals 3
 
+    # Radio Dash : nom de station RDS avec ses lettres accentuées (jeu EBU), pour MG4Dash
+    invoke-static {p2}, Lapp/mg4dash/radiodash/Rds;->decode(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object p2
+
     .line 696
     invoke-static {p1}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
 

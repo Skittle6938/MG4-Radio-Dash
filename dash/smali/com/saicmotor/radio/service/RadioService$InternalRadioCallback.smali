@@ -1253,6 +1253,11 @@
 .method public onRdsRTTextChanged(Ljava/lang/String;)V
     .locals 5
 
+    # Radio Dash : lettres accentuées du jeu de caractères RDS (EBU) remises en Unicode, pour la radio et MG4Dash
+    invoke-static {p1}, Lapp/mg4dash/radiodash/Rds;->decode(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object p1
+
     # MG4-Radio-Dash : texte RDS transmis à MG4Dash
     iget-object v0, p0, Lcom/saicmotor/radio/service/RadioService$InternalRadioCallback;->this$0:Lcom/saicmotor/radio/service/RadioService;
 

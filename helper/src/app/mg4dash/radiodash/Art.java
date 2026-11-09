@@ -25,7 +25,8 @@ import java.util.Map;
  *    (RadioStorage.getDabLogoInfoList, table dab_logo_info_list_table) et le garde.
  *
  * Règle : une image du diaporama ne vaut que 5 minutes après son arrivée (ou jusqu'à la suivante). Ensuite, le logo
- * de la station, sinon rien. Lecteur et MG4Dash (session média) : diaporama récent, sinon logo. Liste des stations :
+ * de la station, sinon la dernière image gardée. Lecteur et MG4Dash (session média) : diaporama récent, sinon logo,
+ * sinon la dernière image du diaporama (la même que la liste). Liste des stations :
  * logo d'abord (il identifie la station), sinon la dernière image du diaporama, sinon le nom seul.
  *
  * Branché dans le smali : DabTunerCallback.onDabSlideShowChanged → live() ; RadioMBService.toSetSessionMetadataDabBitmap
@@ -83,7 +84,7 @@ public final class Art {
         }
     }
 
-    /** Lecteur et session média : diaporama de moins de 5 minutes, sinon logo SPI, sinon rien. */
+    /** Lecteur et session média : voir forPlayer. */
     public static Bitmap current(Context c, Object station) {
         if (c == null || station == null) return null;
         return forPlayer(c, sid(station));
@@ -112,10 +113,16 @@ public final class Art {
 
     // ── Choix de l'image ─────────────────────────────────────────────────────
 
+    /**
+     * Lecteur et session média : diaporama de moins de 5 minutes, sinon logo SPI, sinon la dernière image du diaporama
+     * gardée pour la station (comme la case de la liste), plutôt que rien : beaucoup de multiplexes n'envoient aucun logo.
+     */
     static Bitmap forPlayer(Context c, long sid) {
         if (sid <= 0) return null;
         Bitmap s = slide(c, sid);
-        return s != null ? s : logo(c, sid);
+        if (s != null) return s;
+        Bitmap l = logo(c, sid);
+        return l != null ? l : lastSlide(c, sid);
     }
 
     /**
