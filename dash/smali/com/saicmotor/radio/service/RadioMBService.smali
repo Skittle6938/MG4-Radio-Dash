@@ -860,6 +860,17 @@
 .method private toSetSessionMetadataDabBitmap(Lcom/android/car/radio/service/RadioDabStation;Landroid/graphics/Bitmap;)V
     .locals 7
 
+    # Radio Dash : infos DAB+ reçues en fond pendant la FM, la session média reste sur la FM (MG4Dash #80)
+    invoke-static {p0}, Lapp/mg4dash/radiodash/Bands;->notOnDab(Landroid/content/Context;)Z
+
+    move-result v0
+
+    if-eqz v0, :rd_on_dab
+
+    return-void
+
+    :rd_on_dab
+
     const-string v0, "android.media.metadata.ARTIST"
 
     const-string v1, "android.media.metadata.TITLE"
@@ -1094,6 +1105,17 @@
 
 .method private toSetSessionMetadataDabTitle(Lcom/android/car/radio/service/RadioDabStation;)V
     .locals 12
+
+    # Radio Dash : infos DAB+ reçues en fond pendant la FM, la session média reste sur la FM (MG4Dash #80)
+    invoke-static {p0}, Lapp/mg4dash/radiodash/Bands;->notOnDab(Landroid/content/Context;)Z
+
+    move-result v0
+
+    if-eqz v0, :rd_on_dab
+
+    return-void
+
+    :rd_on_dab
 
     const-string v0, "android.media.metadata.ALBUM_ART"
 

@@ -2,6 +2,7 @@ package app.mg4dash.radiodash;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.saicmotor.radio.model.RadioStorage;
 import com.saicmotor.radio.utils.FeatureUtil;
@@ -76,5 +77,20 @@ public class BandsTest {
         Bands.setBand(s, null);
         Bands.setBand(s, "AM");   // no AM on this radio
         assertEquals(new ArrayList<Integer>(), s.calls);
+    }
+
+    /** Infos DAB+ reçues en fond pendant la FM : la session média ne repasse pas en DAB+ (MG4Dash #80). */
+    @Test public void dabMetadataOnlyWhenTheRadioIsOnDab() {
+        Service s = new Service();
+        RadioStorage.band = 1;
+        assertTrue(Bands.notOnDab(s));
+        RadioStorage.band = 0;
+        assertTrue(Bands.notOnDab(s));
+        RadioStorage.band = 4;
+        assertFalse(Bands.notOnDab(s));
+    }
+
+    @Test public void dabMetadataNotBlockedWhenTheBandIsUnreadable() {
+        assertFalse(Bands.notOnDab(null));
     }
 }

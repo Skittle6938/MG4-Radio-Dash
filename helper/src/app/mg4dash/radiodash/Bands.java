@@ -126,6 +126,29 @@ public final class Bands {
     }
     private static boolean fallbackLogged;
 
+    /**
+     * RadioMBService.toSetSessionMetadataDab* : vrai quand la radio est sur une autre bande que le DAB+. Le tuner DAB+
+     * continue de recevoir en fond pendant la FM (infos de la station, diaporama, et le retour au logo 5 minutes après
+     * le dernier diaporama) : la session média repassait alors en DAB+ (auteur « DAB », nom de la station DAB+) alors que
+     * le son restait sur la FM, et MG4Dash affichait DAB (MG4Dash #80). La bande enregistrée change avant le réglage
+     * d'une station DAB+, ses infos arrivent donc bien une fois sur le DAB+. En cas d'erreur : rien n'est bloqué.
+     */
+    public static boolean notOnDab(Context c) {
+        try {
+            Object storage = Class.forName("com.saicmotor.radio.model.RadioStorage")
+                    .getMethod("getInstance", Context.class).invoke(null, c.getApplicationContext());
+            int band = ((Number) storage.getClass().getMethod("getStoredRadioBand").invoke(storage)).intValue();
+            if (band != 4 && !dabSkipLogged) { dabSkipLogged = true; Log.i(TAG, "infos DAB+ reçues en fond sur la bande " + band + " : session média laissée telle quelle"); }
+            if (band == 4) dabSkipLogged = false;
+            return band != 4;
+        } catch (Throwable t) {
+            Log.w(TAG, "bande enregistrée : " + t);
+            return false;
+        }
+    }
+
+    private static boolean dabSkipLogged;
+
     /** Bande demandée (DAB = 4, FM = 1, AM = 0 avec l'option) : ignorée si la radio ne l'a pas, rien à faire si elle y est déjà. */
     static void setBand(Context service, String name) {
         int target = "DAB".equalsIgnoreCase(name) ? 4 : "FM".equalsIgnoreCase(name) ? 1 : "AM".equalsIgnoreCase(name) ? 0 : -1;
