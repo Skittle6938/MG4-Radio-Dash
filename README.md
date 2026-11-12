@@ -1,16 +1,18 @@
-# MG4 Radio Dash — redesigned radio for the MG4 (fork of MG4-Radio-DABplus-Fix)
+# MG4Radio — redesigned radio for the MG4 (fork of MG4-Radio-DABplus-Fix)
+
+*Formerly Radio Dash: same app, same package, MG4Dash keeps updating it as before.*
 
 This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.com/Skittle6938/MG4Dash)** and adds favourites-only station switching. It keeps every fix from the original project ([MG4-Radio-DABplus-Fix](https://github.com/Skittle6938/MG4-Radio-DABplus-Fix), documented below).
 
 **Firmware:** built and tested for SWI69. SWI68 is being tested by users ([#2](https://github.com/Skittle6938/MG4-Radio-Dash/issues/2)) and is not officially supported.
 
-![MG4 Radio Dash, DAB+, dark](screenshots/radio-dash.jpg)
+![MG4Radio, DAB+, dark](screenshots/radio-dash.jpg)
 
-![MG4 Radio Dash, DAB+, light](screenshots/radio-dash-light.jpg)
+![MG4Radio, DAB+, light](screenshots/radio-dash-light.jpg)
 
-![MG4 Radio Dash, DAB+, all stations](screenshots/radio-dash-stations.jpg)
+![MG4Radio, DAB+, all stations](screenshots/radio-dash-stations.jpg)
 
-![MG4 Radio Dash, FM](screenshots/radio-dash-fm.jpg)
+![MG4Radio, FM](screenshots/radio-dash-fm.jpg)
 
 *Screenshots taken on the car with 1.6.1 beta 7: DAB+ with the Immersive player and the favourites (dark and light mode), DAB+ with every station (All stations chosen in the header, Scan shown), FM with the full-width dial.*
 
@@ -156,8 +158,8 @@ The redesign is applied on top of `apk/Radio_patched_signed.apk`:
 Install exactly like the original patch below (`adb push` + `pm install -r -f`, or USB stick), then **reboot the head unit**. To go back, reinstall the original `Radio_patched_signed.apk`, or `adb shell pm uninstall com.saicmotor.radio` for the factory radio.
 
 **Good to know**
-- Radio Dash **replaces** the stock radio app (same package, `com.saicmotor.radio`): while it is installed, the stock radio cannot be opened separately. Uninstalling Radio Dash brings the factory radio back.
-- Favourites and the station list are stored by the radio app itself, so **uninstalling Radio Dash also removes them**. Updating Radio Dash (`pm install -r`) keeps them.
+- MG4Radio **replaces** the stock radio app (same package, `com.saicmotor.radio`): while it is installed, the stock radio cannot be opened separately. Uninstalling MG4Radio brings the factory radio back.
+- Favourites and the station list are stored by the radio app itself, so **uninstalling MG4Radio also removes them**. Updating MG4Radio (`pm install -r`) keeps them.
 - **At first start the station lists are empty** until the tuner has found stations. The box on the right then says so: choose **All stations** in the header of the box and press **Scan** to search for them (band scan on FM and AM, refreshed list on DAB+).
 
 ---
@@ -193,7 +195,7 @@ After this patch, **the artwork appears directly on the launcher home screen**, 
 
 ### 2. Auto-resume on car start
 
-> **In MG4 Radio Dash this auto-resume is turned off** (its toggle is hidden): playback at car start is now set in **MG4Dash**, for every source, under Settings › Home › Audio source › *Playback at startup* (as when the car was switched off, always paused or always playing). The section below describes the original DAB+ patch.
+> **In MG4Radio this auto-resume is turned off** (its toggle is hidden): playback at car start is now set in **MG4Dash**, for every source, under Settings › Home › Audio source › *Playback at startup* (as when the car was switched off, always paused or always playing). The section below describes the original DAB+ patch.
 
 If the radio was playing when you switched the car off, it now **starts playing again automatically** the next time you start the car — no need to open the radio app or press play.
 
@@ -223,7 +225,7 @@ DAB+ stations only broadcast their slideshow image every 10–30 seconds. Withou
 
 This patch also **remembers the last image received for each station** and restores it immediately the next time you tune to that station, so the artwork is visible right away. (The first time you ever hear a station, you still have to wait for its first broadcast — see the 10–60 s note above.)
 
-> **Radio Dash 1.6.2 beta 8 and later:** a remembered slideshow image is only restored while it is less than 5 minutes old. Older ones give way to the station logo (SPI), or to no image when the station has never sent a logo.
+> **MG4Radio 1.6.2 beta 8 and later:** a remembered slideshow image is only restored while it is less than 5 minutes old. Older ones give way to the station logo (SPI), or to no image when the station has never sent a logo.
 
 ### Image cropping
 
