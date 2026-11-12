@@ -4,7 +4,7 @@
 
 This fork restyles the stock SAIC radio app to match **[MG4Dash](https://github.com/Skittle6938/MG4Dash)** and adds favourites-only station switching. It keeps every fix from the original project ([MG4-Radio-DABplus-Fix](https://github.com/Skittle6938/MG4-Radio-DABplus-Fix), documented below).
 
-**Firmware:** built and tested for SWI69. SWI68 is being tested by users ([#2](https://github.com/Skittle6938/MG4-Radio-Dash/issues/2)) and is not officially supported.
+**Firmware:** built and tested for SWI69. SWI68 is being tested by users ([#2](https://github.com/Skittle6938/MG4Radio/issues/2)) and is not officially supported.
 
 ![MG4Radio, DAB+, dark](screenshots/radio-dash.jpg)
 
@@ -30,25 +30,25 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 
 ### What's new in this fork
 
-**[1.6.3 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.3-beta.1) (in testing)**
+**[1.6.3 beta 1](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.3-beta.1) (in testing)**
 - **MG4Dash no longer switches back to DAB+ while on FM** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the DAB+ tuner keeps receiving in the background during FM (station info, slideshow, and the return to the logo after 5 minutes), and each of these put DAB+ back in the media session. The music card then showed DAB while the sound stayed on FM. DAB+ info now only reaches the session when the radio is on DAB+.
 - **DAB+ picture kept on the player and in MG4Dash**: on a station that sends no logo, the player and MG4Dash showed no picture 5 minutes after the last slideshow, while the station list kept it. They now show that last picture too (recent slideshow, then logo, then last slideshow picture).
 - **RDS accents shown**: RDS has its own character set (é, è, à, ç… are not coded as in Latin-1), and the tuner passes the bytes as they are, so accented letters were invisible. Radio text and station names are now converted, in Radio Dash and in MG4Dash.
 
-**[1.6.2](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2) (latest)**: everything in 1.6.2 beta 1 to 8 below, with DAB+ slideshow pictures shown for 5 minutes at most then the station logo, AM as an option in MG4Dash, the vertical bar following MG4Dash's side and width, the reworked station box, and fixes for older firmwares (SWI68, SWI165…).
+**[1.6.2](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2) (latest)**: everything in 1.6.2 beta 1 to 8 below, with DAB+ slideshow pictures shown for 5 minutes at most then the station logo, AM as an option in MG4Dash, the vertical bar following MG4Dash's side and width, the reworked station box, and fixes for older firmwares (SWI68, SWI165…).
 
-**[1.6.2 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.8)**
+**[1.6.2 beta 8](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2-beta.8)**
 - **DAB+ station logos kept, slideshow pictures only while they are current**: a DAB+ station sends two kinds of pictures. Its **logo** comes with the programme guide (SPI) and the radio keeps it per station; its **slideshow** (covers, hosts, ads…) changes all the time. A slideshow picture is now shown for **5 minutes at most**, or until the next one. After that, the player and MG4Dash show the station logo, or no picture when the station has never sent one.
 - **Station list**: each DAB+ station shows its logo. A station without a logo keeps its last slideshow picture, as before (many multiplexes broadcast no SPI logo), and a station never heard shows its name in large type, like an FM station.
 
-**[1.6.2 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.7)**
+**[1.6.2 beta 7](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2-beta.7)**
 - **AM back as an option**: MG4Dash's settings (Home, Audio source) get a *Radio Dash: AM band* switch, **off by default**, shown on firmwares whose radio can have AM (SWI68, SWI165…). When on, the AM tab, dial, scan and favourites come back as in 1.6.2 beta 1, and the band change goes through AM again. Needs an MG4Dash version with this switch.
 - **No more RDS text from the previous station in MG4Dash** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the tuner sometimes sends the last RDS text again after switching to DAB+ and back, or to another station. A text identical to the last one sent for another frequency, or received on DAB+, is now ignored.
 
-**[1.6.2 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.6)**
+**[1.6.2 beta 6](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2-beta.6)**
 - **Favourites easier to tell apart** in All stations: a station that is not a favourite now shows only the dark round badge, without a grey star, on DAB+ and FM. Tapping the badge still adds it. The big star of the player is unchanged.
 
-**[1.6.2 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.5)**
+**[1.6.2 beta 5](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2-beta.5)**
 - **DAB+ picture in MG4Dash right away**: on a station change, the media session now carries the picture cached by Radio Dash, so MG4Dash shows it at once instead of waiting for the station to send its slideshow again.
 - **No more AM** (back as an option in beta 7): there are no AM stations left to listen to, so the AM tab is hidden even where the car configuration offers it, the steering wheel source button and MG4Dash only switch between DAB+ and FM, and a radio left on AM goes back to FM.
 - **Vertical bar like in MG4Dash**: on the right for right-hand drive (or when the side is forced in MG4Dash), and twice as wide with MG4Dash's *wide bar* setting. Needs an MG4Dash version that publishes these two settings.
@@ -68,25 +68,25 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **DAB+ with the MG4Dash bar at the bottom**: the player and the favourites go down to the same 12 dp gap above the bar as the other boxes.
 - **Band change from MG4Dash on SWI68** ([MG4Dash #80](https://github.com/Skittle6938/MG4Dash/issues/80)): the radio reads its bands from the car configuration, empty on SWI68, so the band commands of its media session did nothing. Radio Dash then uses DAB, FM, AM.
 
-**[1.6.2 beta 1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.2-beta.1)**
+**[1.6.2 beta 1](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.2-beta.1)**
 - **Three band tabs fit next to the settings gear** (AM on SWI68): the tabs get narrower instead of going under the gear.
 - **◀ ▶ and play centred** on the DAB+ player.
 - **Bigger FM station names**: the name gets the size of the frequency of a station without a name (smaller only if it doesn't fit), with the frequency in the top left corner of the card.
 - **DAB+ station names in bold** in the box on the right.
 - **FM / AM dial**: with the MG4Dash bar at the bottom, the dial goes down to the same 12 dp gap as between the other boxes.
 
-**[1.6.1](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1)**: everything in 1.6.1 beta 1 to 8 below, with the ★ Favourites | All stations switch, the AM page, Scan on every band and the direct band change for MG4Dash.
+**[1.6.1](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.1)**: everything in 1.6.1 beta 1 to 8 below, with the ★ Favourites | All stations switch, the AM page, Scan on every band and the direct band change for MG4Dash.
 
-**[1.6.1 beta 8](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.8)**
+**[1.6.1 beta 8](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.1-beta.8)**
 - **Bigger settings gear**, redrawn as a filled icon in the MG4Dash style.
 - **DAB+ channel back** after the multiplex name: a station named after its multiplex no longer hides it.
 - **Real Radio Dash version for MG4Dash**: the app now carries its own version (`radiodash.version`), so MG4Dash shows the installed one, even after an install by ADB.
 
-**[1.6.1 beta 7](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.7)**
+**[1.6.1 beta 7](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.1-beta.7)**
 - **★ Favourites | All stations switch** in the header of the box on the right, replacing the ★ Favourites button of the player. **Scan** sits next to it, with All stations only.
 - **Tidier player** on DAB+, FM and AM: the star moves to the top right corner, and the RDS / DAB+ settings gear moves to the tab row, on the right edge of the player.
 
-**[1.6.1 beta 6](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.6)**
+**[1.6.1 beta 6](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.1-beta.6)**
 - **Same star everywhere**: FM and AM stations get the DAB+ star, on a dark round badge in the top right corner of the card.
 - **Bigger DAB / FM / AM tabs** (180 × 64 dp, larger text), easier to reach while driving.
 - **Scan result**: at the end of a scan, the header shows the number of stations for 10 s, on DAB+ too.
@@ -94,7 +94,7 @@ On the player, **◀ ▶** go to the previous / next station of the list; a **lo
 - **DAB+ channel**: the multiplex line of the player adds the channel (11C…), unless the multiplex name already contains it.
 - **Direct band change for MG4Dash**: a new media session command takes the radio straight to DAB+, FM or AM, instead of stepping band by band (for the source menu of the MG4Dash music card).
 
-**[1.6.1 beta 5](https://github.com/Skittle6938/MG4-Radio-Dash/releases/tag/v1.6.1-beta.5)**
+**[1.6.1 beta 5](https://github.com/Skittle6938/MG4Radio/releases/tag/v1.6.1-beta.5)**
 - **Stations in the box on the right**: the full-screen Stations window is gone. ★ Favourites now switches the box on the right between your favourites and every station known, with a star on each station to add or remove it (see above).
 - **Every station control follows the same list**: steering wheel, home screen, MG4Dash media card, ◀ ▶ of the player and a new horizontal **swipe on the player** go through the favourites, or through every station when ★ Favourites is off. A long press on ◀ ▶ searches for the next station received.
 - **FM / AM dial easier to read**: much bigger frequency numbers under the track, and while dragging, the frequency bubble shows above the finger instead of under it.
