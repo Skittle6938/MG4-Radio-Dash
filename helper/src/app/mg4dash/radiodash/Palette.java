@@ -68,6 +68,8 @@ public final class Palette {
     public static boolean wideBar = false;
     /** Barre verticale à droite (conduite à droite ou côté forcé dans MG4Dash, 7e champ). */
     public static boolean rightBar = false;
+    /** Bouton antibrouillards masqué par MG4Dash (menu de raccourcis, 9e champ) : la barre gauche prend toute la hauteur. */
+    public static boolean fogHidden = false;
     private static String loaded = null;
     private static boolean identity = true;
     private static final Map<TextView, ColorStateList> textDone = new WeakHashMap<>();
@@ -98,6 +100,7 @@ public final class Palette {
             mediaStyle = p.length > 4 && "1".equals(p[4].trim()) ? 1 : 0;
             wideBar = p.length > 5 && "1".equals(p[5].trim());
             rightBar = p.length > 6 && "1".equals(p[6].trim());
+            fogHidden = p.length > 8 && "1".equals(p[8].trim());
         } catch (Throwable ignored) {}
         lightMode = lm;
         identity = b == 0 && a == 0 && !lm;

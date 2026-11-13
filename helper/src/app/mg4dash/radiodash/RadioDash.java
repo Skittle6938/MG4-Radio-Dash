@@ -314,8 +314,9 @@ public final class RadioDash {
         bar.setBackground(panel(a, PANEL, 20));
         bar.setPadding(dp(a, 4), dp(a, 4), dp(a, 4), dp(a, 6));
         bar.setElevation(dp(a, 6));
-        // Place du bouton antibrouillards en haut à gauche ; à droite, la barre prend toute la hauteur (comme MG4Dash)
-        if (!Palette.rightBar) bar.addView(new View(a), new LinearLayout.LayoutParams(-1, dp(a, 62)));
+        // Place du bouton antibrouillards en haut à gauche ; à droite, ou quand MG4Dash masque le bouton (menu de
+        // raccourcis), la barre prend toute la hauteur (comme MG4Dash)
+        if (!Palette.rightBar && !Palette.fogHidden) bar.addView(new View(a), new LinearLayout.LayoutParams(-1, dp(a, 62)));
         int iconDp = Palette.wideBar ? 51 : 34;
         clock = null; date = null;
         String[][] items = {
