@@ -750,6 +750,38 @@ public final class RadioDash {
     private static String lastRds;
     private static int lastRdsCh = -1;
 
+    /**
+     * Nom de station RDS (PS) de la station FM : envoyé à MG4Dash avec la fréquence en cours (kHz). La radio ne met
+     * dans sa session média que le nom connu au moment de l'accord, presque toujours vide puisque le PS arrive quelques
+     * secondes après : la carte musique de MG4Dash gardait la fréquence comme nom de station. Comme pour le texte RDS,
+     * un nom reçu en DAB+, ou identique au dernier envoyé pour une autre fréquence (reste de la station d'avant), est
+     * ignoré.
+     */
+    public static void rdsName(Context c, char[] ps) {
+        try {
+            String n = ps == null ? "" : Rds.decode(new String(ps)).replace('\0', ' ').trim();
+            if (n.length() < 2) return;
+            Object storage = storage(c);
+            Object band = storage == null ? null : callQuiet(storage, "getStoredRadioBand");
+            if (!(band instanceof Number) || ((Number) band).intValue() != 1) return;
+            int ch = currentFmChannel(storage, 1);
+            if (ch <= 0 || n.equals(lastPs) && ch == lastPsCh) return;
+            if (n.equals(lastPs) && ch != lastPsCh && android.os.SystemClock.uptimeMillis() - lastPsAt < PS_STALE_MS) {
+                Log.i(TAG, "nom RDS de " + lastPsCh + " renvoyé sur " + ch + " : ignoré");
+                return;
+            }
+            lastPs = n; lastPsCh = ch; lastPsAt = android.os.SystemClock.uptimeMillis();
+            Log.i(TAG, "nom RDS " + ch + " : " + n);
+            c.sendBroadcast(new android.content.Intent("app.mg4dash.RDS_NAME").setPackage("app.mg4dash")
+                    .putExtra("name", n).putExtra("frequency", ch));
+        } catch (Throwable e) { Log.w(TAG, "nom RDS : " + e); }
+    }
+    private static String lastPs;
+    private static int lastPsCh = -1;
+    private static long lastPsAt;
+    /** Un même nom sur une autre fréquence moins de 5 s après : reste de la station d'avant, pas un émetteur voisin. */
+    private static final long PS_STALE_MS = 5000;
+
     private static boolean squarePlayer(Activity a, int band) {
         View cont = byName(a, "fragment_container");
         View card = byName(a, "fragment_container_card");

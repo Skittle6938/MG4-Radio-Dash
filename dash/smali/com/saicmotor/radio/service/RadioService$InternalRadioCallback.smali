@@ -1195,6 +1195,15 @@
 .method public onRdsMainInfoChanged(Landroid/hardware/radio/RadioRdsInfo$MainInfo;)V
     .locals 3
 
+    # MG4Radio : nom de station RDS transmis à MG4Dash (la session média de la radio ne le reçoit pas)
+    iget-object v0, p0, Lcom/saicmotor/radio/service/RadioService$InternalRadioCallback;->this$0:Lcom/saicmotor/radio/service/RadioService;
+
+    invoke-virtual {p1}, Landroid/hardware/radio/RadioRdsInfo$MainInfo;->getPsName()[C
+
+    move-result-object v1
+
+    invoke-static {v0, v1}, Lapp/mg4dash/radiodash/RadioDash;->rdsName(Landroid/content/Context;[C)V
+
     .line 2262
     invoke-static {}, Lcom/saicmotor/radio/service/RadioService;->access$200()Lcom/saicmotor/radio/utils/log/Logger;
 
